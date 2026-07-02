@@ -1,0 +1,90 @@
+[
+  {
+    "controlId": "MARITIME-OFFSHORE-001",
+    "processArea": "Maritime Safety",
+    "subProcess": "Offshore Operations",
+    "controlName": "Maintain Facility Information Book/Installation Data Card",
+    "controlStatement": "Who: Facility management and maritime SME | What: Maintain structured facility information (Facility Information Book or Installation Data Card) with pre-arrival info, operational details, safety/security info, and environmental data | When: Maintained as controlled document with formal annual review and prompt reissue of updates | Where: In Facility Information Book/Installation Data Card accessible to support vessels | Why: To provide support vessels with complete operational and safety information enabling safe vessel-facility interface operations and compliance with maritime regulations | How: Develop comprehensive facility information covering mooring plans, crane SWL, cargo handling, emergency contacts, high-pressure riser locations, and metocean conditions; maintain as controlled document; formally review annually with relevant agencies; distribute electronically with receipt acknowledgement | Evidence: Current facility information document, version control records, annual review sign-offs, vessel receipt acknowledgements, SME-MS/AP-MS input documentation",
+    "controlType": "Procedural",
+    "isHSSECritical": true,
+    "keyActivities": [
+      "Develop comprehensive Facility Information Book/Installation Data Card",
+      "Include pre-arrival communication channels and timelines",
+      "Document operational details (mooring, crane SWL, cargo arrangements)",
+      "Record safety and security information with emergency contacts",
+      "Capture environmental data and metocean limitations",
+      "Conduct formal annual review and reconfirmation with agencies",
+      "Distribute electronically with vessel receipt acknowledgement",
+      "Maintain as controlled document with version control"
+    ],
+    "riskAddressed": "Unsafe operations at vessel-facility interface due to incomplete, outdated, or unclear facility information leading to cargo transfer incidents or safety breaches",
+    "testingApproach": "Audit facility information document for completeness and currency, verify annual review completion and SME-MS/AP-MS sign-off, confirm vessel acknowledgement records, observe adherence to document control process",
+    "practiceDocumentName": "SEAM_Maritime_Safety_Offshore_Operations_Practice.md"
+  },
+  {
+    "controlId": "MARITIME-OFFSHORE-002",
+    "processArea": "Maritime Safety",
+    "subProcess": "Offshore Operations",
+    "controlName": "Pre-Arrival Equipment and Readiness Checklist",
+    "controlStatement": "Who: Facility manager/operator | What: Complete comprehensive facility-specific checklist prior to support vessel arrival confirming operational readiness and operability of critical equipment | When: Prior to vessel entry and periodically per activity level (more frequently with multiple daily vessels) | Where: At offshore facility with checklist document signed, dated, and timed | Why: To verify that all critical equipment is functional and facility is ready for safe vessel operations | How: Use comprehensive facility-specific checklist tailored to facility type and cargo; verify condition and readiness of wet/dry transfer equipment, dry cargo equipment, lifting machinery, PPE, and post-operation safety arrangements; document findings with sign-off | Evidence: Completed checklists with dates, times, and signatures; maintenance records addressing checklist findings; frequency adjusted logs for high-activity facilities",
+    "controlType": "Procedural",
+    "isHSSECritical": true,
+    "keyActivities": [
+      "Develop facility-specific pre-arrival checklist",
+      "Verify wet and dry transfer equipment (hoses, pipelines, isolation, valves, relief systems)",
+      "Confirm tank levels, insulating flanges, drains, sampling valves, gauges, and alarms",
+      "Inspect dry cargo equipment (lifting machinery, hooks, strops, chains, containers, forklifts)",
+      "Verify personal protective equipment including lifejackets and flotation devices",
+      "Ensure post-operation safety procedures documented",
+      "Complete checklist with date, time, and operator signature",
+      "Adjust frequency based on vessel activity levels while maintaining safety"
+    ],
+    "riskAddressed": "Failure of critical communication or equipment checks leading to cargo transfer incidents, loss of containment, or vessel-facility safety breaches",
+    "testingApproach": "Review pre-arrival checklists for completeness and timeliness, verify all required equipment checked, audit maintenance records for findings follow-up, confirm checklist signature and dating compliance",
+    "practiceDocumentName": "SEAM_Maritime_Safety_Offshore_Operations_Practice.md"
+  },
+  {
+    "controlId": "MARITIME-OFFSHORE-003",
+    "processArea": "Maritime Safety",
+    "subProcess": "Safety Zone Management",
+    "controlName": "Establish Procedures for Vessel Entry into Safety Zones",
+    "controlStatement": "Who: Asset manager, Offshore Installation Manager (OIM), Maritime SME-MS/AP-MS | What: Define and document all requirements and procedures for support vessel entry into Safety Zones, with clear responsibilities for vessel entry, residence, and exit | When: Upon asset startup and reviewed periodically; enforced for all vessel entries | Where: In Facility Marine Operations Manual or documented RASCI matrix | Why: To ensure only authorized vessels conduct approved operations within safety zones and prevent unauthorized entries, collisions, or SIMOPS conflicts | How: Identify how local safety zones are defined per jurisdictional requirements; document vessel entry, residence, exit procedures; assign clear accountabilities (typically SME-MS identifies risks/sets standards; Asset Manager/OIM handles zone management); ensure vessel obtains facility permission before zone entry; conduct required checks (communications functionality, vessel machinery readiness, personnel competence) | Evidence: Facility Marine Operations Manual with documented procedures, RASCI matrix showing clear accountabilities, vessel entry permission logs, pre-entry communication records",
+    "controlType": "Procedural",
+    "isHSSECritical": true,
+    "keyActivities": [
+      "Understand local safety zone definitions per jurisdiction and government requirements",
+      "Define clear accountabilities and responsibilities in Marine Operations Manual",
+      "Establish vessel entry permission protocol with facility authority (typically OIM)",
+      "Verify communications equipment functionality before zone entry",
+      "Confirm operational readiness of vessel machinery and systems",
+      "Verify competence and availability of vessel personnel",
+      "Conduct regular communication checks including portable radio battery replacement",
+      "Document entry exchanges between vessel Master and OIM with date/time"
+    ],
+    "riskAddressed": "Unauthorized or poorly managed vessel entry into safety zones leading to collisions, SIMOPS conflicts, or damage to subsea infrastructure",
+    "testingApproach": "Review facility Marine Operations Manual and RASCI for clarity of procedures and accountabilities, audit vessel entry permission logs for completeness, verify pre-entry communication records, observe entry procedures for one actual vessel visit, interview OIM on entry authorization process",
+    "practiceDocumentName": "SEAM_Maritime_Safety_Offshore_Operations_Practice.md"
+  },
+  {
+    "controlId": "MARITIME-OFFSHORE-004",
+    "processArea": "Maritime Safety",
+    "subProcess": "Safety Zone Management",
+    "controlName": "Define Safe Operating Sectors and SIMOPS Controls",
+    "controlStatement": "Who: Facility management, maritime SME-MS/AP-MS, simulation engineers | What: Establish safe operating sectors for specific operations (e.g. export tanker tandem loading) through simulation across range of metocean conditions, accounting for obstructions (moorings, risers, export lines) | When: During operations planning and reviewed when facility layout or equipment changes | Where: In Matrix of Permitted Operations (MOPO) and supporting simulation documentation | Why: To define the bounds within which simultaneous vessel operations can safely occur without interference or collision | How: Conduct joint risk assessments with vessel operators and installation management during planning; simulate across range of metocean conditions; define safe sectors considering vessel maneuverability, crane/hose/cargo transfer equipment locations, weather limits; record all planned and expected SIMOPS in MOPO with cross-references | Evidence: MOPO documentation with defined safe operating sectors, simulation reports showing metocean scenarios tested, joint risk assessment records with vessel operators and installation management",
+    "controlType": "Analytical",
+    "isHSSECritical": true,
+    "keyActivities": [
+      "Identify all simultaneous operations that may occur (construction, resupply, export, helicopter)",
+      "Conduct joint risk assessments with vessel operators and installation management",
+      "Define operational activities and potential conflicts during planning",
+      "Simulate safe operating sectors across range of metocean conditions",
+      "Account for obstructions (moorings, risers, export lines) in simulations",
+      "Consider crane, hose, and cargo equipment locations relative to prevailing conditions",
+      "Record and cross-reference all planned SIMOPS in Matrix of Permitted Operations (MOPO)",
+      "Establish clear safe operating boundaries and responsibility assignments"
+    ],
+    "riskAddressed": "Overlapping vessel or facility operations creating conflicts that may lead to collisions, interference, unsafe working conditions, or damage to subsea infrastructure",
+    "testingApproach": "Review MOPO for all identified SIMOPS with safe sector definitions, examine simulation reports for metocean scenario coverage, audit joint risk assessment records for vessel operator and installation management involvement, verify sector definitions account for equipment locations and obstructions",
+    "practiceDocumentName": "SEAM_Maritime_Safety_Offshore_Operations_Practice.md"
+  }
+]

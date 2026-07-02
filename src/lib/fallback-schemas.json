@@ -1,0 +1,644 @@
+{
+  "User": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "username": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "passwordHash": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "role": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "totalPoints": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "dailyPointStreak": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "confidenceInfluencer": {
+      "type": "Boolean",
+      "required": false,
+      "isId": false
+    }
+  },
+  "ControlAssignment": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "assessmentId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "controlId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "lastTestedDate": {
+      "type": "DateTime",
+      "required": false,
+      "isId": false
+    },
+    "effective": {
+      "type": "Effectiveness",
+      "required": false,
+      "isId": false
+    },
+    "effectiveUpdatedAt": {
+      "type": "DateTime",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "ProcessArea": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "description": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "pId": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "standard": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    }
+  },
+  "SubProcess": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "description": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "processAreaId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "Control": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "sourceFile": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "controlRef": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "practiceDocument": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "statement": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "controlType": {
+      "type": "ControlType",
+      "required": true,
+      "isId": false
+    },
+    "controlTypeDetail": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "processAreaId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "subProcessId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "isHsseCritical": {
+      "type": "Boolean",
+      "required": false,
+      "isId": false
+    },
+    "csfWho": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfWhat": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfWhen": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfWhere": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfWhy": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfHow": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "csfEvidence": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "keyActivities": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "riskAddressed": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "testingApproach": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "uncertainFlags": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "ramRating": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "riskWeight": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "rawHealthScore": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "lastTestedDate": {
+      "type": "DateTime",
+      "required": false,
+      "isId": false
+    },
+    "lastTestResult": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "standard": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "pId": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "Requirements": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    }
+  },
+  "Assessment": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "activityTypeId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "assessorId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "startDate": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "endDate": {
+      "type": "DateTime",
+      "required": false,
+      "isId": false
+    },
+    "loa": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "status": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "SampleType": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "RecordSourceType": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "Sample": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "assessmentId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "controlId": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "sampleTypeId": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "recordSourceId": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "recordReference": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "controlEffective": {
+      "type": "Boolean",
+      "required": false,
+      "isId": false
+    },
+    "comment": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "status": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "conclusion": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "evidenceUrl": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AssuranceActivityType": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "description": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "defaultLOA": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AchievementBadge": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "description": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "icon": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "emotionalDrive": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "rarity": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "pointsRequired": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "BehaviorMeasurement": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "date": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "plansMade": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "controlsTested": {
+      "type": "Int",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "PointTransaction": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "points": {
+      "type": "Int",
+      "required": true,
+      "isId": false
+    },
+    "reason": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AssessmentTemplate": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "name": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "description": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "updatedAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AssessmentTemplateControlLinkage": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "templateId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "controlId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AssessmentTemplateActivityType": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "templateId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "activityTypeId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  }
+}

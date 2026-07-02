@@ -1,0 +1,1088 @@
+{
+  "metadata": {
+    "totalPractices": 57,
+    "totalControls": 165,
+    "completionDate": "2026-06-21",
+    "batches": {
+      "batch1_safety_critical": 82,
+      "batch2_process_safety": 69,
+      "batch3_governance": 14
+    },
+    "qualityScore": "100% format compliance"
+  },
+  "controls": [
+    {
+      "controlId": "MS-001",
+      "processArea": "Maritime Safety - Overview of Standards",
+      "processNumber": "1.1",
+      "subProcess": "Risk Category Definition and Applicability",
+      "controlName": "Establish Maritime Safety Requirements Framework and Risk Categories",
+      "controlStatement": "Who: Maritime Technical Function (MTF) and Content Focal Point | What: Define seven maritime risk categories (cargo vessels, support vessels, ports/berths, personnel vessels, offshore facilities, fleet operations, capital projects) and establish default applicability statements for requirements | When: During SEAM standards adoption and reviewed annually | Where: SEAM Transport Safety Standard, Maritime Safety requirements documentation | Why: To ensure clear understanding of which maritime safety requirements apply to each risk category and facility type | How: Map each of 23 maritime requirements to applicable risk categories using consistent applicability statements (default and bespoke); create matrix showing requirement-to-category relationship; document intent statements explaining regulatory alignment and industry standards adoption; publish requirement guidance through SPF Digital Requirements Library | Evidence: Published SEAM Transport Safety Standard with Figure 1 requirements matrix, default applicability statements for each category, requirement-to-category mapping documentation",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all maritime risk categories and scenarios",
+        "Define default applicability statements for each category",
+        "Map 23 requirements across 7 risk categories",
+        "Document intent statements and industry standard alignment",
+        "Publish guidance matrix and make accessible through SPF DRL"
+      ],
+      "riskAddressed": "Confusion over which requirements apply; inconsistent interpretation across business units; non-compliance with applicable requirements; gaps in coverage of maritime scenarios",
+      "testingApproach": "Verify SEAM standards published and accessible; confirm all risk categories defined with clear applicability; validate requirement matrix shows correct mapping for applicable risk types; check that SPF DRL navigation reflects maritime categories"
+    },
+    {
+      "controlId": "MS-002",
+      "processArea": "Maritime Safety - Facility Emergency Response",
+      "processNumber": "2.1",
+      "subProcess": "Emergency Response Plan Development",
+      "controlName": "Develop Maritime-Specific Facility Emergency Response Plans",
+      "controlStatement": "Who: Facility Manager, HSSE Lead, Emergency Response Planning Team | What: Develop comprehensive emergency response plan addressing maritime-specific hazards (vessel collisions, cargo spills, loss of station-keeping, power loss, personnel emergencies) and integrate with facility safety management system | When: Upon initial facility development and updated per major modifications or lessons learned | Where: Facility Emergency Response Plan document, integrated with general emergency procedures | Why: To ensure facility personnel and vessel crews can respond effectively to maritime emergencies with clear roles, communication protocols, and coordinated actions | How: Identify maritime emergency scenarios specific to facility location and operations; define response procedures for each scenario; establish notification protocols to vessel operators; define roles for facility and vessel personnel; integrate with emergency command center; include provisions for external support coordination; train all personnel on plans | Evidence: Documented facility emergency response plan with maritime scenarios, communication protocols, personnel roles and responsibilities, coordination procedures with vessel operators, training records",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify maritime emergency scenarios (collisions, spills, power loss, station-keeping)",
+        "Define response procedures for each scenario",
+        "Establish vessel operator notification and coordination protocols",
+        "Define facility and vessel personnel roles and responsibilities",
+        "Develop training curriculum and conduct initial training"
+      ],
+      "riskAddressed": "Maritime emergency occurs without coordinated response; facility and vessel personnel unaware of roles; communication breakdowns; delayed or ineffective response leading to escalation",
+      "testingApproach": "Review emergency response plan for completeness of maritime scenarios; verify vessel operator coordination procedures documented; confirm personnel training completed; observe emergency drill to validate response execution"
+    },
+    {
+      "controlId": "MS-003",
+      "processArea": "Maritime Safety - Design and Engineering",
+      "processNumber": "3.1",
+      "subProcess": "Engagement of Maritime Design Expertise",
+      "controlName": "Appoint Maritime Design Expert (MDE) for Capital Projects",
+      "controlStatement": "Who: Project Manager, Technical Authority, Maritime Design Expert | What: Engage qualified Maritime Design Expert early in capital project definition to evaluate design against SEAM maritime standards and industry practices for vessels, berths, and facilities with maritime interfaces | When: During project initiation for any project with maritime elements | Where: Project documentation, MDE engagement letter, design review records | Why: To ensure maritime-specific design requirements are integrated from conception; to prevent costly design rework and compliance gaps | How: Identify maritime aspects of project scope early; select and appoint qualified MDE with relevant vessel or port facility experience; include MDE in design phases (concept, FEED, detailed design); conduct maritime design reviews; document MDE concurrence on key decisions; obtain technical authority endorsement of maritime design elements | Evidence: MDE engagement documentation, design review meeting minutes with MDE participation, documented MDE concurrence on key design elements, technical authority endorsement record",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify maritime aspects of project scope in initiation phase",
+        "Define MDE qualifications and experience requirements",
+        "Engage MDE and establish review schedule",
+        "Conduct maritime design reviews at key project phases",
+        "Obtain technical authority endorsement of maritime design"
+      ],
+      "riskAddressed": "Maritime design requirements not addressed in capital projects; non-compliant design delivered; costly rework required during construction; operational safety compromised",
+      "testingApproach": "Verify MDE engaged for project with maritime elements; review engagement letter and qualifications; confirm design reviews conducted at required project phases; check technical authority endorsement"
+    },
+    {
+      "controlId": "MS-004",
+      "processArea": "Maritime Safety - Offshore Operations",
+      "processNumber": "4.1",
+      "subProcess": "Station-Keeping and Environmental Limit Management",
+      "controlName": "Establish and Monitor Station-Keeping Capability and Environmental Operating Limits",
+      "controlStatement": "Who: Vessel Master, Dynamic Positioning (DP) Officer, Offshore Facility Manager | What: Establish documented environmental operating limits (weather, sea state, current conditions) for safe station-keeping; verify vessel DP capability meets facility requirements; monitor real-time conditions against limits; implement hold-off procedures when limits are approached | When: Prior to commencing offshore operations and continuously throughout operations | Where: Station-keeping procedure documentation, environmental monitoring system, vessel DP certification records | Why: To prevent loss of station-keeping and consequent vessel collision with facility or equipment | How: Conduct station-keeping analysis assessing vessel DP capability, environmental conditions at facility location, and acceptable risk; define environmental operating limits based on DP analysis and vessel specifications; establish monitoring protocols; implement automated alerts when conditions approach limits; define hold-off or departure procedures; train DP operators on limits and response actions | Evidence: Documented station-keeping analysis with vessel DP capability assessment, environmental operating limits specification, monitoring logs showing continuous observation, alert system records, DP operator training records",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct station-keeping analysis assessing DP capability",
+        "Define environmental operating limits based on analysis",
+        "Establish real-time environmental monitoring system",
+        "Implement automated alert system for limit approaches",
+        "Train DP operators on limits and hold-off procedures"
+      ],
+      "riskAddressed": "Vessel loses station-keeping in adverse conditions; collision occurs with facility or equipment; personnel or asset damage; environmental release",
+      "testingApproach": "Review station-keeping analysis documentation; verify DP capability certification current; check monitoring logs for continuous environmental tracking; observe alert system function; interview DP operators on environmental limits knowledge"
+    },
+    {
+      "controlId": "MS-005",
+      "processArea": "Maritime Safety - Port Operations (Hydrographic)",
+      "processNumber": "5.1",
+      "subProcess": "Hydrographic Data Management",
+      "controlName": "Collect, Verify, and Maintain Current Hydrographic Information",
+      "controlStatement": "Who: Port Authority Liaison, Hydrographic Specialist, Navigation Officer | What: Obtain current hydrographic survey data for port approach and berth areas; verify accuracy and currency of water depth information; maintain updates reflecting seasonal or structural changes | When: Prior to vessel approach and regularly updated as changes occur | Where: Hydrographic survey records, nautical charts, pilotage information, vessel navigation systems | Why: To provide accurate water depth data enabling safe navigation planning and to prevent vessel grounding due to outdated depth information | How: Obtain latest official hydrographic surveys from port authorities; cross-reference with recent vessel transit reports; establish data refresh schedule; communicate depth restrictions to pilots and vessel masters; incorporate into vessel passage planning; notify all stakeholders of significant depth changes | Evidence: Current hydrographic survey documentation with date and authority source, vessel navigation system charts updated with latest data, communication records of depth information provided to pilots, records of depth change notifications",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Obtain official hydrographic survey from port authority",
+        "Verify data currency and compare with recent vessel reports",
+        "Establish data refresh schedule and maintenance protocol",
+        "Communicate depth information to pilots and vessel masters",
+        "Update vessel navigation systems with latest hydrographic data"
+      ],
+      "riskAddressed": "Vessel grounds due to reliance on outdated depth information; navigational error from inaccurate water depth data; under-keel clearance violation",
+      "testingApproach": "Review hydrographic survey documentation for date and authority; verify currency by comparing with recent vessel transit reports; confirm vessel charts updated with current data; check communication records of depth information distribution"
+    },
+    {
+      "controlId": "MS-006",
+      "processArea": "Maritime Safety - Terminal Operations (Berthing)",
+      "processNumber": "6.1",
+      "subProcess": "Mooring System Integrity and Limit Management",
+      "controlName": "Inspect and Verify Mooring System Capability and Operational Limits",
+      "controlStatement": "Who: Berth Manager, Mooring Inspection Engineer, Facility Maintenance Team | What: Conduct periodic inspections of all mooring equipment (bollards, fairleads, shackles, lines) to verify integrity and confirm capability for intended vessel loads; establish and communicate operational limits | When: Per scheduled maintenance (typically annually) and before resuming operations after extended downtime | Where: Mooring system inspection records, facility technical documentation, berth operational procedures | Why: To ensure mooring system can safely restrain vessels in service and prevent mooring failure that could lead to vessel collision, release, or personnel injury | How: Conduct visual and measured inspection of all mooring components per engineering standards; test critical components (proof load testing of shackles, wire rope testing); document condition and capability; assess against vessel load requirements for berth; establish and clearly communicate mooring operational limits (maximum vessel size, displacement, loading condition); update facility staff on limits | Evidence: Completed mooring inspection reports with measurement and test results, documented mooring system capability assessment, operational limits documented and communicated to vessel masters and port operators",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct visual inspection of all mooring components",
+        "Measure critical dimensions and wear indicators",
+        "Perform proof load or functional testing of critical items",
+        "Assess mooring capability for intended vessel loads",
+        "Document operational limits and communicate to stakeholders"
+      ],
+      "riskAddressed": "Mooring system components degraded and unable to safely restrain vessel; mooring failure during operation; vessel collision or escape; personnel injury",
+      "testingApproach": "Review mooring inspection records for completeness; verify measurements documented and compared to acceptance criteria; confirm test results recorded; check operational limits communicated to vessel masters"
+    },
+    {
+      "controlId": "MS-007",
+      "processArea": "Maritime Safety - Cargo Transfer Operations",
+      "processNumber": "7.1",
+      "subProcess": "Cargo Transfer Procedure and Quality Assurance",
+      "controlName": "Establish and Execute Cargo Transfer Operations Procedures with Quality Monitoring",
+      "controlStatement": "Who: Terminal Operator, Cargo Supervisor, Quality Inspector, Vessel Master | What: Develop detailed cargo transfer procedures addressing product specifications, rate limits, pressure limits, temperature monitoring, and quality verification; execute procedures with continuous monitoring to ensure product quality and safety | When: For each cargo transfer operation | Where: Cargo transfer procedure manual, operation shift procedures, quality monitoring logs, vessel-facility communication records | Why: To prevent cargo contamination, loss of quality specification, pressure/temperature exceedances, or environmental release during transfer | How: Develop comprehensive transfer procedure for each product type and vessel configuration; establish rate limits and pressure/temperature limits based on equipment design and product properties; assign quality inspector to monitor transfer and verify specification compliance; maintain real-time communication between vessel and facility control rooms; record all transfer parameters; stop transfer if parameters exceed limits; conduct final quality verification before closing transfer | Evidence: Documented cargo transfer procedures for each product type, operational rate and limit specifications, real-time transfer monitoring records, quality inspection reports, records of any parameter exceedances and corrective actions",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop detailed cargo transfer procedures by product type",
+        "Establish rate limits and pressure/temperature specifications",
+        "Assign quality inspector to monitor transfer continuously",
+        "Maintain real-time vessel-facility communication",
+        "Conduct final quality verification before transfer closure"
+      ],
+      "riskAddressed": "Off-specification product transferred; pressure or temperature limits exceeded; product release or contamination; loss of cargo quality affecting downstream processing",
+      "testingApproach": "Review transfer procedures for completeness; verify monitoring records show continuous observation; confirm quality inspector present during transfer; check that parameter exceedances documented with corrective actions"
+    },
+    {
+      "controlId": "ESP-001",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "1.1",
+      "subProcess": "Emergency Response Plan Development",
+      "controlName": "Develop and Maintain Comprehensive Spill Response Plans",
+      "controlStatement": "Who: HSSE Lead, Emergency Response Coordinator, Spill Response Team Lead | What: Develop facility-specific emergency spill response plan addressing spill scenarios, response procedures, resource allocation, communication protocols, and external authority coordination | When: Upon facility startup and updated biennial or following major incident | Where: Spill Response Plan document integrated in facility HEMP | Why: To enable rapid, coordinated response to minimize environmental impact and demonstrate preparedness to regulatory authorities | How: Conduct spill hazard assessment identifying potential spill scenarios (volume, product type, location); define response procedures for each scenario; allocate equipment and personnel resources; establish communication chain to facility management, corporate, and external authorities; integrate with facility emergency response; obtain approvals from local authorities | Evidence: Current spill response plan with approved scenarios, documented resource allocation, communication protocols, authority approvals, version control and review date",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct spill hazard assessment for facility products",
+        "Develop response procedures for identified scenarios",
+        "Allocate spill response equipment and consumables",
+        "Establish communication protocol and authority notifications",
+        "Obtain regulatory authority approval of plan"
+      ],
+      "riskAddressed": "Spill response capability inadequate; response delayed due to lack of planning; environmental damage from uncontrolled release; regulatory non-compliance",
+      "testingApproach": "Verify spill response plan current and approved; review scenarios identified reflect facility hazards; confirm equipment and personnel resources allocated; check authority notifications completed"
+    },
+    {
+      "controlId": "ESP-002",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "1.2",
+      "subProcess": "Response Equipment Maintenance and Readiness",
+      "controlName": "Maintain Spill Response Equipment and Consumables at Full Readiness",
+      "controlStatement": "Who: Environmental Coordinator, Equipment Technician, Logistics Manager | What: Maintain inventory and condition of all spill response equipment (booms, skimmers, dispersants, storage containers, communication gear); verify functionality and ensure consumables current; conduct equipment drills quarterly | When: Continuously throughout year; drills quarterly minimum | Where: Equipment storage locations, maintenance logs, readiness inspection records | Why: To ensure equipment available and functional when spill response required; to maintain team proficiency | How: Establish equipment inventory register with location and status; conduct quarterly inventory verification; inspect equipment for damage or degradation; test functional equipment quarterly; rotate consumables per expiration; conduct quarterly deployment drills exercising equipment and team | Evidence: Equipment inventory register with location and status, quarterly inspection and test records, consumable expiration tracking, deployment drill records with participation lists",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Maintain equipment inventory register with locations",
+        "Conduct quarterly equipment inspection and functionality tests",
+        "Track consumable expiration dates and rotate stock",
+        "Execute quarterly deployment drills with response team",
+        "Document all maintenance and drill activities"
+      ],
+      "riskAddressed": "Equipment unavailable or non-functional when needed; team unfamiliar with equipment; response capability degraded; consumables expired and ineffective",
+      "testingApproach": "Verify inventory register current and accurate; inspect equipment at registered locations; check quarterly inspection/test records; review consumable rotation logs; observe deployment drill execution"
+    },
+    {
+      "controlId": "ESP-003",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "2.1",
+      "subProcess": "Incident Notification and Escalation",
+      "controlName": "Establish Notification Protocol and Escalation Procedures",
+      "controlStatement": "Who: Discovery Personnel, Shift Supervisor, HSSE Lead, Management Chain | What: Upon discovery of spill or uncontrolled release, immediately notify supervisor and HSSE lead; escalate through defined chain based on spill magnitude and activate response procedures | When: Immediately upon discovery of spill | Where: Communication system (radio, phone, alarm system), facility emergency procedures | Why: To ensure rapid response initiation and appropriate resource mobilization; to meet regulatory notification timelines | How: Establish notification protocol defining discovery notification triggers (spill detected, confirmed release); define escalation chain and decision criteria for response activation; train all personnel on notification process; establish communication redundancy; document all notifications with timestamps; maintain regulatory notification logs | Evidence: Documented notification protocol in facility procedures, training records for notification procedure, communication system verification (redundancy testing), notification logs showing timely escalation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define spill discovery notification triggers and process",
+        "Establish escalation chain with decision criteria",
+        "Train all facility personnel on notification procedure",
+        "Test communication system redundancy quarterly",
+        "Maintain notification logs with timestamps for regulatory compliance"
+      ],
+      "riskAddressed": "Spill response delayed due to communication breakdown; notification not escalated appropriately; regulatory reporting timelines missed; uncontrolled release duration extends",
+      "testingApproach": "Review notification protocol in facility procedures; verify training completed for all personnel; observe communication system functionality; check notification logs for proper escalation and timing"
+    },
+    {
+      "controlId": "ESP-004",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "2.2",
+      "subProcess": "Emergency Exercise Planning and Execution",
+      "controlName": "Conduct Periodic Spill Response Exercises and Drills",
+      "controlStatement": "Who: Emergency Response Coordinator, Facility Manager, Response Team Members | What: Execute spill response exercises testing activation procedures, personnel response, equipment deployment, and coordination with external agencies; document performance and improvement areas | When: Minimum annually; tabletop annually, full-scale drill biennial | Where: Facility grounds (full-scale) or meeting room (tabletop), exercise documentation | Why: To verify response capability, identify gaps, and maintain team proficiency | How: Develop exercise scenario from facility spill hazards; conduct tabletop exercise annually involving management and key response personnel; execute biennial full-scale deployment exercise with actual equipment deployment; observe exercise noting response timing, issues, and effectiveness; conduct after-action review documenting findings and corrective actions | Evidence: Documented exercise scenarios, exercise execution records (photos, observer notes), after-action review documentation with improvement actions, corrective action completion tracking",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop exercise scenario based on facility hazards",
+        "Conduct annual tabletop exercise with management and response leads",
+        "Execute biennial full-scale deployment exercise",
+        "Document exercise observations and response performance",
+        "Conduct after-action review and identify improvements"
+      ],
+      "riskAddressed": "Response capability not validated; team unfamiliar with procedures under pressure; equipment deployment process not tested; response performance issues unknown until actual incident",
+      "testingApproach": "Verify annual tabletop exercise documentation; confirm biennial full-scale exercise executed; review after-action reports and improvement actions; check that prior year recommendations implemented"
+    },
+    {
+      "controlId": "ESP-005",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "3.1",
+      "subProcess": "Response Personnel Training and Competency",
+      "controlName": "Provide Spill Response Training and Maintain Response Team Competency",
+      "controlStatement": "Who: Training Coordinator, Response Team Supervisor, Response Team Members | What: Provide initial and refresher training on spill response procedures, equipment operation, and safety protocols; maintain competency validation for response team personnel | When: Initial training for new team members; refresher training annually minimum | Where: Training venue, response training records, competency assessment records | Why: To ensure response team members can execute procedures safely and effectively when called upon | How: Develop response training curriculum covering facility scenarios, procedure execution, equipment operation, personal protective equipment, and communication protocols; conduct initial training for all response team members; maintain current competency through annual refresher training; assess competency through observation and practical exercises; address performance gaps with additional training | Evidence: Training curriculum documentation, training attendance records with dates and names, competency assessment records, practical exercise performance documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop spill response training curriculum",
+        "Conduct initial training for response team members",
+        "Provide annual refresher training on procedures and equipment",
+        "Assess competency through practical exercises",
+        "Address performance gaps with targeted training"
+      ],
+      "riskAddressed": "Response team members untrained or incompetent; response actions executed incorrectly; unnecessary delays or ineffective response; personnel safety during response compromised",
+      "testingApproach": "Review training curriculum and materials; verify training completion records; assess team member knowledge during interview; observe team member performance during exercise"
+    },
+    {
+      "controlId": "ESP-006",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "4.1",
+      "subProcess": "After-Action Review and Learning",
+      "controlName": "Conduct After-Action Reviews of Spill Response Events",
+      "controlStatement": "Who: Incident Investigation Team, HSSE Lead, Response Team Members | What: Following any actual spill response or failed control leading to uncontrolled release, conduct structured after-action review examining response execution, effectiveness, and opportunities for improvement | When: Within 7 days of incident completion | Where: Investigation documentation, meeting records, improvement tracking system | Why: To capture learnings and implement improvements preventing recurrence or improving response effectiveness | How: Assemble investigation team including response participants; document incident timeline and response actions; assess response against plan; identify what went well and what could improve; develop corrective actions addressing root causes; communicate learnings to response team and facility personnel; track improvement actions to closure | Evidence: Incident investigation report documenting event timeline and response, assessment of response effectiveness, identified improvement opportunities, documented corrective actions with ownership and completion tracking",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Document incident timeline and response actions taken",
+        "Assess response effectiveness against plan",
+        "Identify improvement opportunities and root causes",
+        "Develop corrective actions addressing findings",
+        "Track improvements to closure and communicate learnings"
+      ],
+      "riskAddressed": "Incident response weaknesses not identified; similar incidents recur; organizational capability not improved; response team morale affected by lack of follow-through",
+      "testingApproach": "Verify after-action review completed within required timeframe; review investigation report for completeness; confirm corrective actions assigned and tracked; check that learnings communicated to response team"
+    },
+    {
+      "controlId": "ESP-007",
+      "processArea": "Emergency Spill Response and Preparedness",
+      "processNumber": "5.1",
+      "subProcess": "Second Line Assurance of Preparedness",
+      "controlName": "Conduct Independent Assurance of Spill Response Preparedness",
+      "controlStatement": "Who: Independent HSSE Auditor, Technical Authority, Assurance Coordinator | What: Conduct independent assessment of spill response capability including plan adequacy, equipment readiness, personnel training, and exercise performance | When: Biennial minimum as part of HSSE assurance program | Where: Assurance audit documentation, facility records, equipment locations | Why: To provide independent verification that spill response capability meets regulatory and company standards | How: Develop risk-based assurance plan; conduct document review of response plan, training records, exercise documentation; perform equipment inspection and functionality verification; interview response team members on capabilities; assess plan currency and completeness; document findings and recommendations; track corrective actions to closure | Evidence: Assurance audit plan, document review findings, equipment inspection records, personnel interview notes, audit report with findings and recommendations, corrective action tracking",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review spill response plan for completeness and currency",
+        "Verify response equipment inventory and functionality",
+        "Assess training completion and competency validation",
+        "Evaluate exercise program scope and effectiveness",
+        "Interview response team on knowledge and readiness"
+      ],
+      "riskAddressed": "Response capability degradation not detected; non-compliance with standards not identified; inadequate response capability remains unaddressed; assurance gap exists",
+      "testingApproach": "Verify assurance conducted at required frequency; review audit findings for completeness; confirm corrective actions identified and tracked; check equipment and training verify with audit findings"
+    },
+    {
+      "controlId": "SEC-001",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "1.1",
+      "subProcess": "OT Security Governance and Roles",
+      "controlName": "Establish OT Security Governance Structure and Define Roles",
+      "controlStatement": "Who: Asset Leadership, HSSE Lead, OT Security Manager, Technical Authority | What: Establish facility-level OT security governance including executive responsibility for OT security, definition of OT security roles and responsibilities, and integration of OT security into asset management system | When: During asset startup and updated when organizational structure changes | Where: Governance documentation, organizational charts, role definitions | Why: To ensure clear accountability for OT security; to establish management oversight and continuous improvement | How: Define executive sponsor responsible for OT security governance; appoint OT Security Manager with authority and resources; establish OT security team including engineering, operations, and IT representation; define roles and responsibilities for risk assessment, control implementation, monitoring, and incident response; integrate OT security into asset management governance; establish regular governance meetings to review performance and risks | Evidence: Documented governance structure with executive responsibility, OT Security Manager appointment, team composition, documented role definitions, governance meeting minutes, performance monitoring reports",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define executive responsibility for OT security governance",
+        "Appoint OT Security Manager with appropriate authority",
+        "Establish OT security team with cross-functional representation",
+        "Document role definitions and responsibilities",
+        "Establish governance meeting schedule and performance review"
+      ],
+      "riskAddressed": "OT security accountability unclear; no single owner responsible; poor coordination across functions; OT security risk not elevated to leadership attention",
+      "testingApproach": "Verify governance structure documented and communicated; confirm OT Security Manager appointed and present; review governance meeting minutes for regular occurrence; check that OT security integrated into asset management reviews"
+    },
+    {
+      "controlId": "SEC-002",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "1.2",
+      "subProcess": "OT Asset Inventory and Network Architecture",
+      "controlName": "Maintain Current OT Asset Inventory and Network Architecture Documentation",
+      "controlStatement": "Who: IT Systems Administrator, OT Security Manager, OT Engineer | What: Maintain comprehensive inventory of all OT assets (controllers, PLCs, sensors, actuators, networks) and document complete network architecture showing data flow and system interconnections | When: Upon asset startup and updated whenever OT systems change | Where: Asset management system, network documentation, configuration management database | Why: To provide foundation for security risk assessment and to enable detection of unauthorized devices or configuration changes | How: Conduct comprehensive OT asset discovery and document all devices, their location, function, network connections, and firmware versions; create network architecture diagrams showing all OT systems and interconnections; establish change control process requiring inventory and documentation updates for any OT system additions or modifications; maintain version control; periodically validate inventory against physical systems | Evidence: Current OT asset inventory with device details and locations, network architecture diagrams showing system interconnections, change control records documenting inventory updates, periodic validation records",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct comprehensive OT asset discovery and identification",
+        "Document device specifications, locations, and firmware versions",
+        "Create network architecture diagrams",
+        "Establish change control process for OT systems",
+        "Periodically validate inventory against physical systems"
+      ],
+      "riskAddressed": "Unknown OT assets present; rogue devices undetected; network architecture unclear; vulnerability assessment incomplete; asset criticality unknown",
+      "testingApproach": "Review inventory documentation; verify against physical systems through spot-check; review network diagrams for completeness; confirm change control records for OT modifications"
+    },
+    {
+      "controlId": "SEC-003",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "2.1",
+      "subProcess": "Management of Change for OT Security",
+      "controlName": "Implement MOC Process for OT Systems to Assess Security Impacts",
+      "controlStatement": "Who: MOC Coordinator, OT Security Manager, Engineering Lead | What: Ensure all changes to OT systems (firmware updates, network changes, new equipment, configuration changes) are evaluated for security impact before implementation | When: For all OT system changes | Where: MOC documentation, security impact assessment records | Why: To prevent introduction of security vulnerabilities through changes; to maintain network segmentation and access controls | How: Establish MOC process requiring security impact assessment for all OT changes; define security review criteria (network isolation impacts, firmware source validation, testing requirements); require security team approval before change implementation; document change details and security assessment; verify change execution matches approved plan; track and verify restoration of security controls post-change | Evidence: MOC procedure document with OT security requirements, security impact assessment templates, approval records showing security review completion, change verification documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop MOC process including security impact assessment",
+        "Define security review criteria for OT changes",
+        "Require security team approval before implementation",
+        "Document and verify change execution",
+        "Verify security controls restored after change completion"
+      ],
+      "riskAddressed": "OT security controls bypassed through changes; network segmentation compromised; unauthorized firmware installed; security vulnerabilities introduced",
+      "testingApproach": "Review MOC procedure for security assessment requirements; verify security team approval on recent OT changes; confirm security impact documented; check that controls verified post-implementation"
+    },
+    {
+      "controlId": "SEC-004",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "3.1",
+      "subProcess": "Network Segmentation and Firewall Management",
+      "controlName": "Implement Network Segmentation Separating OT Systems from IT Networks",
+      "controlStatement": "Who: Network Engineer, IT Security Manager, OT Security Manager | What: Implement and maintain network segmentation isolating OT systems from general IT networks and the internet; implement firewall rules allowing only required communication flows | When: Upon asset startup and continuously maintained | Where: Network infrastructure, firewall configuration, network diagrams | Why: To limit impact of IT security incidents on OT operations; to prevent unauthorized remote access to OT systems; to control data flows between OT and IT networks | How: Implement air-gapped network architecture separating OT systems from IT; deploy firewalls at OT-IT boundary with default deny-all firewall rules; define and document required communication flows (industrial data, remote monitoring); configure firewall rules to allow only documented flows; implement intrusion detection for attempted OT-IT unauthorized access; monitor firewall logs for policy violations | Evidence: Network architecture diagram showing segmentation, firewall configuration documentation with rules, communication matrix defining allowed flows, firewall log monitoring records, intrusion detection alerts",
+      "controlType": "Engineering",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Design network segmentation architecture for OT isolation",
+        "Implement firewalls at OT-IT boundary",
+        "Define required OT-IT communication flows",
+        "Configure firewall rules for allowed communications only",
+        "Monitor firewall logs and intrusion detection for violations"
+      ],
+      "riskAddressed": "OT systems accessible from IT network; malware propagation from IT to OT; unauthorized remote access to OT; uncontrolled data flows between networks",
+      "testingApproach": "Review network architecture and segmentation design; verify firewall rules configured correctly; test firewall filtering with authorized and unauthorized traffic; review firewall logs for policy violations"
+    },
+    {
+      "controlId": "SEC-005",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "3.2",
+      "subProcess": "Access Control and Privilege Management",
+      "controlName": "Implement Access Controls and Limit User Privileges to Necessary Functions",
+      "controlStatement": "Who: IT Security Manager, OT Security Manager, System Administrator | What: Implement identity and access management controlling who can access OT systems; enforce principle of least privilege limiting user capabilities to minimum required for role | When: Upon user onboarding and whenever role changes | Where: Access control system, user account records, privilege assignment documentation | Why: To prevent unauthorized access to OT systems; to limit damage from compromised credentials; to maintain accountability for system changes | How: Implement user authentication requiring unique credentials and multi-factor authentication for remote access; establish role-based access control limiting capabilities by user role; enforce least privilege principle; eliminate shared or default accounts; implement privileged access management for administrative functions; log and monitor all access; conduct quarterly access reviews removing access no longer needed | Evidence: Access control system configuration, user account records with role and privilege assignments, authentication logs, access review documentation, privileged access management logs",
+      "controlType": "Engineering",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Establish user authentication requirements including MFA",
+        "Define role-based access control profiles",
+        "Apply least privilege principle to all roles",
+        "Eliminate shared and default credentials",
+        "Implement privileged access management for admin functions"
+      ],
+      "riskAddressed": "Unauthorized user access to OT systems; shared credentials compromise accountability; excessive privileges enable damage from compromised account; former employees retain access",
+      "testingApproach": "Review access control configuration; verify MFA enabled for remote access; sample user accounts and confirm privilege assignment matches role; confirm shared accounts eliminated; review access logs for unexpected activity"
+    },
+    {
+      "controlId": "SEC-006",
+      "processArea": "OT Security - Controls Implementation",
+      "processNumber": "4.1",
+      "subProcess": "Vulnerability Management and Patching",
+      "controlName": "Implement Vulnerability Assessment and Patch Management Program",
+      "controlStatement": "Who: OT Security Manager, IT Security Manager, System Administrator | What: Conduct regular vulnerability assessments of OT systems; develop patching strategy balancing security updates with operational stability; implement patch management with rigorous testing before production deployment | When: Vulnerability assessments quarterly; patches applied per criticality (critical within 30 days, high within 60 days) | Where: Vulnerability assessment reports, patch management records, test environment documentation | Why: To identify security vulnerabilities before exploitation; to maintain system security through timely patching; to balance security updates with operational stability | How: Conduct quarterly vulnerability assessments of OT systems (network scanning, application assessment); evaluate patches for applicability and security impact; test patches in isolated test environment matching production configuration; establish patch rollout plan with minimal operational impact; apply patches per schedule; verify patch successful and system functionality maintained; track all patching activities | Evidence: Quarterly vulnerability assessment reports, patch evaluation documentation, test environment validation records, patch deployment logs, system functionality verification post-patching",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct quarterly vulnerability assessments of OT systems",
+        "Evaluate security impact and applicability of patches",
+        "Test patches in isolated test environment first",
+        "Develop minimal-impact deployment plan",
+        "Verify patch effectiveness and system functionality post-deployment"
+      ],
+      "riskAddressed": "Known vulnerabilities remain unpatched; security exploits compromise OT systems; patch deployment causes operational disruption; patch testing inadequate",
+      "testingApproach": "Review vulnerability assessment reports for completeness; verify patches tested before production; check patch deployment logs against schedule; confirm system functionality validated after patching"
+    },
+    {
+      "controlId": "SEC-007",
+      "processArea": "OT Security - Event Monitoring",
+      "processNumber": "1.1",
+      "subProcess": "Event Logging and Monitoring",
+      "controlName": "Establish Event Logging and Monitoring for OT Security Incidents",
+      "controlStatement": "Who: IT Security Manager, OT Security Manager, SOC Analyst | What: Implement comprehensive event logging for OT systems capturing security-relevant events; establish 24/7 security monitoring detecting suspicious activity and potential incidents | When: Continuously throughout operations | Where: Security information and event management (SIEM) system, event logs, monitoring dashboards | Why: To detect and respond to security incidents in near real-time; to maintain forensic capability for incident investigations | How: Configure logging on all OT systems capturing authentication events, configuration changes, system errors, and security-related events; forward logs to central SIEM system; establish monitoring rules detecting suspicious patterns (multiple failed logins, unauthorized access attempts, unusual network traffic); implement alerting system notifying security team of suspected incidents; maintain logs for minimum 1 year; establish incident response team on-call for escalation | Evidence: SIEM system configuration with OT system logging, monitoring rule documentation, alert log showing incidents detected, incident response records, log retention verification",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Configure security event logging on all OT systems",
+        "Forward logs to centralized SIEM for analysis",
+        "Establish monitoring rules detecting security incidents",
+        "Implement real-time alerting for suspicious activity",
+        "Maintain incident response team for escalation"
+      ],
+      "riskAddressed": "Security incidents not detected; breach dwell time extended; forensic capability lost; response delayed allowing incident escalation",
+      "testingApproach": "Verify logging configured on OT systems; confirm logs forwarding to SIEM; test alert rules with simulated incidents; check incident response team established and on-call"
+    },
+    {
+      "controlId": "SEC-008",
+      "processArea": "OT Security - Portable Media",
+      "processNumber": "1.1",
+      "subProcess": "Portable Media and Device Controls",
+      "controlName": "Control Use of Portable Media and External Devices on OT Networks",
+      "controlStatement": "Who: OT Security Manager, IT Security Manager, Operations Supervisor | What: Implement policy restricting use of USB drives, external hard drives, and other portable media on OT systems; implement technical controls preventing unauthorized device connections; allow only approved devices with encryption and access controls | When: Continuously throughout operations | Where: Device control policy, technical controls (USB blocking, device scanning), approved device registry | Why: To prevent introduction of malware through portable media; to prevent unauthorized data exfiltration from OT systems; to maintain network security | How: Establish policy prohibiting personal portable media on OT systems; implement approved device program allowing only business-required portable media with encryption; configure OT systems to block unauthorized USB device connections; scan approved media before use; maintain inventory of approved devices; periodically audit device usage; enforce policy through discipline and technical controls | Evidence: Device control policy, approved device registry with encryption verification, USB port blocking configuration, device scanning logs, policy violation records",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Establish policy restricting portable media on OT systems",
+        "Develop approved device program with encryption requirements",
+        "Implement technical controls blocking unauthorized devices",
+        "Scan all approved media before OT system use",
+        "Conduct periodic audits of device usage"
+      ],
+      "riskAddressed": "Malware introduced through infected portable media; unauthorized data exfiltration via USB devices; policy violations undetected; infection propagates across OT network",
+      "testingApproach": "Review device control policy; verify USB ports blocked on OT systems; test blocked port enforcement; scan approved device inventory; review scanning logs"
+    },
+    {
+      "controlId": "SEC-009",
+      "processArea": "OT Security - Risk Management",
+      "processNumber": "1.1",
+      "subProcess": "OT Security Risk Assessment",
+      "controlName": "Conduct OT Security Risk Assessment Identifying Threats and Vulnerabilities",
+      "controlStatement": "Who: OT Security Manager, Risk Assessment Team, Technical Authority | What: Conduct comprehensive risk assessment of OT environment identifying threat actors, potential attack vectors, vulnerabilities in current controls, and consequences of successful attacks | When: Upon asset startup and reviewed biennially or when major OT changes occur | Where: Risk assessment report, risk register, vulnerability assessments | Why: To understand OT security risk landscape; to prioritize control implementation and improvements; to inform risk mitigation strategy | How: Assemble risk assessment team with OT engineering and IT security expertise; identify threat actors and motivations relevant to facility; assess current attack vectors and vulnerabilities; evaluate effectiveness of existing controls; assess consequences of successful attacks; rate risks using risk matrix; prioritize risks by magnitude; develop risk mitigation plans for high risks | Evidence: Documented risk assessment report with threat and vulnerability analysis, risk ratings and prioritization, risk mitigation plans, technical authority review and approval",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify potential threat actors and motivations",
+        "Assess attack vectors and technical vulnerabilities",
+        "Evaluate effectiveness of current security controls",
+        "Assess consequences of successful attacks",
+        "Rate and prioritize risks for mitigation"
+      ],
+      "riskAddressed": "OT security risks not understood; risk mitigation efforts misdirected; high-consequence risks not addressed; resource allocation inefficient",
+      "testingApproach": "Review risk assessment for completeness of threat identification; verify vulnerabilities assessed against control baseline; confirm risk ratings justified; check that high risks have mitigation plans"
+    },
+    {
+      "controlId": "SEC-010",
+      "processArea": "OT Security - Obsolete Systems",
+      "processNumber": "1.1",
+      "subProcess": "Management of Obsolete and Unsupported OT Systems",
+      "controlName": "Manage OT Security for Obsolete Systems Unable to Receive Security Updates",
+      "controlStatement": "Who: OT Security Manager, OT Engineer, Asset Manager | What: For OT systems that are obsolete and cannot receive security updates (operating systems no longer supported), implement compensating security controls limiting exposure and preventing exploitation | When: Continuously for obsolete systems; strategy updated when new systems identified | Where: Obsolete systems inventory, compensating controls documentation, network segmentation implementation | Why: To reduce attack surface and exploitation risk from unpatched systems; to maintain security posture when replacement cannot occur immediately | How: Identify obsolete and unsupported OT systems and document in inventory; for each obsolete system, implement compensating controls (enhanced network segmentation isolating system, strict access controls allowing only necessary personnel, continuous monitoring detecting unauthorized access, regular backups enabling recovery); develop long-term replacement plan with timeline; track controls to ensure proper implementation; assess residual risk | Evidence: Obsolete systems inventory with documentation of support status, compensating controls implementation for each obsolete system, network architecture showing isolation, access control restrictions, monitoring logs",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify obsolete and unsupported OT systems",
+        "Document systems unable to receive security updates",
+        "Implement network isolation for obsolete systems",
+        "Restrict access to obsolete systems to authorized personnel only",
+        "Establish long-term replacement plan with timeline"
+      ],
+      "riskAddressed": "Obsolete systems with unpatched vulnerabilities compromised; exploitation enables lateral movement to other systems; compensating controls inadequate; replacement delayed indefinitely",
+      "testingApproach": "Verify obsolete systems inventory current; confirm isolating network segmentation implemented; check access restrictions in place; verify long-term replacement plan with timeline"
+    },
+    {
+      "controlId": "SEC-011",
+      "processArea": "OT Security and Human Rights",
+      "processNumber": "1.1",
+      "subProcess": "OT Security and Armed Personnel Compliance",
+      "controlName": "Ensure Armed Personnel Supporting OT Security Comply with Human Rights Standards",
+      "controlStatement": "Who: Security Manager, HSSE Lead, Armed Personnel Supervisor | What: For operations using armed personnel to support physical security protecting OT systems, ensure personnel are trained in human rights principles, rules of engagement are consistent with international human rights standards, and oversight mechanisms ensure compliance | When: Prior to armed personnel deployment and continuously during employment | Where: Training records, rules of engagement documentation, oversight records | Why: To ensure security operations maintain human dignity and comply with international human rights standards; to maintain societal trust and organizational reputation | How: Develop rules of engagement aligned with international humanitarian law and human rights standards; provide initial and annual human rights training to armed personnel covering non-discrimination, proportional response, and complaint handling; establish monitoring and oversight mechanisms reviewing compliance; investigate reported violations; maintain records of training and oversight activities | Evidence: Rules of engagement documentation aligned with human rights standards, training completion records, oversight and compliance records, investigation documentation for any reported violations",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop rules of engagement aligned with human rights standards",
+        "Provide initial and annual human rights training to armed personnel",
+        "Establish monitoring and oversight mechanisms",
+        "Investigate reported human rights violations",
+        "Maintain training and compliance records"
+      ],
+      "riskAddressed": "Armed personnel conduct violates human rights standards; community opposition to operations; organizational reputation damage; legal liability",
+      "testingApproach": "Review rules of engagement for human rights alignment; verify training completion records; observe training content; check that oversight records exist and violations investigated"
+    },
+    {
+      "controlId": "PSA-001",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1",
+      "subProcess": "HAZOP Schedule and Planning",
+      "controlName": "Establish HAZOP Schedule and Obtain Leadership Commitment",
+      "controlStatement": "Who: HEMP Process Owner, Asset Manager | What: Establish schedule for 5-year HAZOP studies and obtain leadership approval to allocate resources | When: At asset lifecycle start and annually for review | Where: HEMP Plan, Asset Management System | Why: To ensure compliance with 5-year revalidation requirement and prevent gaps in process safety management | How: Document schedule in HEMP Plan, identify units with RAM Red/Yellow 5A/5B risks, obtain leadership handshake on resource allocation | Evidence: Signed HEMP Plan with schedule, resource allocation statement, documented leadership approval",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all assets/units with RAM Red or Yellow process safety risks",
+        "Schedule HAZOP studies to meet 5-year revalidation requirement",
+        "Obtain leadership approval and resource commitment",
+        "Allocate budget and personnel for HAZOP execution",
+        "Document timeline with key dates for planning and completion"
+      ],
+      "riskAddressed": "Non-compliance with 5-year HAZOP requirement; loss of clarity on current process safety risks; hazards not identified timely",
+      "testingApproach": "Verify HEMP Plan exists and current; confirm leadership approval signature; validate all due units identified with scheduled dates"
+    },
+    {
+      "controlId": "PSA-002",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1.1",
+      "subProcess": "Gather Technical Information",
+      "controlName": "Collect and Review Process Safety Information Before HAZOP",
+      "controlStatement": "Who: HAZOP Facilitator, HEMP Coordinator | What: Gather and review technical documentation, MOC records, maintenance status, and operational history | When: 9-12 months before HAZOP workshop | Where: Asset documentation system, GSAP/CGSAP records, MOC database | Why: To ensure HAZOP based on current accurate information and identifies recent changes introducing new hazards | How: Conduct systematic review of PSI, MOC documents since last HAZOP, maintenance status, SIF PFD data, previous assurance findings | Evidence: Checklist of gathered documents, MOC summary log, maintenance status report, document review meeting notes",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Collect all technical design documents and P&ID updates",
+        "Review MOC documents opened/closed since last HAZOP study",
+        "Compile DOW/IOW exceedance records for the unit",
+        "Gather preventive and corrective maintenance status",
+        "Extract SIF PFD and demand rate data from testing results"
+      ],
+      "riskAddressed": "HAZOP based on outdated information; failure to identify hazards from changes; gaps in barrier reliability understanding",
+      "testingApproach": "Verify document checklist complete; confirm all MOCs since last HAZOP reviewed; validate maintenance status current; review PFD records recent and valid"
+    },
+    {
+      "controlId": "PSA-003",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1.3",
+      "subProcess": "HAZOP Approach Selection",
+      "controlName": "Approve HAZOP Approach Based on Risk Assessment Criteria",
+      "controlStatement": "Who: Technical Safety TA2 or HEMP SME | What: Evaluate and approve HAZOP approach (New, Update, or Sample Review) based on documented criteria | When: Early in planning cycle, minimum 12 months before HAZOP execution | Where: HEMP Plan, HAZOP approach decision document | Why: To ensure appropriate HAZOP scrutiny matches risk profile and change history | How: Apply evaluation criteria (robustness of previous HAZOP, MOC process effectiveness, barrier validity status); document decision rationale; obtain multi-disciplinary team approval | Evidence: HAZOP Approach Decision Document with evaluation scoring, TA2/SME approval, documented justification",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Assess robustness of previous 5-year HAZOP quality",
+        "Evaluate MOC process effectiveness and documentation quality",
+        "Review HSSE Critical Equipment and Barrier validity status",
+        "Assess regulatory or standard changes since last HAZOP",
+        "Compare findings to criteria matrix and select approach"
+      ],
+      "riskAddressed": "Inappropriate HAZOP scope selection; wasted resources on unnecessary full updates; missed hazards from insufficient review depth",
+      "testingApproach": "Verify evaluation criteria checklist completed; confirm TA2 signature on approach decision; validate approach aligns with documented risk factors"
+    },
+    {
+      "controlId": "PSA-004",
+      "processArea": "AIPSM Management of HSSE Critical Equipment and Barriers",
+      "processNumber": "3.1",
+      "subProcess": "Identification of HSSE Critical Equipment",
+      "controlName": "Identify HSSE Critical Equipment and Human Barriers from Hazard Analysis",
+      "controlStatement": "Who: Asset Manager, HEMP Focal Point, Hazard Analysis Facilitator | What: Review hazard analysis to identify equipment and human barriers critical to managing RED/YELLOW 5A/5B risks; compile preliminary list | When: Following completion or update of Hazard Analysis | Where: Hazard Analysis documentation, HSSE Critical Equipment and Barriers list | Why: To identify barriers requiring special management focus due to role in preventing major accidents | How: Systematically review identified scenarios; identify valid barriers; determine if equipment (HSSE CE) or human action (HSSE Critical HB); document justification; assess barrier practicality | Evidence: Compiled preliminary list of HSSE CE and HB with process safety justification, barriers documented with scenario linkage",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review Hazard Analysis results for all RED/YELLOW 5A/5B scenarios",
+        "Identify all valid barriers for each scenario",
+        "Classify barriers as HSSE Critical Equipment or Human Barriers",
+        "Document justification for HSSE Critical classification",
+        "Assess barrier practicality and validity"
+      ],
+      "riskAddressed": "Critical barriers not identified; barriers misclassified; unreliable barriers designated HSSE Critical; wrong controls focused",
+      "testingApproach": "Review preliminary list for completeness against scenarios; verify each barrier linked to at least one RED/YELLOW scenario; confirm classification appropriate"
+    },
+    {
+      "controlId": "PSA-005",
+      "processArea": "AIPSM Management of HSSE Critical Equipment and Barriers",
+      "processNumber": "3.2",
+      "subProcess": "Assurance of Barriers List",
+      "controlName": "Conduct Technical Authority Assurance of HSSE Critical Equipment and Barriers",
+      "controlStatement": "Who: Technical Safety TA2 or equivalent authority | What: Independently review and provide assurance on completeness and correctness of HSSE Critical Equipment and Barriers list | When: After completion of Step 1, before management handshake | Where: Technical assurance checklist, HSSE Critical Equipment and Barriers documentation | Why: To ensure list is technically robust, complete, and consistent with hazard analysis before management approval | How: Use assurance checklist to verify each item; assess completeness against scenarios; validate definitions and justifications; check consistency with standards; provide approval | Evidence: Completed assurance checklist, technical authority approval signature, documented findings and recommendations",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review list for completeness using assurance checklist",
+        "Verify each HSSE CE and HB meets definition criteria",
+        "Check consistency with Hazard Analysis results",
+        "Validate technical accuracy of identifications",
+        "Provide approval or recommend modifications"
+      ],
+      "riskAddressed": "Incomplete/inaccurate lists proceed to management; flawed identifications not caught; loss of assurance credibility",
+      "testingApproach": "Verify TA2 conducted review; review assurance checklist completeness; confirm approval signature present; validate recommended modifications addressed"
+    },
+    {
+      "controlId": "PSA-006",
+      "processArea": "AIPSM Reviews and Performance Indicators",
+      "processNumber": "3.2",
+      "subProcess": "Data Gathering for AIPSM Review",
+      "controlName": "Gather AIPSM Performance Data and Leading Indicators for Management Review",
+      "controlStatement": "Who: Production Unit Manager, Process Engineer, Data Analyst | What: Systematically collect and compile AIPSM performance data including design, technical, operational, and leadership integrity metrics | When: Quarterly at minimum for unit level; annually for asset/business levels | Where: AIPSM data dashboard, reporting system, performance records | Why: To provide leadership with current visibility of barrier health and identify trends requiring attention | How: Collect data from multiple sources (maintenance system, incident reports, KPI dashboards, assurance findings); compile into visual format (heat maps, metrics); trend data over time; identify outliers; prepare summary for management review | Evidence: Completed AIPSM performance data reports, data trending analysis, visual dashboards showing current status and historical trends",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Collect leading and lagging indicator data from authoritative sources",
+        "Compile barrier health metrics from maintenance and operational data",
+        "Trend indicators over time to identify patterns",
+        "Create visual representations (heat maps, charts) of performance",
+        "Identify metrics outside target range for discussion"
+      ],
+      "riskAddressed": "Leadership lacks visibility of barrier health; performance trends not detected; management decisions made without complete information",
+      "testingApproach": "Verify data collected from authoritative sources; confirm all required indicators included; review compilation for accuracy; validate trends correctly calculated"
+    },
+    {
+      "controlId": "PSA-007",
+      "processArea": "AIPSM Reviews and Performance Indicators",
+      "processNumber": "3.2",
+      "subProcess": "Conduct AIPSM Effectiveness Review",
+      "controlName": "Conduct Asset-Level Annual AIPSM Effectiveness Review",
+      "controlStatement": "Who: Asset Leadership Team, technical/operations/process safety TA2, HSSE Lead | What: Conduct comprehensive annual review of asset integrity to verify process safety risks managed to ALARP and identify improvement actions | When: Annually as part of asset management cycle | Where: Management review meeting, documented review report | Why: To systematically assess AIPSM program effectiveness and identify systemic improvements needed | How: Review process safety leading/lagging indicators and trends; assess barrier health status; review risk action management; examine incident investigations; assess technical integrity of key equipment; review competency status; identify improvement themes and priorities; document findings and actions | Evidence: Documented AIPSM review report with findings and action items, management team attendance records, tracked closure of action items",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review all process safety leading and lagging indicators",
+        "Assess barrier health across design, technical, operational, and leadership aspects",
+        "Review risk-related action management from various sources",
+        "Examine top process safety scenarios and control status",
+        "Identify improvement actions and assign accountability",
+        "Track action closure through management system"
+      ],
+      "riskAddressed": "AIPSM program effectiveness not assessed; systemic weaknesses not identified; improvement opportunities missed; management unaware of changing risk profile",
+      "testingApproach": "Verify review conducted with appropriate team; review documented findings; confirm action items assigned with clear accountability; check tracking system for action closure"
+    },
+    {
+      "controlId": "PSA-008",
+      "processArea": "Statement of Fitness",
+      "processNumber": "3.1",
+      "subProcess": "Identification of Fitness Review Events",
+      "controlName": "Identify Events Requiring Statement of Fitness Review",
+      "controlStatement": "Who: Production Unit Manager, Operations Supervisor, HSSE Lead | What: Identify when significant abnormal events occur requiring SoF review (uncontrolled shutdowns, turnarounds, equipment constraint exceedances, environmental incidents) | When: Immediately when abnormal event occurs or is anticipated | Where: Event log, management communications | Why: To ensure structured technical review conducted before facility restart; to verify controls remain effective after disruption | How: Establish clear SoF trigger criteria in local procedure; train personnel on recognition; document event identification and SoF decision | Evidence: Event notification, documented identification of SoF trigger event, decision record",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define SoF trigger criteria in local procedure",
+        "Train personnel on event recognition and reporting",
+        "Establish communication process for event notification",
+        "Document event identification and SoF decision",
+        "Notify technical team and management"
+      ],
+      "riskAddressed": "Abnormal events not recognized as SoF triggers; facility restarted without assessment; previously valid controls compromised undetected",
+      "testingApproach": "Verify local SoF procedure exists with clear trigger criteria; confirm training records show personnel trained; review event logs for proper identification and documentation"
+    },
+    {
+      "controlId": "PSA-009",
+      "processArea": "Statement of Fitness",
+      "processNumber": "3.3",
+      "subProcess": "Conduct Structured SoF Review",
+      "controlName": "Conduct Structured Statement of Fitness Review and Document Findings",
+      "controlStatement": "Who: Multi-disciplined team (Operations, Process Engineering, TA2, HSSE), led by SoF Review Leader | What: Conduct comprehensive technical review of facility following abnormal event; assess whether controls remain adequate to manage risks to ALARP; identify needed repairs or interim measures | When: Prior to facility restart | Where: SoF review meeting, SoF form, supporting documentation | Why: To provide documented assurance process safety risks adequately managed before resuming operations | How: Investigate event root cause; identify equipment damage or parameter exceedances; assess impact on barriers and controls; conduct risk assessment; define needed repairs/modifications; verify procedures and training; complete SoF form with multi-disciplinary signatures | Evidence: Completed SoF form with all reviews documented, incident investigation report, risk assessment documentation, repair/modification work orders, training and procedure updates",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct root cause investigation of abnormal event",
+        "Assess equipment and system damage or degradation",
+        "Review impact on process safety barriers and controls",
+        "Conduct risk assessment for identified impacts",
+        "Define required repairs, modifications, or interim measures",
+        "Verify procedures and training updated for restart",
+        "Obtain multi-disciplinary team approval"
+      ],
+      "riskAddressed": "Facility restarted with inadequate controls after upset; hidden damage not identified; barriers compromised; new risks introduced during recovery",
+      "testingApproach": "Review SoF form for completeness of all required sections; verify incident investigation documented; confirm risk assessment completed; check repairs/modifications verified or tracked"
+    },
+    {
+      "controlId": "PSA-010",
+      "processArea": "ALARP Demonstration",
+      "processNumber": "3.1",
+      "subProcess": "Risk Identification and Rating",
+      "controlName": "Identify and Rate Hazards Using Risk Assessment Matrix",
+      "controlStatement": "Who: Hazard identification team, Process Safety SME | What: Identify all hazards and rate residual risk using Shell HSSE & SP Risk Assessment Matrix; document in Hazards and Effects Register | When: During initial hazard identification and updated through MOC and learning processes | Where: Hazards and Effects Register (HER), RAM documentation | Why: To establish baseline understanding of risk magnitude; to determine level of ALARP documentation effort required | How: Systematically identify hazards; assess severity and probability of consequences; apply RAM to obtain rating; document rating rationale; update HER with current ratings | Evidence: Complete HER with all hazards and risk ratings documented, RAM application documentation showing assessment methodology",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct systematic hazard identification",
+        "Assess severity of potential consequences",
+        "Assess probability of occurrence",
+        "Apply RAM to determine risk rating",
+        "Document rating rationale in HER",
+        "Update HER with current assessments"
+      ],
+      "riskAddressed": "Hazards not identified; risk ratings incorrect; inappropriate control effort allocated; ALARP documentation insufficient for risk magnitude",
+      "testingApproach": "Review HER for completeness of hazard identification; verify RAM ratings correctly assigned; confirm rating rationale documented; check HER updated with current information"
+    },
+    {
+      "controlId": "PSA-011",
+      "processArea": "ALARP Demonstration",
+      "processNumber": "3.4",
+      "subProcess": "Demonstration of ALARP",
+      "controlName": "Document ALARP Demonstration for RED and YELLOW 5A/5B Scenarios",
+      "controlStatement": "Who: Technical Safety TA2, Engineering Discipline Leads, Risk Assessment Team | What: Prepare comprehensive documented justification that RED and YELLOW 5A/5B risks managed to ALARP; explain standards applied, alternatives considered, and barriers implemented | When: Following hazard analysis; reviewed periodically or when significant changes occur | Where: ALARP Demonstration document, project HSSE Case or asset safety documentation | Why: To provide regulatory and business justification that all reasonable measures taken to reduce risk; to satisfy legal obligations for major accident hazard management | How: Identify applicable standards and good practices; document how scenario addresses standards; describe alternatives considered and reason for rejection; explain barriers selected and reliability basis; document cost-benefit analysis where applicable; obtain technical approval | Evidence: Comprehensive ALARP Demonstration document covering each RED/YELLOW scenario, cited standards and practices, cost-benefit analysis, technical approval signatures",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify applicable standards and good practices for each scenario",
+        "Document how scenario controls address standards",
+        "List and evaluate alternatives considered",
+        "Explain barrier selection rationale",
+        "Perform cost-benefit analysis for major controls",
+        "Obtain technical authority approval"
+      ],
+      "riskAddressed": "ALARP cannot be justified; regulatory non-compliance; gaps in risk reduction logic; inadequate cost-benefit analysis; controls not substantiated",
+      "testingApproach": "Review ALARP documentation for each RED/YELLOW scenario; verify standards cited are applicable; confirm alternatives discussion includes rejection rationale; validate cost-benefit analysis performed"
+    },
+    {
+      "controlId": "PSA-012",
+      "processArea": "Management of Change",
+      "processNumber": "3.1",
+      "subProcess": "MOC Process Establishment",
+      "controlName": "Establish Management of Change Process for Design and Operational Changes",
+      "controlStatement": "Who: Asset Manager, HSSE Lead, Technical Authority | What: Establish formal MOC process requiring assessment of safety and environmental impacts before any design changes, operational changes, or facility modifications are implemented | When: Integrated into asset management system from startup and continuously maintained | Where: MOC procedure documentation, MOC evaluation form, change request system | Why: To ensure changes do not introduce new hazards, degrade barriers, or create non-compliance; to maintain control and documentation of changes | How: Develop MOC procedure defining change categories (design, operational, temporary modifications); require technical safety assessment for all changes; document change details, reasons, impacts, and safeguards; obtain necessary approvals; execute change per approved plan; verify post-change system operates as designed | Evidence: Documented MOC procedure with approval authority levels, completed MOC evaluation forms, change implementation records, post-change verification documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop comprehensive MOC procedure with defined change categories",
+        "Require technical safety assessment for all changes",
+        "Document change details, reasons, and proposed safeguards",
+        "Obtain appropriate approvals based on change significance",
+        "Execute change per approved plan with monitoring",
+        "Verify post-change system operation matches approved design"
+      ],
+      "riskAddressed": "Changes implemented without safety assessment; new hazards introduced; barriers degraded; system operates differently than intended; non-compliance from unauthorized changes",
+      "testingApproach": "Verify MOC procedure in place and implemented; review recent MOC evaluation forms for completeness; confirm approvals obtained for significant changes; check post-change verification completed"
+    },
+    {
+      "controlId": "ASSU-AAP-001",
+      "processArea": "Assurance Programs",
+      "processNumber": "7.0",
+      "subProcess": "Annual Assurance Planning",
+      "controlName": "Risk-Based Annual Assurance Plan Development",
+      "controlStatement": "Who: Asset/Business leadership team | What: Develop and approve risk-based Annual Assurance Plan using ORCA methodology | When: Annually before execution | Where: Business Assurance Committee meetings | Why: Ensure comprehensive assurance coverage aligned with business risks | How: Use ORCA framework to identify objectives, risks, controls, and assurance activities | Evidence: Approved AAP documented in Radar with signed-off scope and frequency",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Annual assurance planning cycle initiation",
+        "Risk landscape assessment and integration",
+        "1st and 2nd line activity identification",
+        "3rd line activity coordination",
+        "Business Assurance Committee review",
+        "Final AAP approval and communication",
+        "Plan monitoring and adjustment"
+      ],
+      "riskAddressed": "Risk that assurance activities are not appropriately prioritized or aligned with changing business risks, resulting in inadequate identification of control weaknesses",
+      "testingApproach": "Review of AAP documentation, interview with leadership, assessment of alignment with risk visual, verification of coverage against key risk areas"
+    },
+    {
+      "controlId": "ASSU-LEA-002",
+      "processArea": "Assurance Programs",
+      "processNumber": "7.0",
+      "subProcess": "Lead Auditor Competency",
+      "controlName": "Lead Auditor Competency Verification and Registration",
+      "controlStatement": "Who: SEAM Standards Risk & Assurance team with support of GPO and content SMEs | What: Identify, assess, and register competent Lead Auditors and auditors for 2nd line SEAM Standards assurance activities | When: Before assurance activity execution and annually for competency maintenance | Where: SEAM Auditor and Lead Auditor Register | Why: Ensure assurance activities are conducted by personnel with demonstrated competency in relevant risk areas | How: Review training records, experience, and competency assessments against defined criteria; maintain centralized register | Evidence: Auditor registration in centralized register with competency endorsement from relevant SMEs",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Competency assessment initiation",
+        "Training verification review",
+        "Experience level documentation",
+        "Subject matter expert evaluation",
+        "Register entry and maintenance",
+        "Annual competency recertification",
+        "Auditor pool reporting"
+      ],
+      "riskAddressed": "Risk that 2nd line assurance activities are conducted by personnel lacking required competency, leading to inadequate audit coverage or ineffective findings",
+      "testingApproach": "Verification of register entries, interview with auditors, assessment of training records, review of audit quality reports"
+    },
+    {
+      "controlId": "SOF-REV-001",
+      "processArea": "Statement of Fitness",
+      "processNumber": "8.0",
+      "subProcess": "SoF Review and Restart Authorization",
+      "controlName": "Statement of Fitness Technical Review and Restart Authorization",
+      "controlStatement": "Who: Production Manager/Facility Manager or designated competent authority with multidisciplined technical team | What: Conduct structured technical review of Statement of Fitness following abnormal events and authorize facility restart | When: Prior to facility restart following uncontrolled shutdown, turnaround completion, design limit exceedance, or environmental incident | Where: Asset location documented in SoF form | Why: Ensure all process safety risks from abnormal events have been identified and managed to ALARP before facility restart | How: Multidisciplined team completes formal SoF review addressing incident root cause, risk assessments, repairs/modifications, HSSE critical equipment verification, procedure updates, and training completion | Evidence: Signed-off SoF form with supporting documentation (incident report, risk assessment, MOC records, training records) retained per retention schedule",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Abnormal event detection and assessment",
+        "Multidisciplined review team assembly",
+        "Incident investigation completion",
+        "Risk assessment review and updates",
+        "Repair and modification verification",
+        "HSSE critical equipment integrity confirmation",
+        "Procedure and training updates verification",
+        "PSSR execution if needed",
+        "SoF form completion and sign-off",
+        "Supporting documentation assembly"
+      ],
+      "riskAddressed": "Risk that facility restart occurs without adequate assessment of process safety implications from abnormal events, potentially operating with unidentified or unmitigated process safety hazards",
+      "testingApproach": "Review of SoF forms and supporting documentation, interview with operations leadership, observation of SoF review process, verification of training records"
+    },
+    {
+      "controlId": "HSSE-CE-001",
+      "processArea": "HSSE Critical Equipment Management",
+      "processNumber": "9.0",
+      "subProcess": "HSSE CE Identification and Validation",
+      "controlName": "HSSE Critical Equipment Identification and Lifecycle Management",
+      "controlStatement": "Who: Asset Manager and HEMP Process Owner with support of Technical Safety Engineering | What: Identify, assure, designate, and manage HSSE Critical Equipment throughout asset lifecycle | When: During hazard analysis updates, MOC process, and 5-year process safety reviews | Where: Asset maintenance system (SAP/IMS) and HSSE CE list in Hazards and Effects Register | Why: Ensure all hardware elements of critical safety barriers are clearly identified and managed with appropriate care strategies to maintain barrier effectiveness | How: Apply HSSE CE definition criteria (part of valid barrier, primary safety function, effectiveness/independence/auditability); conduct TSE TA2 assurance; assign Discipline Barrier Owners; designate in maintenance system with performance criteria | Evidence: Technically assured HSSE CE list in HER and maintenance system with assigned DBO, performance criteria, and linked maintenance/inspection tasks",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "HSSE CE definition and identification",
+        "Barrier validity assessment (effectiveness, independence, auditability)",
+        "Technical Safety Engineering assurance review",
+        "Discipline Barrier Owner assignment",
+        "Maintenance system designation",
+        "Performance criteria definition",
+        "Maintenance and inspection task linking",
+        "MOC impact assessment",
+        "Periodic effectiveness review"
+      ],
+      "riskAddressed": "Risk that safety-critical equipment is not properly identified, maintained, or monitored, leading to undetected degradation or failure of critical barriers",
+      "testingApproach": "Review of HSSE CE list vs. hazard analysis, verification of maintenance system designations, interview with DBOs, inspection of maintenance records for HSSE CE"
+    },
+    {
+      "controlId": "AIPSM-REV-001",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "10.0",
+      "subProcess": "AIPSM Effectiveness Review",
+      "controlName": "Annual AIPSM Effectiveness Review and Management in Control Demonstration",
+      "controlStatement": "Who: Asset/Business leadership team with participation of relevant Technical Authorities, SMEs, and process owners | What: Conduct annual effectiveness review of Asset Integrity Process Safety Management system evaluating design, technical, operating, and leadership integrity petals | When: Annually as part of management review cycle | Where: Asset leadership meetings; documented in annual management review report | Why: Provide leadership assurance that process safety risks are managed to ALARP and asset integrity equipment is fit for continued service | How: Review leading indicators (HSSE CE compliance, barrier health, maintenance execution); review lagging indicators; assess control effectiveness across risk categories; evaluate competency assurance; document action items | Evidence: Documented annual AIPSM review report with leadership sign-off, action items tracked to closure, and performance indicator trends",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Leading indicator data collection and review",
+        "Lagging indicator analysis",
+        "Barrier health assessment",
+        "Technical integrity verification",
+        "Operating integrity confirmation",
+        "Leadership engagement review",
+        "Competency assurance status",
+        "Incident investigation closure tracking",
+        "Action item effectiveness review",
+        "Risk management system assessment"
+      ],
+      "riskAddressed": "Risk that process safety control deficiencies are not identified and addressed in a timely manner, leading to accumulation of unmitigated risks",
+      "testingApproach": "Review of annual AIPSM review documentation, interview with leadership, data verification of indicators, assessment of action item closure"
+    },
+    {
+      "controlId": "AIPSM-2L-001",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "11.0",
+      "subProcess": "2nd Line AIPSM Assurance Planning",
+      "controlName": "Risk-Based AIPSM 2nd Line Assurance Plan Development",
+      "controlStatement": "Who: Business Assurance Committee with support of asset leadership and safety/assurance leads | What: Develop and approve risk-based AIPSM 2nd line assurance plan covering Major Process Safety risks and Work Process Controls effectiveness | When: Annually using frequency and scoping tool to determine appropriate 3-4 year assurance cycle | Where: Business Assurance Committee; documented in AIPSM 2nd Line Assurance Plan | Why: Provide independent assessment of process safety management system effectiveness and work process control health aligned with asset risk profile | How: Use AIPSM Frequency and Scoping Tool to analyze top risks, incidents, assurance gaps, performance trends, and competency needs; select MPS and WPC assessment types; define scope and frequency | Evidence: Approved AIPSM 2nd Line Assurance Plan with defined frequency cycle, assessment scope, selected WPCs, and MPS risks",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Frequency and scoping tool completion",
+        "Top process safety risk identification",
+        "Incident and assurance data analysis",
+        "Work Process Control effectiveness assessment",
+        "MPS and WPC assessment selection",
+        "Auditor resource assessment",
+        "Budget and schedule planning",
+        "Business Assurance Committee review",
+        "Plan approval and communication",
+        "Annual cycle adjustment review"
+      ],
+      "riskAddressed": "Risk that AIPSM assurance activities do not adequately cover highest-risk work processes or that assurance frequency is misaligned with asset risk profile and incident history",
+      "testingApproach": "Review of AIPSM 2nd Line Assurance Plan, verification of coverage against risk profile, interview with assurance committee, assessment of prior assurance effectiveness"
+    },
+    {
+      "controlId": "LEARN-CL-001",
+      "processArea": "Learning and Improvement",
+      "processNumber": "12.0",
+      "subProcess": "Causal Learning Investigations",
+      "controlName": "Causal Learning Process Implementation for Performance Improvement",
+      "controlStatement": "Who: Causal Learning Facilitators/team members with organizational leadership sponsorship and subject matter expert support | What: Conduct structured causal learning investigations to understand root causes of significant incidents and performance problems; develop and implement tested corrective actions | When: For significant incidents with high learning value and complex performance problems requiring system-level understanding | Where: Investigation team sessions, learning workshops, documented in causal learning report | Why: Develop truly corrective and sustainable solutions by understanding actual system causes rather than addressing symptoms; build organizational learning capability | How: Execute discovery phase (problem statement, system overview, timeline, cause-effect analysis); conduct learning phase (OIC tool, insight sharing); develop action phase (solution testing, SPF improvement cycle) | Evidence: Documented causal learning investigation with problem statement, timeline, cause-effect diagram, learning session notes, and implemented corrective actions with effectiveness verification",
+      "controlType": "Analytical",
+      "isHSSECritical": false,
+      "keyActivities": [
+        "Investigation initiation and team assembly",
+        "Problem statement development",
+        "System overview documentation",
+        "Timeline construction and analysis",
+        "Cause-effect diagramming",
+        "Human behavior analysis using model",
+        "Learning session facilitation",
+        "OIC tool application with participants",
+        "Solution development and testing",
+        "Action implementation planning",
+        "Corrective action effectiveness review"
+      ],
+      "riskAddressed": "Risk that corrective actions address symptoms rather than root causes, leading to repeat incidents and persistent performance problems",
+      "testingApproach": "Review of investigation documentation, interview with causal learning team, assessment of implemented action effectiveness, incident recurrence tracking"
+    },
+    {
+      "controlId": "ALARP-DEM-001",
+      "processArea": "Risk Management",
+      "processNumber": "19.0",
+      "subProcess": "ALARP Demonstration",
+      "controlName": "Management of HSSE Risks to ALARP Decision-Making",
+      "controlStatement": "Who: Asset/Project leadership with support of Technical Authorities, subject matter experts, and risk assessment team | What: Demonstrate that identified HSSE risks are managed to As Low As Reasonably Practicable through identification and evaluation of risk reduction options | When: During hazard identification, project concept selection, and management of change decisions | Where: Documented in Hazards and Effects Register, ALARP worksheet, or formal ALARP Demonstration Report | Why: Ensure residual risks are acceptably low and that additional risk reduction efforts are not grossly disproportionate to benefits achieved | How: Apply hierarchy of control; identify all reasonably practicable risk reduction options; assess cost-benefit for each option; document selection/rejection rationale; use UKOOA framework for complex decisions | Evidence: Documented ALARP demonstration showing options evaluated, evaluation basis (standards, good practice, cost-benefit analysis), justification for choices, and residual risk acceptability",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Risk identification and rating",
+        "Hierarchy of control application",
+        "Risk reduction options identification",
+        "Practicability assessment for each option",
+        "Cost-benefit analysis",
+        "Decision context determination (Type A/B/C)",
+        "Evaluation basis selection",
+        "Option comparison and selection",
+        "Documentation of rationale",
+        "Residual risk acceptability assessment",
+        "Leadership approval and sign-off"
+      ],
+      "riskAddressed": "Risk that risk reduction decisions are not adequately justified, leading to acceptance of unacceptably high residual risks or unnecessary over-investment in risk mitigation",
+      "testingApproach": "Review of ALARP documentation and supporting studies, interview with decision-makers, assessment of risk reduction options evaluated, verification of residual risk acceptability"
+    },
+    {
+      "controlId": "MTO-THREAT-001",
+      "processArea": "Threat and Opportunity Management",
+      "processNumber": "20.0",
+      "subProcess": "Threat and Opportunity Identification and Prioritization",
+      "controlName": "Short- and Long-Term Threat and Opportunity Management Process",
+      "controlStatement": "Who: Production Unit Manager with support of Production Team, workstream leadership, and technical resources | What: Identify, prioritize, and manage threats and opportunities aligned with business plan delivery across short-term (30 days) and long-term cycles | When: Continuously for short-term identification and resolution; regularly for long-term planning and execution | Where: MTO board (short-term) and MTO tool (long-term); reviewed in production meetings | Why: Proactively identify performance threats to protect business objectives and capture improvement opportunities for value realization | How: Screen performance data for threats/opportunities; assess long-term items using MTO RAM for risk ranking and Gap-to-Potential value; assign owners; develop mitigation/corrective actions; track execution | Evidence: MTO board with active short-term items and progress; MTO tool with scored threats/opportunities, assigned owners, and documented action plans",
+      "controlType": "Procedural",
+      "isHSSECritical": false,
+      "keyActivities": [
+        "Threat and opportunity identification",
+        "Performance data collection and analysis",
+        "Data quality assessment",
+        "Risk Assessment Matrix scoring for long-term items",
+        "Gap-to-Potential value assessment",
+        "Priority and resource allocation",
+        "Owner assignment",
+        "Mitigation plan development",
+        "Causal learning for complex threats",
+        "Action plan tracking and closeout",
+        "Learning and effectiveness review"
+      ],
+      "riskAddressed": "Risk that emerging threats are not identified early enough to allow effective mitigation, or that high-value opportunities are overlooked due to lack of structured identification process",
+      "testingApproach": "Review of MTO board and tool entries, interview with Production Team, assessment of threat identification timeliness, verification of action plan closure rates"
+    },
+    {
+      "controlId": "IA-SCREE-001",
+      "processArea": "Impact Assessment",
+      "processNumber": "21.0",
+      "subProcess": "Impact Assessment Screening and Project Categorization",
+      "controlName": "Impact Assessment Screening and Project Risk Categorization",
+      "controlStatement": "Who: Impact Assessment SME with project management and environmental/social teams | What: Screen proposed projects for environmental, social, and health impacts; categorize project risk level (A/B/C) to determine assurance scope | When: During earliest project phases (identify/assess) before major design commitments | Where: IA Screening Note Tool | Why: Identify early whether comprehensive impact assessment is required and determine scope of environmental/social management effort needed | How: Desktop assessment of project characteristics against ESH sensitivity factors; identify baseline concerns; review against critical habitat/deforestation triggers; determine category; assess showstoppers | Evidence: Completed IA Screening Note Tool with documented project category, risk rationale, and identified next steps for IA process",
+      "controlType": "Analytical",
+      "isHSSECritical": false,
+      "keyActivities": [
+        "Project description and characterization",
+        "Geographic location analysis",
+        "Baseline environmental/social assessment",
+        "Sensitivity factor identification",
+        "Critical habitat assessment",
+        "Risk factor evaluation",
+        "Category determination (A/B/C)",
+        "Showstopper identification",
+        "Stakeholder concerns identification",
+        "Regulatory requirement assessment",
+        "Next steps scoping"
+      ],
+      "riskAddressed": "Risk that projects with significant environmental or social impacts proceed without adequate assessment and mitigation planning, potentially causing unacceptable impacts or regulatory non-compliance",
+      "testingApproach": "Review of IA Screening Notes, interview with IA SME and project team, verification of category assignments against project characteristics, assessment of early risk identification"
+    },
+    {
+      "controlId": "IA-SCOPE-001",
+      "processArea": "Impact Assessment",
+      "processNumber": "21.0",
+      "subProcess": "Impact Assessment Scoping and Baseline Definition",
+      "controlName": "Impact Assessment Scoping and Study Design",
+      "controlStatement": "Who: IA SME with project team, functional specialists, and external stakeholders | What: Define scope and methodology for impact assessment studies including baseline definition and impact study parameters | When: Following IA screening, during select/define project phases | Where: IA Scoping Report | Why: Focus impact assessment on most significant issues, define appropriate data collection, and establish clear baseline for impact evaluation | How: Identify impact sources and pathways; engage stakeholders for input; define significance criteria; scope baseline studies and required expert assessments; develop Terms of Reference for contractors | Evidence: Signed scoping report with defined impact areas, baseline study scope, significance criteria, stakeholder engagement plan, and study budget/schedule",
+      "controlType": "Procedural",
+      "isHSSECritical": false,
+      "keyActivities": [
+        "Impact source identification",
+        "Baseline data requirements definition",
+        "Stakeholder engagement planning",
+        "Significance criteria development",
+        "Expert study scope definition",
+        "ToR preparation for contractors",
+        "Specialist requirements identification",
+        "Schedule and budget estimation",
+        "Regulatory requirement documentation",
+        "Data quality standards definition",
+        "Study management approach"
+      ],
+      "riskAddressed": "Risk that impact assessment studies are not appropriately scoped, leading to missed significant impacts or inadequate baseline for evaluating project effects",
+      "testingApproach": "Review of IA Scoping Report, assessment of stakeholder engagement process, verification of baseline scope alignment with identified impacts"
+    },
+    {
+      "controlId": "MOC-CHANGE-001",
+      "processArea": "Management of Change",
+      "processNumber": "22.0",
+      "subProcess": "MOC Process and Risk Assessment",
+      "controlName": "Management of Change Process for System and Operational Changes",
+      "controlStatement": "Who: Asset/Operations leadership with support of technical authorities and process safety team | What: Assess, approve, and implement changes to facilities, equipment, procedures, or operations using structured MOC process | When: Before any change is implemented | Where: MOC system/database with documented assessment and approval records | Why: Ensure changes are evaluated for HSSE and operational risks and that all necessary modifications are completed before implementation | How: Complete MOC application with change description and rationale; assess design/operational/training impacts; identify required modifications; obtain multidisciplinary approvals; verify implementation; document formal MOC closure | Evidence: Completed MOC with supporting documentation (risk assessment, design packages, procedure updates, training records, implementation verification) retained per records requirements",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Change identification and description",
+        "Risk assessment completion",
+        "Design change evaluation",
+        "Operational impact assessment",
+        "Training requirement identification",
+        "Procedure update development",
+        "Technical authority review",
+        "HSSE evaluation",
+        "Approval by authorized personnel",
+        "Implementation verification",
+        "Post-MOC effectiveness review",
+        "MOC closure documentation"
+      ],
+      "riskAddressed": "Risk that changes are implemented without adequate assessment of consequences, leading to new hazards, barrier failures, or operational problems",
+      "testingApproach": "Review of MOC documentation, interview with operations leadership, assessment of risk assessment quality, verification of implementation completeness"
+    },
+    {
+      "controlId": "PSBR-BASIC-001",
+      "processArea": "Process Safety Basic Requirements",
+      "processNumber": "23.0",
+      "subProcess": "Process Safety Basic Requirements Compliance",
+      "controlName": "Process Safety Basic Requirements Compliance and Gap Closure",
+      "controlStatement": "Who: Asset/Business leadership with HSSE leadership and technical authorities | What: Ensure all Process Safety Basic Requirements are implemented and gaps are identified and closed | When: During annual AIPSM review, management reviews, and continuously through operational assurance | Where: AIPSM review documents, management system implementation records | Why: Provide baseline safeguards that all assets must maintain to manage major process safety hazards | How: Assess compliance against each PSBR element; document current status; identify gaps; develop corrective actions with timelines; implement; verify closure | Evidence: PSBR compliance assessment documenting status against each requirement, action plans for gaps, and closure documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "PSBR requirement review",
+        "Current implementation assessment",
+        "Gap identification and documentation",
+        "Root cause analysis for gaps",
+        "Corrective action development",
+        "Resource allocation",
+        "Implementation timeline definition",
+        "Implementation tracking",
+        "Effectiveness verification",
+        "Gap closure sign-off",
+        "Continuous monitoring"
+      ],
+      "riskAddressed": "Risk that fundamental process safety safeguards are not in place, leaving assets vulnerable to major hazard incidents",
+      "testingApproach": "Review of PSBR compliance assessment, interview with HSSE leadership, observation of implementations, verification of gap closure actions"
+    },
+    {
+      "controlId": "HEMP-HAZID-001",
+      "processArea": "Hazards and Effects Management",
+      "processNumber": "24.0",
+      "subProcess": "Hazard Identification and Analysis",
+      "controlName": "Hazards and Effects Management Process Implementation",
+      "controlStatement": "Who: HEMP Process Owner and Site Process Owner with support of multidisciplinary team | What: Execute Hazards and Effects Management Process to identify, analyze, and manage process safety hazards across asset lifecycle | When: During project design (DEM1), operating asset management, and management of change | Where: Documented in Hazards and Effects Register maintained in asset systems | Why: Provide systematic identification and assessment of major process safety hazards to support ALARP demonstration and barrier management | How: Conduct hazard identification (HAZID, HAZOP); assess consequences and likelihood; determine RAM rating; identify and evaluate barriers; apply mitigation hierarchy; document in HER | Evidence: Hazards and Effects Register with documented hazards, RAM ratings, barrier information, ALARP statements, and action status",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "HAZID/HAZOP study planning",
+        "Team assembly and facilitation",
+        "Hazard identification and documentation",
+        "Consequence assessment",
+        "Likelihood/frequency determination",
+        "Risk Assessment Matrix rating",
+        "Barrier identification",
+        "Risk reduction options evaluation",
+        "ALARP demonstration",
+        "HER documentation and maintenance",
+        "Management review and sign-off"
+      ],
+      "riskAddressed": "Risk that major hazards are not identified or evaluated, leading to lack of appropriate controls for significant process safety risks",
+      "testingApproach": "Review of HEMP study documentation and HER, assessment of hazard identification completeness, interview with team members, verification of barrier adequacy"
+    },
+    {
+      "controlId": "EMERG-PREP-001",
+      "processArea": "Emergency Preparedness and Response",
+      "processNumber": "25.0",
+      "subProcess": "Emergency Response Planning and Exercises",
+      "controlName": "Emergency Response Plan Development and Drill Execution",
+      "controlStatement": "Who: Operations leadership and emergency response coordinator with support of HSSE and community relations teams | What: Develop and maintain emergency response plans; conduct regular drills to verify plan effectiveness and personnel capability | When: Plans developed during project design; drills conducted at planned frequency (typically annually or per regulatory requirement) | Where: Emergency response procedures, site emergency plan, drill records | Why: Ensure rapid and effective response to emergency situations to protect personnel, public, and environment | How: Identify credible emergency scenarios; develop response procedures; assign roles and responsibilities; conduct awareness training; execute drills with observation and after-action review; update plans based on learning | Evidence: Emergency response plan, training records showing personnel participation, drill records with observation notes, and documented improvements from after-action reviews",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Emergency scenario identification",
+        "Response procedure development",
+        "Role and responsibility definition",
+        "Coordination mechanism establishment",
+        "Training plan development",
+        "Awareness training delivery",
+        "Drill planning and scheduling",
+        "Drill execution and observation",
+        "After-action review conduct",
+        "Lessons learned documentation",
+        "Plan update and distribution",
+        "Periodic plan review"
+      ],
+      "riskAddressed": "Risk that emergency response is slow or ineffective due to inadequate planning or insufficient personnel training, leading to personnel injury or environmental impact",
+      "testingApproach": "Review of emergency response plans, interview with response team members, observation of drills, assessment of training records, evaluation of after-action review effectiveness"
+    }
+  ]
+}

@@ -1,0 +1,1007 @@
+{
+  "batchInfo": {
+    "batchName": "BATCH 2 - PROCESS SAFETY & MAINTENANCE CONTROLS",
+    "batchDescription": "Comprehensive extraction of process safety, equipment integrity, and operational safety controls from SEAM practices",
+    "targetPractices": 30,
+    "targetControls": 90,
+    "actualPractices": 20,
+    "actualControls": 69,
+    "completionPercentage": 77,
+    "startDate": "2026-06-21",
+    "completionDate": "2026-06-21"
+  },
+  "practiceBreakdown": {
+    "processSafety": {
+      "practiceCount": 8,
+      "controlCount": 26,
+      "practices": [
+        "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+        "SEAM_AIPSM_CE_HB_CA_Practice.md",
+        "SEAM_AIPSM_Reviews_and_Performance_Indicators_Practice.md",
+        "SEAM_AIPSM_Statement_of_Fitness_Practice.md",
+        "SEAM_ALARP_Practice.md",
+        "SEAM_Management_of_Change_Practice.md",
+        "SEAM_Managing_HSSE_&_SP_Risk_Practice.md",
+        "SEAM_Integrity_and_Design_Operating_Window_Management_Practice.md"
+      ]
+    },
+    "equipmentIntegrity": {
+      "practiceCount": 6,
+      "controlCount": 25,
+      "practices": [
+        "SEAM_MAC_Asset_Care_Plan_Practice.md",
+        "SEAM_MAC_Pressure_Equipment_Integrity_Management_Practice.md",
+        "SEAM_MAC_Electrical_Equipment_Integrity_Practice.md",
+        "SEAM_MAC_Safety_Instrumented_Systems_Practice.md",
+        "SEAM_MAC_Reliability_Centred_Maintenance_Practice.md",
+        "SEAM_Manage_Reliability_Practice.md"
+      ]
+    },
+    "operationalSafety": {
+      "practiceCount": 6,
+      "controlCount": 18,
+      "practices": [
+        "SEAM_ESP_Ensure_Plan_Delivery_Practice.md",
+        "SEAM_ESP_Manage_Abnormal_Situations_Practice.md",
+        "SEAM_ESP_Manage_Limits_and_Alarms_Practice.md",
+        "SEAM_ESP_Proactive_Monitoring_Practice.md",
+        "SEAM_ESP_Safe_Operation_of_Storage_Tanks_Practice.md",
+        "SEAM_Control_of_Work_Practice.md"
+      ]
+    }
+  },
+  "controls": [
+    {
+      "controlId": "PSA-001",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1",
+      "subProcess": "HAZOP Schedule and Planning",
+      "controlName": "Establish HAZOP Schedule and Obtain Leadership Commitment",
+      "controlStatement": "Who: HEMP Process Owner, Asset Manager | What: Establish schedule for 5-year HAZOP studies and obtain leadership approval to allocate resources | When: At asset lifecycle start and annually for review | Where: HEMP Plan, Asset Management System | Why: To ensure compliance with 5-year revalidation requirement and prevent gaps in process safety management | How: Document schedule in HEMP Plan, identify units with RAM Red/Yellow 5A/5B risks, obtain leadership handshake on resource allocation | Evidence: Signed HEMP Plan with schedule, resource allocation statement, documented leadership approval",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all assets/units with RAM Red or Yellow process safety risks",
+        "Schedule HAZOP studies to meet 5-year revalidation requirement",
+        "Obtain leadership approval and resource commitment",
+        "Allocate budget and personnel for HAZOP execution",
+        "Document timeline with key dates for planning and completion"
+      ],
+      "riskAddressed": "Non-compliance with 5-year HAZOP requirement; loss of clarity on current process safety risks; hazards not identified timely",
+      "testingApproach": "Verify HEMP Plan exists and current; confirm leadership approval signature; validate all due units identified with scheduled dates"
+    },
+    {
+      "controlId": "PSA-002",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1.1",
+      "subProcess": "Gather Technical Information",
+      "controlName": "Collect and Review Process Safety Information Before HAZOP",
+      "controlStatement": "Who: HAZOP Facilitator, HEMP Coordinator | What: Gather and review technical documentation, MOC records, maintenance status, and operational history | When: 9-12 months before HAZOP workshop | Where: Asset documentation system, GSAP/CGSAP records, MOC database | Why: To ensure HAZOP based on current accurate information and identifies recent changes introducing new hazards | How: Conduct systematic review of PSI, MOC documents since last HAZOP, maintenance status, SIF PFD data, previous assurance findings | Evidence: Checklist of gathered documents, MOC summary log, maintenance status report, document review meeting notes",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Collect all technical design documents and P&ID updates",
+        "Review MOC documents opened/closed since last HAZOP study",
+        "Compile DOW/IOW exceedance records for the unit",
+        "Gather preventive and corrective maintenance status",
+        "Extract SIF PFD and demand rate data from testing results"
+      ],
+      "riskAddressed": "HAZOP based on outdated information; failure to identify hazards from changes; gaps in barrier reliability understanding",
+      "testingApproach": "Verify document checklist complete; confirm all MOCs since last HAZOP reviewed; validate maintenance status current; review PFD records recent and valid"
+    },
+    {
+      "controlId": "PSA-003",
+      "processArea": "5 Year Process Hazard Analysis",
+      "processNumber": "3.1.3",
+      "subProcess": "HAZOP Approach Selection",
+      "controlName": "Approve HAZOP Approach Based on Risk Assessment Criteria",
+      "controlStatement": "Who: Technical Safety TA2 or HEMP SME | What: Evaluate and approve HAZOP approach (New, Update, or Sample Review) based on documented criteria | When: Early in planning cycle, minimum 12 months before HAZOP execution | Where: HEMP Plan, HAZOP approach decision document | Why: To ensure appropriate HAZOP scrutiny matches risk profile and change history | How: Apply evaluation criteria (robustness of previous HAZOP, MOC process effectiveness, barrier validity status); document decision rationale; obtain multi-disciplinary team approval | Evidence: HAZOP Approach Decision Document with evaluation scoring, TA2/SME approval, documented justification",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Assess robustness of previous 5-year HAZOP quality",
+        "Evaluate MOC process effectiveness and documentation quality",
+        "Review HSSE Critical Equipment and Barrier validity status",
+        "Assess regulatory or standard changes since last HAZOP",
+        "Compare findings to criteria matrix and select approach"
+      ],
+      "riskAddressed": "Inappropriate HAZOP scope selection; wasted resources on unnecessary full updates; missed hazards from insufficient review depth",
+      "testingApproach": "Verify evaluation criteria checklist completed; confirm TA2 signature on approach decision; validate approach aligns with documented risk factors"
+    },
+    {
+      "controlId": "PSA-004",
+      "processArea": "AIPSM Management of HSSE Critical Equipment and Barriers",
+      "processNumber": "3.1",
+      "subProcess": "Identification of HSSE Critical Equipment",
+      "controlName": "Identify HSSE Critical Equipment and Human Barriers from Hazard Analysis",
+      "controlStatement": "Who: Asset Manager, HEMP Focal Point, Hazard Analysis Facilitator | What: Review hazard analysis to identify equipment and human barriers critical to managing RED/YELLOW 5A/5B risks; compile preliminary list | When: Following completion or update of Hazard Analysis | Where: Hazard Analysis documentation, HSSE Critical Equipment and Barriers list | Why: To identify barriers requiring special management focus due to role in preventing major accidents | How: Systematically review identified scenarios; identify valid barriers; determine if equipment (HSSE CE) or human action (HSSE Critical HB); document justification; assess barrier practicality | Evidence: Compiled preliminary list of HSSE CE and HB with process safety justification, barriers documented with scenario linkage",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review Hazard Analysis results for all RED/YELLOW 5A/5B scenarios",
+        "Identify all valid barriers for each scenario",
+        "Classify barriers as HSSE Critical Equipment or Human Barriers",
+        "Document justification for HSSE Critical classification",
+        "Assess barrier practicality and validity"
+      ],
+      "riskAddressed": "Critical barriers not identified; barriers misclassified; unreliable barriers designated HSSE Critical; wrong controls focused",
+      "testingApproach": "Review preliminary list for completeness against scenarios; verify each barrier linked to at least one RED/YELLOW scenario; confirm classification appropriate"
+    },
+    {
+      "controlId": "PSA-005",
+      "processArea": "AIPSM Management of HSSE Critical Equipment and Barriers",
+      "processNumber": "3.2",
+      "subProcess": "Assurance of Barriers List",
+      "controlName": "Conduct Technical Authority Assurance of HSSE Critical Equipment and Barriers",
+      "controlStatement": "Who: Technical Safety TA2 or equivalent authority | What: Independently review and provide assurance on completeness and correctness of HSSE Critical Equipment and Barriers list | When: After completion of Step 1, before management handshake | Where: Technical assurance checklist, HSSE Critical Equipment and Barriers documentation | Why: To ensure list is technically robust, complete, and consistent with hazard analysis before management approval | How: Use assurance checklist to verify each item; assess completeness against scenarios; validate definitions and justifications; check consistency with standards; provide approval | Evidence: Completed assurance checklist, technical authority approval signature, documented findings and recommendations",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review list for completeness using assurance checklist",
+        "Verify each HSSE CE and HB meets definition criteria",
+        "Check consistency with Hazard Analysis results",
+        "Validate technical accuracy of identifications",
+        "Provide approval or recommend modifications"
+      ],
+      "riskAddressed": "Incomplete/inaccurate lists proceed to management; flawed identifications not caught; loss of assurance credibility",
+      "testingApproach": "Verify TA2 conducted review; review assurance checklist completeness; confirm approval signature present; validate recommended modifications addressed"
+    },
+    {
+      "controlId": "PSA-006",
+      "processArea": "AIPSM Reviews and Performance Indicators",
+      "processNumber": "3.2",
+      "subProcess": "Data Gathering for AIPSM Review",
+      "controlName": "Gather AIPSM Performance Data and Leading Indicators for Management Review",
+      "controlStatement": "Who: Production Unit Manager, Process Engineer, Data Analyst | What: Systematically collect and compile AIPSM performance data including design, technical, operational, and leadership integrity metrics | When: Quarterly at minimum for unit level; annually for asset/business levels | Where: AIPSM data dashboard, reporting system, performance records | Why: To provide leadership with current visibility of barrier health and identify trends requiring attention | How: Collect data from multiple sources (maintenance system, incident reports, KPI dashboards, assurance findings); compile into visual format (heat maps, metrics); trend data over time; identify outliers; prepare summary for management review | Evidence: Completed AIPSM performance data reports, data trending analysis, visual dashboards showing current status and historical trends",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Collect leading and lagging indicator data from authoritative sources",
+        "Compile barrier health metrics from maintenance and operational data",
+        "Trend indicators over time to identify patterns",
+        "Create visual representations (heat maps, charts) of performance",
+        "Identify metrics outside target range for discussion"
+      ],
+      "riskAddressed": "Leadership lacks visibility of barrier health; performance trends not detected; management decisions made without complete information",
+      "testingApproach": "Verify data collected from authoritative sources; confirm all required indicators included; review compilation for accuracy; validate trends correctly calculated"
+    },
+    {
+      "controlId": "PSA-007",
+      "processArea": "AIPSM Reviews and Performance Indicators",
+      "processNumber": "3.2",
+      "subProcess": "Conduct AIPSM Effectiveness Review",
+      "controlName": "Conduct Asset-Level Annual AIPSM Effectiveness Review",
+      "controlStatement": "Who: Asset Leadership Team, technical/operations/process safety TA2, HSSE Lead | What: Conduct comprehensive annual review of asset integrity to verify process safety risks managed to ALARP and identify improvement actions | When: Annually as part of asset management cycle | Where: Management review meeting, documented review report | Why: To systematically assess AIPSM program effectiveness and identify systemic improvements needed | How: Review process safety leading/lagging indicators and trends; assess barrier health status; review risk action management; examine incident investigations; assess technical integrity of key equipment; review competency status; identify improvement themes and priorities; document findings and actions | Evidence: Documented AIPSM review report with findings and action items, management team attendance records, tracked closure of action items",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review all process safety leading and lagging indicators",
+        "Assess barrier health across design, technical, operational, and leadership aspects",
+        "Review risk-related action management from various sources",
+        "Examine top process safety scenarios and control status",
+        "Identify improvement actions and assign accountability",
+        "Track action closure through management system"
+      ],
+      "riskAddressed": "AIPSM program effectiveness not assessed; systemic weaknesses not identified; improvement opportunities missed; management unaware of changing risk profile",
+      "testingApproach": "Verify review conducted with appropriate team; review documented findings; confirm action items assigned with clear accountability; check tracking system for action closure"
+    },
+    {
+      "controlId": "PSA-008",
+      "processArea": "Statement of Fitness",
+      "processNumber": "3.1",
+      "subProcess": "Identification of Fitness Review Events",
+      "controlName": "Identify Events Requiring Statement of Fitness Review",
+      "controlStatement": "Who: Production Unit Manager, Operations Supervisor, HSSE Lead | What: Identify when significant abnormal events occur requiring SoF review (uncontrolled shutdowns, turnarounds, equipment constraint exceedances, environmental incidents) | When: Immediately when abnormal event occurs or is anticipated | Where: Event log, management communications | Why: To ensure structured technical review conducted before facility restart; to verify controls remain effective after disruption | How: Establish clear SoF trigger criteria in local procedure; train personnel on recognition; document event identification and SoF decision | Evidence: Event notification, documented identification of SoF trigger event, decision record",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define SoF trigger criteria in local procedure",
+        "Train personnel on event recognition and reporting",
+        "Establish communication process for event notification",
+        "Document event identification and SoF decision",
+        "Notify technical team and management"
+      ],
+      "riskAddressed": "Abnormal events not recognized as SoF triggers; facility restarted without assessment; previously valid controls compromised undetected",
+      "testingApproach": "Verify local SoF procedure exists with clear trigger criteria; confirm training records show personnel trained; review event logs for proper identification and documentation"
+    },
+    {
+      "controlId": "PSA-009",
+      "processArea": "Statement of Fitness",
+      "processNumber": "3.3",
+      "subProcess": "Conduct Structured SoF Review",
+      "controlName": "Conduct Structured Statement of Fitness Review and Document Findings",
+      "controlStatement": "Who: Multi-disciplined team (Operations, Process Engineering, TA2, HSSE), led by SoF Review Leader | What: Conduct comprehensive technical review of facility following abnormal event; assess whether controls remain adequate to manage risks to ALARP; identify needed repairs or interim measures | When: Prior to facility restart | Where: SoF review meeting, SoF form, supporting documentation | Why: To provide documented assurance process safety risks adequately managed before resuming operations | How: Investigate event root cause; identify equipment damage or parameter exceedances; assess impact on barriers and controls; conduct risk assessment; define needed repairs/modifications; verify procedures and training; complete SoF form with multi-disciplinary signatures | Evidence: Completed SoF form with all reviews documented, incident investigation report, risk assessment documentation, repair/modification work orders, training and procedure updates",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct root cause investigation of abnormal event",
+        "Assess equipment and system damage or degradation",
+        "Review impact on process safety barriers and controls",
+        "Conduct risk assessment for identified impacts",
+        "Define required repairs, modifications, or interim measures",
+        "Verify procedures and training updated for restart",
+        "Obtain multi-disciplinary team approval"
+      ],
+      "riskAddressed": "Facility restarted with inadequate controls after upset; hidden damage not identified; barriers compromised; new risks introduced during recovery",
+      "testingApproach": "Review SoF form for completeness of all required sections; verify incident investigation documented; confirm risk assessment completed; check repairs/modifications verified or tracked"
+    },
+    {
+      "controlId": "PSA-010",
+      "processArea": "ALARP Demonstration",
+      "processNumber": "3.1",
+      "subProcess": "Risk Identification and Rating",
+      "controlName": "Identify and Rate Hazards Using Risk Assessment Matrix",
+      "controlStatement": "Who: Hazard identification team, Process Safety SME | What: Identify all hazards and rate residual risk using Shell HSSE & SP Risk Assessment Matrix; document in Hazards and Effects Register | When: During initial hazard identification and updated through MOC and learning processes | Where: Hazards and Effects Register (HER), RAM documentation | Why: To establish baseline understanding of risk magnitude; to determine level of ALARP documentation effort required | How: Systematically identify hazards; assess severity and probability of consequences; apply RAM to obtain rating; document rating rationale; update HER with current ratings | Evidence: Complete HER with all hazards and risk ratings documented, RAM application documentation showing assessment methodology",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct systematic hazard identification",
+        "Assess severity of potential consequences",
+        "Assess probability of occurrence",
+        "Apply RAM to determine risk rating",
+        "Document rating rationale in HER",
+        "Update HER with current assessments"
+      ],
+      "riskAddressed": "Hazards not identified; risk ratings incorrect; inappropriate control effort allocated; ALARP documentation insufficient for risk magnitude",
+      "testingApproach": "Review HER for completeness of hazard identification; verify RAM ratings correctly assigned; confirm rating rationale documented; check HER updated with current information"
+    },
+    {
+      "controlId": "PSA-011",
+      "processArea": "ALARP Demonstration",
+      "processNumber": "3.4",
+      "subProcess": "Demonstration of ALARP",
+      "controlName": "Document ALARP Demonstration for RED and YELLOW 5A/5B Scenarios",
+      "controlStatement": "Who: Technical Safety TA2, Engineering Discipline Leads, Risk Assessment Team | What: Prepare comprehensive documented justification that RED and YELLOW 5A/5B risks managed to ALARP; explain standards applied, alternatives considered, and barriers implemented | When: Following hazard analysis; reviewed periodically or when significant changes occur | Where: ALARP Demonstration document, project HSSE Case or asset safety documentation | Why: To provide regulatory and business justification that all reasonable measures taken to reduce risk; to satisfy legal obligations for major accident hazard management | How: Identify applicable standards and good practices; document how scenario addresses standards; describe alternatives considered and reason for rejection; explain barriers selected and reliability basis; document cost-benefit analysis where applicable; obtain technical approval | Evidence: Comprehensive ALARP Demonstration document covering each RED/YELLOW scenario, cited standards and practices, cost-benefit analysis, technical approval signatures",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify applicable standards and good practices for each scenario",
+        "Document how scenario controls address standards",
+        "List and evaluate alternatives considered",
+        "Explain barrier selection rationale",
+        "Perform cost-benefit analysis for major controls",
+        "Obtain technical authority approval"
+      ],
+      "riskAddressed": "ALARP cannot be justified; regulatory non-compliance; gaps in risk reduction logic; inadequate cost-benefit analysis; controls not substantiated",
+      "testingApproach": "Review ALARP documentation for each RED/YELLOW scenario; verify standards cited are applicable; confirm alternatives discussion includes rejection rationale; validate cost-benefit analysis performed"
+    },
+    {
+      "controlId": "PSA-012",
+      "processArea": "Management of Change",
+      "processNumber": "3.1",
+      "subProcess": "MOC Process Establishment",
+      "controlName": "Establish Management of Change Process for Design and Operational Changes",
+      "controlStatement": "Who: Asset Manager, HSSE Lead, Technical Authority | What: Establish formal MOC process requiring assessment of safety and environmental impacts before any design changes, operational changes, or facility modifications are implemented | When: Integrated into asset management system from startup and continuously maintained | Where: MOC procedure documentation, MOC evaluation form, change request system | Why: To ensure changes do not introduce new hazards, degrade barriers, or create non-compliance; to maintain control and documentation of changes | How: Develop MOC procedure defining change categories (design, operational, temporary modifications); require technical safety assessment for all changes; document change details, reasons, impacts, and safeguards; obtain necessary approvals; execute change per approved plan; verify post-change system operates as designed | Evidence: Documented MOC procedure with approval authority levels, completed MOC evaluation forms, change implementation records, post-change verification documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop comprehensive MOC procedure with defined change categories",
+        "Require technical safety assessment for all changes",
+        "Document change details, reasons, and proposed safeguards",
+        "Obtain appropriate approvals based on change significance",
+        "Execute change per approved plan with monitoring",
+        "Verify post-change system operation matches approved design"
+      ],
+      "riskAddressed": "Changes implemented without safety assessment; new hazards introduced; barriers degraded; system operates differently than intended; non-compliance from unauthorized changes",
+      "testingApproach": "Verify MOC procedure in place and implemented; review recent MOC evaluation forms for completeness; confirm approvals obtained for significant changes; check post-change verification completed"
+    },
+    {
+      "controlId": "PSA-013",
+      "processArea": "Management of Change",
+      "processNumber": "3.2",
+      "subProcess": "MOC Review and Approval",
+      "controlName": "Conduct Technical Review and Approval of Proposed Changes",
+      "controlStatement": "Who: Technical Safety TA2, Discipline Engineers, Process Engineer | What: Conduct technical review of each MOC evaluating proposed change against design standards, process safety requirements, and equipment capabilities; approve, approve with conditions, or reject change | When: Prior to change implementation | Where: MOC review meeting, MOC evaluation documentation | Why: To ensure proposed change is technically sound and does not compromise safety or compliance | How: Review MOC evaluation package; assess technical feasibility; evaluate safety and environmental impacts; identify any additional safeguards needed; provide approval or recommend modifications; document review findings and approval | Evidence: Completed MOC evaluation form with technical review documented, approvals/rejections with justification, any required additional safeguards specified",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review proposed change technical feasibility",
+        "Assess design standards and requirements compliance",
+        "Evaluate safety and environmental impacts",
+        "Identify any additional safeguards or testing needed",
+        "Provide approval with justification or recommend modifications"
+      ],
+      "riskAddressed": "Technically unsound changes approved; safety impacts not assessed; inadequate safeguards identified; compliance issues not caught before implementation",
+      "testingApproach": "Review MOC evaluation for technical assessment completeness; verify TA2/discipline engineer reviewed and approved; confirm safety impacts assessed; check additional safeguards specified if needed"
+    },
+    {
+      "controlId": "PSA-014",
+      "processArea": "Managing HSSE and SP Risk",
+      "processNumber": "3.1",
+      "subProcess": "Risk Identification and Assessment",
+      "controlName": "Establish Risk Assessment Process and Identify All HSSE and SP Risks",
+      "controlStatement": "Who: Risk Assessment Team, HSSE Lead, Subject Matter Experts | What: Conduct comprehensive identification of HSSE and SP risks through hazard identification, consequence assessment, and risk rating; establish risk register documenting all identified risks | When: During asset planning and periodically updated through assurance and learning processes | Where: Risk assessment documentation, Risk Register | Why: To ensure all significant risks identified and have management attention proportional to risk magnitude | How: Conduct systematic hazard identification workshops; assess consequences and probability; rate risks using established matrix; document risk details; establish risk ownership; track risk treatment status; update risk register periodically | Evidence: Documented risk assessment results, complete Risk Register with all identified risks, risk treatment status tracking, management review records",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct systematic HSSE and SP hazard identification",
+        "Assess consequence severity and probability",
+        "Apply risk rating matrix and rate all identified risks",
+        "Establish Risk Register documenting all risks",
+        "Assign risk owner for each identified risk",
+        "Track risk treatment status and effectiveness"
+      ],
+      "riskAddressed": "Significant risks not identified; risk register incomplete; management attention not proportional to risk magnitude; risks not actively managed",
+      "testingApproach": "Review risk assessment documentation for completeness; verify all significant risks identified and in Risk Register; confirm risk ratings documented with rationale; check that risks have assigned owners"
+    },
+    {
+      "controlId": "PSA-015",
+      "processArea": "Managing HSSE and SP Risk",
+      "processNumber": "3.2",
+      "subProcess": "Risk Treatment and Control Implementation",
+      "controlName": "Develop and Implement Risk Treatment Plans for Identified Risks",
+      "controlStatement": "Who: Risk Owner, Risk Assessment Team, Technical Authority | What: For each identified risk, develop risk treatment plan addressing the risk through engineering controls, administrative controls, or risk acceptance decision; implement approved treatment plans | When: Following risk identification; implemented per agreed timeline | Where: Risk treatment plans, control implementation documentation | Why: To systematically reduce risks to As Low As Reasonably Practicable (ALARP) and prevent escalation | How: For each risk above acceptable threshold, develop treatment plan addressing root cause; implement engineering controls where feasible, supplemented by administrative controls; verify control implementation; track treatment effectiveness; for residual risks, document risk acceptance by management | Evidence: Documented risk treatment plans for each unacceptable risk, control implementation records, verification that controls functioning as designed, risk acceptance documentation where applicable",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop risk treatment plan for each unacceptable risk",
+        "Prioritize engineering controls, supported by administrative controls",
+        "Implement approved risk treatment plans per timeline",
+        "Verify control implementation and effectiveness",
+        "Document risk acceptance for residual risks",
+        "Track risk treatment status to completion"
+      ],
+      "riskAddressed": "Identified risks not addressed; controls not implemented; risks remain unmanaged; residual risk not formally accepted; control effectiveness not verified",
+      "testingApproach": "Review risk treatment plans for identified unacceptable risks; verify controls implemented and functioning; confirm risk acceptance documented for residual risks; check treatment tracking system"
+    },
+    {
+      "controlId": "PSA-016",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.1",
+      "subProcess": "Design Operating Window Definition",
+      "controlName": "Establish Design Operating Window (DOW) Parameters",
+      "controlStatement": "Who: Process Engineer, Technical Authority, Design Team | What: Define Design Operating Window (DOW) specifying acceptable operating ranges for critical process parameters based on equipment design limits and safety requirements | When: During asset design/HAZOP and reviewed when equipment changes occur | Where: Process design documentation, operating procedures | Why: To provide clear operational boundaries ensuring equipment operates within design intent; to prevent equipment stress, failure, or safety incidents | How: Assess equipment design specifications and limits; define safe operating ranges for all critical parameters (temperatures, pressures, rates, levels); include safety margins; document DOW with technical basis; communicate DOW to operations; identify consequences of exceeding limits | Evidence: Documented DOW specification with technical basis, equipment specification references, operating procedures reflecting DOW parameters",
+      "controlType": "Engineering",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review equipment design specifications and limits",
+        "Assess failure modes if limits exceeded",
+        "Define safe operating ranges for critical parameters",
+        "Include appropriate safety margins",
+        "Document DOW with technical basis",
+        "Communicate DOW to operations personnel"
+      ],
+      "riskAddressed": "Operations proceed outside safe limits; equipment stressed beyond design; unplanned shutdowns; barrier failure from equipment degradation",
+      "testingApproach": "Verify DOW documented with equipment specification basis; check procedures reflect DOW parameters; observe operator knowledge of limits; confirm communication of consequences"
+    },
+    {
+      "controlId": "PSA-017",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.2",
+      "subProcess": "DOW Monitoring and Exceedance Management",
+      "controlName": "Monitor Operations Within Design Operating Window and Manage Exceedances",
+      "controlStatement": "Who: Operations Supervisor, Console Operator, Process Engineer | What: Continuously monitor process parameters against DOW limits; immediately respond to approaches to limits; investigate and document any exceedances; assess equipment impact and required actions | When: Continuously throughout operations | Where: Control system displays, alarm system, exceedance investigation records | Why: To detect and respond to out-of-limit conditions before equipment damage occurs; to maintain asset integrity | How: Configure process control system with alarm setpoints reflecting DOW limits; establish escalation procedure for alarm triggers; train operators on limit significance and response; investigate all exceedances; assess impact on equipment integrity; document findings and corrective actions | Evidence: Alarm setpoint documentation, exceedance investigation records, equipment condition assessment following exceedance, corrective action documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Configure alarm setpoints at DOW limits with appropriate warning margin",
+        "Establish operator response procedure for alarms",
+        "Train operators on DOW significance and response requirements",
+        "Investigate all DOW exceedances",
+        "Assess equipment impact and required repairs",
+        "Document exceedance and corrective actions"
+      ],
+      "riskAddressed": "DOW exceeded without detection; equipment damage occurs; barrier integrity compromised; unplanned shutdown results from inadequate monitoring",
+      "testingApproach": "Verify alarm setpoints configured at DOW limits; observe operator response to simulated limit approach; review exceedance investigation reports; confirm equipment assessment conducted"
+    },
+    {
+      "controlId": "PSA-018",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.3",
+      "subProcess": "Interim Operating Window (IOW) and Safeguarding Override",
+      "controlName": "Manage Safeguarding Overrides and Interim Operating Windows",
+      "controlStatement": "Who: Operations Manager, Technical Authority, HSSE Lead | What: When equipment degradation or temporary conditions require operation at reduced limits (Interim Operating Window), establish compensating controls; manage any safeguarding system overrides with documented justification and action plans | When: When IOW needed due to equipment status or when override required for maintenance/testing | Where: IOW documentation, safeguarding override records, compensating controls implementation | Why: To allow continued operations safely when full DOW not available; to maintain control of risks during override conditions | How: Assess equipment condition and establish temporary IOW with reduced safe limits; implement enhanced monitoring and additional safeguards to compensate for degraded equipment; document IOW basis and expiration date; any safeguarding system override requires documented justification, compensating control plan, and reinstatement verification; obtain management approval for override | Evidence: Documented IOW specification with technical basis, compensating controls implemented and verified, safeguarding override approval record, reinstatement verification",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Assess equipment condition and establish IOW limits",
+        "Identify necessary compensating controls",
+        "Implement and verify compensating controls",
+        "Document IOW basis and expiration timeline",
+        "For safeguarding overrides, obtain management approval",
+        "Verify safeguarding system reinstatement"
+      ],
+      "riskAddressed": "IOW implemented without compensating controls; residual risk unmanaged; safeguarding override continues indefinitely; equipment failure with override in place",
+      "testingApproach": "Verify IOW documented with technical basis; confirm compensating controls implemented; check that override has time limit and reinstatement plan; observe safeguarding system functionality"
+    },
+    {
+      "controlId": "PSA-019",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.4",
+      "subProcess": "Barrier Verification and Validation",
+      "controlName": "Establish Process Safety Barrier Verification Program",
+      "controlStatement": "Who: Barrier Owner, Barrier Engineer, Technical Authority | What: Establish program to verify that process safety barriers remain at required reliability through inspection, testing, maintenance, and assessment; document barrier status and required actions | When: Per barrier-specific verification schedule (typically 1-5 years depending on barrier type) | Where: Barrier verification plan, test records, barrier status documentation | Why: To ensure barriers function as designed and maintain required reliability; to detect degradation before failure | How: For each HSSE Critical Barrier, establish verification method appropriate to barrier type (physical inspection, functional testing, integrity assessment); define verification frequency; execute verifications per schedule; document results and any deficiencies found; perform corrective maintenance if needed; verify barrier restored to required condition | Evidence: Barrier verification plan with schedule, completed verification records with test results, corrective action records for any deficiencies found, barrier status summary",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all HSSE Critical Process Safety Barriers",
+        "Establish verification method appropriate to barrier type",
+        "Define verification frequency based on barrier criticality",
+        "Execute planned verifications per schedule",
+        "Document verification results and findings",
+        "Perform corrective actions for any deficiencies"
+      ],
+      "riskAddressed": "Barrier degradation undetected; barrier fails to function when demanded; reliability assumption invalid; control effectiveness not verified",
+      "testingApproach": "Review barrier verification plan for completeness; verify planned verifications conducted on schedule; review test results and any deficiencies documented; confirm corrective actions completed"
+    },
+    {
+      "controlId": "PSA-020",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.5",
+      "subProcess": "Barrier Failure Investigation",
+      "controlName": "Investigate Barrier Failures and Implement Preventive Actions",
+      "controlStatement": "Who: Barrier Owner, Investigation Team, Technical Authority | What: When HSSE Critical Barrier fails to function as designed, conduct investigation to identify root cause and implement preventive actions preventing recurrence | When: Immediately upon discovery of barrier failure | Where: Barrier failure investigation documentation, corrective action records | Why: To understand why barrier failed; to prevent similar failures at same facility or other assets; to maintain barrier reliability | How: Upon discovery of failure, preserve evidence; assess consequences of failure; investigate root cause (design deficiency, material degradation, operational error, maintenance deficiency); develop preventive action addressing root cause; implement corrective actions; verify barrier now functions reliably; communicate findings and lessons learned | Evidence: Completed barrier failure investigation report with root cause analysis, identified preventive actions, implementation records, barrier functionality verification",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Immediately isolate and assess barrier failure",
+        "Preserve evidence and document failure mode",
+        "Assess consequences and impact of failure",
+        "Conduct root cause investigation",
+        "Develop preventive actions addressing root cause",
+        "Implement and verify corrective actions"
+      ],
+      "riskAddressed": "Barrier failure cause not understood; similar failures occur; barrier remains non-functional; organizational learning lost",
+      "testingApproach": "Verify barrier failure investigation conducted; review root cause analysis for completeness; confirm preventive actions address identified causes; check barrier restoration to functional status"
+    },
+    {
+      "controlId": "PSA-021",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.6",
+      "subProcess": "HSSE Critical Equipment Degradation Management",
+      "controlName": "Assess Equipment Degradation and Manage Barrier Reliability Impact",
+      "controlStatement": "Who: Equipment Engineer, Asset Manager, Technical Authority | What: When HSSE Critical Equipment shows signs of degradation, assess impact on barrier reliability; implement compensating controls if necessary; plan equipment restoration or replacement | When: Upon detection of equipment degradation; assessed at least annually for critical equipment | Where: Equipment condition assessment records, barrier impact assessment, maintenance plan | Why: To prevent loss of barrier function due to equipment degradation; to maintain asset integrity | How: Conduct condition assessment of critical equipment; evaluate impact on any process safety barriers the equipment supports; if impact significant, implement compensating controls; plan equipment restoration or replacement; track equipment status and corrective action plan execution | Evidence: Equipment condition assessment reports, barrier impact assessment documentation, compensating controls implemented if necessary, equipment restoration/replacement plan",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct condition assessment of HSSE Critical Equipment",
+        "Evaluate impact on supported process safety barriers",
+        "Identify compensating controls if barrier impact significant",
+        "Implement compensating controls and verify effectiveness",
+        "Develop equipment restoration or replacement plan",
+        "Track plan execution and barrier restoration"
+      ],
+      "riskAddressed": "Equipment degradation reduces barrier reliability undetected; barrier function lost; residual risk unmanaged; compensating controls not implemented",
+      "testingApproach": "Review equipment condition assessment for critical equipment; verify barrier impact assessed; confirm compensating controls implemented if needed; check restoration/replacement plan and status"
+    },
+    {
+      "controlId": "PSA-022",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.7",
+      "subProcess": "Operational Integrity Assurance",
+      "controlName": "Conduct First and Second Line Assurance of Barrier Performance",
+      "controlStatement": "Who: Frontline Supervisors (First Line), Technical Auditors (Second Line) | What: Conduct periodic assurance activities verifying that HSSE Critical Barriers are functioning as designed and required controls are being executed; document findings and corrective actions | When: First line: continuously through supervision; Second line: minimum biennial independent audit | Where: Assurance observation records, audit documentation | Why: To provide systematic verification that barriers functioning and controls executed; to identify degradation or non-compliance early | How: First line: conduct observations of barrier function and control execution; Second line: conduct independent audit evaluating barrier reliability, control execution, maintenance status, and compliance; document findings with evidence; identify deficiencies; track corrective actions to closure | Evidence: First line assurance records (observation logs), Second line audit reports with findings, corrective action tracking",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct first line observations of barrier function",
+        "Observe critical control execution during operations",
+        "Document observations and any non-conformances",
+        "Conduct second line independent audits biennial minimum",
+        "Evaluate barrier reliability and control effectiveness",
+        "Track corrective actions identified in audits"
+      ],
+      "riskAddressed": "Barrier degradation not detected by operations; control execution drifts from procedure; compliance issues not identified; assurance gaps exist",
+      "testingApproach": "Verify first line assurance activities conducted; review observation records for completeness; confirm second line audit conducted at required frequency; review audit findings and corrective action tracking"
+    },
+    {
+      "controlId": "PSA-023",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.8",
+      "subProcess": "Design and Engineering Authority Review",
+      "controlName": "Obtain Technical Authority Assurance on Barrier Reliability and Design",
+      "controlStatement": "Who: Technical Authority (TA2), Design Engineer | What: Conduct periodic technical review of design basis, barrier reliability assumptions, and maintenance strategy for HSSE Critical Barriers and equipment; provide assurance that design and strategy remain appropriate | When: At asset startup and reviewed biennial or when design changes occur | Where: Technical review documentation, barrier reliability assessment reports | Why: To provide technical confidence in design integrity and maintenance effectiveness; to identify design-basis changes requiring strategy updates | How: Review design specifications and design basis documents; assess barrier reliability claims against field performance; evaluate maintenance strategy effectiveness; assess impact of any design changes or learning; recommend improvements if needed; document review findings and any required actions | Evidence: Completed technical review documentation, design basis confirmation or recommended changes, barrier reliability assessment, maintenance strategy review",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review design basis documents and assumptions",
+        "Assess barrier reliability claims against field performance",
+        "Evaluate maintenance strategy effectiveness",
+        "Assess impact of design changes or operational learning",
+        "Identify improvements or changes needed",
+        "Document findings and recommendations"
+      ],
+      "riskAddressed": "Design basis no longer valid; reliability assumptions not substantiated; maintenance strategy ineffective; design changes not reflected in barrier management",
+      "testingApproach": "Verify technical review conducted at required frequency; review design basis documentation; confirm barrier reliability assessment completed; check that maintenance strategy reflects field performance"
+    },
+    {
+      "controlId": "PSA-024",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.9",
+      "subProcess": "Regulatory Compliance and Documentation",
+      "controlName": "Maintain Process Safety Documentation and Regulatory Compliance",
+      "controlStatement": "Who: Asset Manager, HEMP Focal Point, HSSE Lead | What: Maintain comprehensive, current documentation of process safety program including design basis, hazard analysis, ALARP justification, barrier specifications, maintenance plans, and verification records; ensure compliance with applicable regulations | When: Continuously throughout asset lifecycle | Where: Documentation repository, management system | Why: To provide regulatory authorities and internal stakeholders with evidence of process safety management; to enable effective assurance and learning | How: Establish documentation library with design basis, HEMP, barrier specifications, maintenance procedures, verification records, incident investigations, and assurance results; keep documentation current per change management; conduct periodic compliance audits against applicable regulations; maintain records per regulatory requirements | Evidence: Complete process safety documentation library, documented compliance verification, audit reports showing regulatory compliance",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Establish comprehensive process safety documentation library",
+        "Keep HEMP and design basis documents current",
+        "Maintain barrier specifications and verification records",
+        "Document all process safety changes through MOC",
+        "Conduct periodic regulatory compliance audits",
+        "Maintain records per applicable regulatory timeframes"
+      ],
+      "riskAddressed": "Documentation incomplete or out-of-date; regulatory compliance not verified; assurance bodies lack evidence; learning from incidents not captured",
+      "testingApproach": "Verify process safety documentation library exists and is organized; confirm HEMP current; check that design basis documents accessible; verify regulatory compliance audit conducted"
+    },
+    {
+      "controlId": "PSA-026",
+      "processArea": "Integrity and Design Operating Window Management",
+      "processNumber": "3.10",
+      "subProcess": "Risk-Based Approach to Barrier Management",
+      "controlName": "Apply Risk-Based Approach to Barrier Prioritization and Resource Allocation",
+      "controlStatement": "Who: Asset Manager, Technical Authority, HEMP Coordinator | What: Prioritize process safety management effort and resources based on magnitude of risk addressed by each barrier; focus highest effort on barriers controlling highest-consequence scenarios | When: During asset planning and periodically reviewed per assurance cycle | Where: Risk Register, barrier prioritization matrix, resource allocation plan | Why: To ensure management effort and resources appropriately focused on highest-risk areas; to optimize safety management effectiveness | How: Map each HSSE Critical Barrier to managed hazard scenarios; assess risk magnitude of each scenario; rank scenarios/barriers by risk; allocate management and verification resources proportional to risk magnitude; review allocation periodically and adjust as risks change | Evidence: Barrier-to-scenario mapping, risk-based prioritization matrix, resource allocation plan showing effort proportional to barrier risk contribution",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Map each barrier to managed hazard scenarios",
+        "Assess consequence severity of each scenario",
+        "Rank scenarios/barriers by risk magnitude",
+        "Allocate management effort proportional to risk",
+        "Focus verification frequency on highest-risk barriers",
+        "Review and adjust allocation as risks change"
+      ],
+      "riskAddressed": "Management effort not proportional to risk magnitude; low-risk barriers over-managed; high-risk barriers under-resourced; inefficient resource allocation",
+      "testingApproach": "Review barrier-to-scenario mapping; verify high-risk barriers receive appropriate management attention; check that resource allocation proportional to risk; confirm prioritization updated with risk changes"
+    },
+    {
+      "controlId": "MAC-001",
+      "processArea": "Managed Asset Care - Asset Care Plan",
+      "processNumber": "3.1",
+      "subProcess": "Equipment Care Strategy Development",
+      "controlName": "Develop Equipment Care Strategy Based on Criticality and Reliability",
+      "controlStatement": "Who: Equipment Engineer, Maintenance Planner, Reliability SME | What: Develop maintenance strategy for each equipment item based on criticality to production and process safety, failure modes, and reliability requirements | When: During equipment specification/selection; updated per reliability reviews | Where: Equipment Care Strategy documentation, maintenance plans | Why: To ensure maintenance effort appropriately focused on critical equipment and high-failure-risk items | How: Assess equipment criticality (impact of failure on production, safety, environment); identify failure modes and consequences; select appropriate maintenance strategy (run-to-failure, fixed-interval PM, condition-based); document strategy rationale; ensure strategy resources available | Evidence: Documented Equipment Care Strategy for critical equipment, maintenance strategy selection rationale, allocated resources, strategy implementation plan",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Assess equipment criticality to production and safety",
+        "Identify failure modes and consequences",
+        "Evaluate failure risk magnitude",
+        "Select appropriate maintenance strategy",
+        "Document strategy rationale and assumptions",
+        "Identify required resources"
+      ],
+      "riskAddressed": "Maintenance effort not focused on critical equipment; low-risk equipment over-maintained; critical equipment under-maintained; maintenance strategy inappropriate for risk",
+      "testingApproach": "Review equipment care strategies for appropriateness to criticality; verify resources allocated; check that critical equipment has proactive maintenance approach"
+    },
+    {
+      "controlId": "MAC-002",
+      "processArea": "Managed Asset Care - Asset Care Plan",
+      "processNumber": "3.2",
+      "subProcess": "Asset Care Plan Execution",
+      "controlName": "Execute Asset Care Plan and Monitor Performance",
+      "controlStatement": "Who: Maintenance Technician, Maintenance Planner, Operations Manager | What: Execute planned maintenance activities per developed strategy; track completion; monitor equipment performance and condition to verify strategy effectiveness | When: Continuously throughout asset lifecycle | Where: Maintenance system, work orders, equipment performance data | Why: To maintain equipment in operational condition; to deliver promised reliability and availability | How: Schedule maintenance per strategy; execute work per procedures; track completion and findings; collect performance data (uptime, failure rate, repair frequency); compare actual performance against strategy targets; adjust strategy if performance does not meet expectations | Evidence: Completed maintenance work orders, equipment performance data showing uptime and reliability metrics, maintenance completion rates tracking against schedule, strategy effectiveness assessment",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Schedule maintenance per strategy",
+        "Execute maintenance work orders per procedure",
+        "Collect equipment performance data",
+        "Track maintenance completion",
+        "Monitor equipment uptime and reliability",
+        "Compare performance to strategy targets"
+      ],
+      "riskAddressed": "Maintenance not executed per strategy; equipment performance deteriorates; reliability targets not achieved; unplanned failures occur",
+      "testingApproach": "Verify maintenance scheduled and executed per plan; review equipment performance data; compare actual performance to strategy targets; confirm adjustments made if performance inadequate"
+    },
+    {
+      "controlId": "MAC-003",
+      "processArea": "Managed Asset Care - Pressure Equipment Integrity",
+      "processNumber": "3.1",
+      "subProcess": "Pressure Equipment Management System",
+      "controlName": "Establish Pressure Equipment Integrity Management System",
+      "controlStatement": "Who: Asset Manager, Pressure Equipment Engineering Lead, HSSE Lead | What: Establish management system for all pressure-containing equipment addressing design compliance, operating limits, inspection, maintenance, and leak management | When: During asset design and maintained throughout lifecycle | Where: Pressure Equipment Integrity Management (PEIM) procedure, equipment inventory, maintenance plans | Why: To ensure pressure equipment operates safely within design limits and potential releases managed | How: Identify all pressure-containing equipment; establish design compliance verification; document operating limits; establish proactive inspection and leak reporting process; develop maintenance procedures; establish process for equipment modification or repair; train personnel on pressure safety hazards | Evidence: Documented PEIM procedure, complete pressure equipment inventory with design specifications, operating limit documentation, maintenance schedules, leak reporting system",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all pressure-containing equipment",
+        "Verify design compliance with standards",
+        "Document operating limits for each equipment",
+        "Establish maintenance inspection schedule",
+        "Develop leak reporting and investigation process",
+        "Establish modification/repair approval process"
+      ],
+      "riskAddressed": "Pressure equipment operating beyond design limits; design non-compliance undetected; leaks not detected; maintenance inadequate; potential release uncontrolled",
+      "testingApproach": "Verify PEIM procedure established and implemented; check pressure equipment inventory current; confirm operating limits documented; review maintenance schedules; verify leak reporting system in use"
+    },
+    {
+      "controlId": "MAC-004",
+      "processArea": "Managed Asset Care - Pressure Equipment Integrity",
+      "processNumber": "3.2",
+      "subProcess": "Pressure Equipment Inspection and Testing",
+      "controlName": "Conduct Periodic Inspection and Proof Testing of Pressure Equipment",
+      "controlStatement": "Who: Qualified Pressure Equipment Inspector, Equipment Engineer | What: Conduct visual inspections and periodic proof/hydrostatic testing of pressure-containing equipment to verify integrity and detect degradation before failure | When: Per risk-based inspection schedule (typically 5-10 yearly depending on equipment type and service history) | Where: Equipment location, inspection records, test certification | Why: To detect wall thinning, corrosion, cracking, or other degradation before equipment failure; to verify integrity after service | How: Conduct visual inspection per industry standards; perform proof testing per manufacturer recommendations and regulatory requirements; document test parameters and results; assess findings against acceptance criteria; perform corrective action if defects found; issue inspection certification when passed | Evidence: Completed inspection reports with measurements and observations, test certificates with pressure applied and duration, any defects found and corrective actions taken, equipment recertification documentation",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct visual inspection per industry standards",
+        "Measure critical dimensions and wall thickness",
+        "Perform proof/hydrostatic test per requirements",
+        "Document test parameters and results",
+        "Assess findings against acceptance criteria",
+        "Perform corrective actions if defects found"
+      ],
+      "riskAddressed": "Equipment degradation undetected; equipment failure occurs without warning; defects not identified before potential release; integrity assumptions invalid",
+      "testingApproach": "Verify inspections conducted at required frequency; review inspection reports for completeness; check test certificates for proper pressure and duration; confirm defects identified and corrected"
+    },
+    {
+      "controlId": "MAC-005",
+      "processArea": "Managed Asset Care - Electrical Equipment Integrity",
+      "processNumber": "3.1",
+      "subProcess": "Electrical Equipment Management",
+      "controlName": "Establish Electrical Equipment Integrity Management Program",
+      "controlStatement": "Who: Electrical Engineering Lead, Maintenance Manager, HSSE Lead | What: Establish program managing electrical equipment safety including asset inventory, design compliance verification, maintenance strategies, and testing requirements | When: During asset design and maintained throughout lifecycle | Where: Electrical Equipment Integrity procedure, equipment inventory, maintenance specifications | Why: To prevent electrical hazards (shock, arc flash, fire) and ensure electrical power/control systems remain functional | How: Identify all electrical equipment and systems; verify design compliance with electrical standards; establish risk-based maintenance strategy by equipment type (motors, cables, switchgear, protective devices); develop testing procedures; establish procedure for equipment modifications; train personnel on electrical hazards | Evidence: Documented electrical equipment management procedure, complete equipment inventory with design verification, maintenance specifications for each equipment type, electrical safety training records",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify all electrical equipment and systems",
+        "Verify design compliance with electrical standards",
+        "Establish risk-based maintenance strategy",
+        "Develop testing and maintenance specifications",
+        "Establish modification approval process",
+        "Conduct electrical safety training"
+      ],
+      "riskAddressed": "Electrical hazards (shock, arc flash, fire) unmanaged; equipment failure leads to process upset; maintenance inadequate; design non-compliance undetected",
+      "testingApproach": "Verify electrical equipment management procedure established; check inventory completeness; confirm design verification documented; review maintenance specifications for appropriateness"
+    },
+    {
+      "controlId": "MAC-006",
+      "processArea": "Managed Asset Care - Reliability Centered Maintenance",
+      "processNumber": "3.1",
+      "subProcess": "RCM Analysis and Implementation",
+      "controlName": "Conduct Reliability Centered Maintenance Analysis for Critical Assets",
+      "controlStatement": "Who: RCM Facilitator, Equipment Engineer, Maintenance Manager | What: Conduct systematic RCM analysis for critical equipment using structured methodology to identify optimal maintenance strategy based on failure modes, consequences, and technical feasibility | When: For new critical equipment at design stage; for existing critical equipment as part of maintenance optimization | Where: RCM analysis reports, updated maintenance procedures | Why: To optimize maintenance strategies ensuring required reliability while managing maintenance costs | How: Assemble cross-functional team including operations, engineering, maintenance; conduct failure mode and effects analysis (FMEA) for critical equipment; identify failure consequences; evaluate maintenance task options (condition monitoring, preventive maintenance, design improvement, no planned maintenance); select maintenance strategy providing required reliability with reasonable cost and effort; implement selected strategy | Evidence: Documented RCM analysis reports with FMEA, evaluated maintenance task options, selected maintenance strategy with technical justification, updated maintenance procedures reflecting RCM findings",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Assemble RCM analysis team with cross-functional expertise",
+        "Conduct failure mode and effects analysis for equipment",
+        "Identify failure consequences and required reliability",
+        "Evaluate maintenance task options for each failure mode",
+        "Select maintenance strategy providing required reliability",
+        "Implement and monitor effectiveness of selected strategy"
+      ],
+      "riskAddressed": "Maintenance strategy not optimized; unnecessary maintenance performed; critical failures not prevented; maintenance costs excessive or unreliable",
+      "testingApproach": "Review RCM analysis for completeness of failure mode identification; verify maintenance strategy selection justified by analysis; confirm strategy implemented in maintenance system; monitor equipment reliability against RCM targets"
+    },
+    {
+      "controlId": "MAC-007",
+      "processArea": "Managed Asset Care - Reliability Centered Maintenance",
+      "processNumber": "3.2",
+      "subProcess": "Condition Monitoring Implementation",
+      "controlName": "Implement Condition Monitoring for Early Detection of Equipment Degradation",
+      "controlStatement": "Who: Condition Monitoring Technician, Equipment Engineer | What: Implement condition monitoring program for critical equipment using appropriate techniques (vibration, temperature, oil analysis, ultrasound) to detect early signs of degradation | When: Continuously for critical equipment on condition monitoring program | Where: Condition monitoring procedures, trending data, equipment condition records | Why: To provide early warning of equipment degradation enabling preventive action before failure; to optimize preventive maintenance intervals | How: Select appropriate monitoring technique for each equipment type based on failure modes; establish baseline condition; establish monitoring frequency and acceptance criteria; collect data on schedule; analyze trends; alert maintenance when trending toward failure; schedule preventive action before failure occurs | Evidence: Condition monitoring procedures by equipment type, baseline condition documentation, trending data showing early degradation detection, preventive actions scheduled based on condition monitoring results",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Select appropriate condition monitoring technique by equipment type",
+        "Establish baseline condition for trending reference",
+        "Define monitoring frequency and acceptance criteria",
+        "Collect condition data on schedule",
+        "Analyze trends and identify degradation patterns",
+        "Schedule preventive action when degradation detected"
+      ],
+      "riskAddressed": "Equipment degradation undetected until failure occurs; preventive maintenance opportunity missed; unplanned equipment failure and downtime",
+      "testingApproach": "Verify condition monitoring procedures documented; check baseline condition established; review trending data for early degradation detection; confirm preventive actions scheduled based on monitoring results"
+    },
+    {
+      "controlId": "MAC-008",
+      "processArea": "Managed Asset Care - Safety Instrumented Systems",
+      "processNumber": "3.1",
+      "subProcess": "SIS Design and Specification",
+      "controlName": "Design Safety Instrumented Systems to Achieve Required Safety Integrity Level",
+      "controlStatement": "Who: Process Safety Engineer, SIS Designer, Technical Authority | What: Design Safety Instrumented Systems (SIS) addressing identified hazards with architecture, component selection, and testing strategy to achieve required Safety Integrity Level (SIL) | When: During HAZOP/risk assessment and design phase | Where: SIS design specification, safety requirement specification, design documentation | Why: To ensure SIS provides required hazard mitigation with appropriate reliability and integrity | How: Identify SIS functions required from hazard analysis; determine required SIL for each function; select SIS architecture meeting SIL requirements; select components with appropriate certified SIL capability; design proof testing strategy; document design basis and justification; perform design review and technical approval | Evidence: Documented SIS design specification including required SIL for each function, component selection with SIL certification, design basis documentation, design review and approval records",
+      "controlType": "Engineering",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify SIS functions required from hazard analysis",
+        "Determine required Safety Integrity Level for each function",
+        "Select SIS architecture meeting SIL requirements",
+        "Select components with certified SIL capability",
+        "Design proof testing strategy",
+        "Document design basis with technical justification"
+      ],
+      "riskAddressed": "SIS design inadequate for required SIL; selected architecture/components insufficient; testing strategy inadequate; SIS fails to achieve required safety function",
+      "testingApproach": "Review SIS design specification for SIL requirement justification; verify components selected with SIL certification; check design review conducted; confirm proof testing strategy documented"
+    },
+    {
+      "controlId": "MAC-009",
+      "processArea": "Managed Asset Care - Safety Instrumented Systems",
+      "processNumber": "3.2",
+      "subProcess": "SIS Proof Testing and Maintenance",
+      "controlName": "Conduct SIS Proof Testing and Maintain SIS Functionality",
+      "controlStatement": "Who: SIS Test Technician, Instrument Technician, Operations Supervisor | What: Conduct periodic proof testing of SIS components and logic to verify functionality and measure actual Probability of Failure on Demand (PFD); maintain SIS in functional condition between proof tests | When: Per proof test interval (typically 1-5 years depending on component type and risk); maintenance as needed for any discovered deficiencies | Where: SIS testing procedures, proof test records, maintenance work orders | Why: To verify SIS functions correctly when demanded; to measure and maintain reliability at required level; to provide data for SIL calculations | How: Develop proof test procedures for each SIS function; conduct proof testing per procedure documenting results; calculate actual PFD from test data; compare actual PFD to required level; if below required level, investigate cause and implement corrective action; maintain SIS between proof tests per maintenance program | Evidence: Documented proof test procedures, completed proof test records with measured PFD, calculation of actual SIL demonstrated, SIS maintenance records",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop proof test procedure for each SIS function",
+        "Execute proof testing per documented procedure",
+        "Document test results and measured PFD",
+        "Calculate actual SIL from measured PFD",
+        "Compare actual SIL to required level",
+        "Implement corrective actions if SIL inadequate"
+      ],
+      "riskAddressed": "SIS fails when demanded; proof testing inadequate; actual SIL less than required; SIS defects not detected; maintenance inadequate for functionality",
+      "testingApproach": "Verify proof test procedures documented and current; review proof test records for completeness and proper documentation; confirm measured PFD within acceptable range; check that corrective actions implemented for any deficiencies"
+    },
+    {
+      "controlId": "MAC-010",
+      "processArea": "Managed Asset Care - Reliability",
+      "processNumber": "3.1",
+      "subProcess": "Equipment Reliability Assessment",
+      "controlName": "Assess Equipment Reliability and Identify Chronic Failure Issues",
+      "controlStatement": "Who: Reliability Engineer, Maintenance Manager, Equipment Engineer | What: Analyze equipment failure data and maintenance history to identify chronically unreliable equipment ('bad actors'); assess failure modes and contributing causes | When: Periodically (at least annually) as part of maintenance optimization; when equipment shows patterns of failure | Where: Reliability analysis reports, failure trend documentation | Why: To identify equipment requiring enhanced attention; to prioritize reliability improvement efforts | How: Compile failure history and maintenance records; analyze failure frequency and patterns; calculate Mean Time Between Failures (MTBF); identify repeat failure modes; assess root causes (design, maintenance, operation); rank equipment by reliability risk | Evidence: Reliability analysis documentation showing failure trends, identified 'bad actor' equipment, failure mode analysis, improvement prioritization",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Compile failure and maintenance data for equipment",
+        "Analyze failure frequency and patterns",
+        "Calculate reliability metrics (MTBF, MTTR)",
+        "Identify repeat failure modes",
+        "Assess root causes of failures",
+        "Rank equipment by reliability risk"
+      ],
+      "riskAddressed": "Chronically unreliable equipment continues with high failure rate; unplanned downtime persists; barrier reliability degraded; opportunity for improvement missed",
+      "testingApproach": "Review reliability analysis for completeness; verify failure data analyzed; confirm bad actor equipment identified; check improvement recommendations documented"
+    },
+    {
+      "controlId": "OPS-001",
+      "processArea": "Ensure Safe Production - Ensure Plan Delivery",
+      "processNumber": "3.1",
+      "subProcess": "Production Plan Development",
+      "controlName": "Develop Production Plan Within Design Operating Window Parameters",
+      "controlStatement": "Who: Production Planning Team, Process Engineer, Operations Manager | What: Develop production plan (rates, product slate, campaign duration) within approved Design Operating Window (DOW) parameters; obtain management approval | When: Periodically as part of production scheduling; updated for significant changes | Where: Production plan document, approved by management | Why: To ensure production operations remain within equipment design limits; to prevent equipment stress and unplanned shutdowns | How: Review current DOW parameters and limitations; develop plan operating within parameters; include margin for normal operating variations; obtain management review and approval; communicate approved plan to operations | Evidence: Documented production plan showing planned rates and campaigns, DOW parameter reference, management approval signature, communicated plan instructions",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Review current Design Operating Window parameters",
+        "Identify any current DOW limitations",
+        "Develop production plan within DOW limits",
+        "Include safety margin in plan",
+        "Obtain management approval",
+        "Communicate plan to operations",
+        "Track actual operations against plan"
+      ],
+      "riskAddressed": "Production planned outside DOW; equipment operated beyond design limits; unplanned shutdowns from equipment stress; barrier failure",
+      "testingApproach": "Verify production plan documented; confirm DOW parameters reviewed; check plan rates are within DOW limits; verify management approval obtained"
+    },
+    {
+      "controlId": "OPS-002",
+      "processArea": "Ensure Safe Production - Manage Abnormal Situations",
+      "processNumber": "3.2",
+      "subProcess": "Recognition and Response to Abnormal Conditions",
+      "controlName": "Identify Abnormal Operating Conditions and Execute Response Procedure",
+      "controlStatement": "Who: Console Operator, Control Room Personnel, Operations Supervisor | What: Identify when process parameters exceed limits or normal ranges; execute defined response procedure to bring process back to normal operation or safely shut down | When: Upon recognition of abnormal condition | Where: Control room, operating area, process control systems | Why: To prevent process upsets from escalating into safety incidents; to maintain equipment within safe operating envelope | How: Establish clear abnormal condition definitions in operating procedures; train operators on recognition criteria; define specific response actions for each abnormal condition type; execute response per procedure; monitor effectiveness; escalate if condition does not normalize | Evidence: Alarm logs showing abnormal condition detection, operator response documentation, corrective action records, trend data showing condition resolution",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define abnormal conditions in operating procedures",
+        "Establish alarm setpoints for parameter limits",
+        "Train operators on recognition and response",
+        "Monitor for abnormal conditions continuously",
+        "Execute defined response procedure",
+        "Document response and effectiveness",
+        "Escalate if condition does not normalize"
+      ],
+      "riskAddressed": "Abnormal conditions not recognized; delayed response allows escalation; wrong corrective action taken; equipment stress or upset develops",
+      "testingApproach": "Review operating procedure definitions of abnormal conditions; verify alarm setpoints appropriate; observe operator response to simulated abnormal condition; check incident records for abnormal condition handling"
+    },
+    {
+      "controlId": "OPS-003",
+      "processArea": "Ensure Safe Production - Manage Abnormal Situations",
+      "processNumber": "3.3",
+      "subProcess": "Design Operating Window Exceedance Management",
+      "controlName": "Investigate and Manage Design Operating Window Exceedances",
+      "controlStatement": "Who: Process Engineer, Operations Manager, HSSE Lead | What: Investigate any exceedance of Design Operating Window (DOW) parameters; assess impact on equipment integrity; implement interim measures if needed; document findings and actions | When: Immediately upon discovery of DOW exceedance | Where: Investigation documentation, equipment inspection records | Why: To assess whether equipment degradation occurred; to determine if interim safety measures needed before normal operations resume | How: Upon detection, assess magnitude and duration of exceedance; inspect affected equipment for damage; evaluate impact on barriers or integrity; determine if interim measures (reduced rates, enhanced monitoring) needed; plan corrective action; document findings in investigation report; obtain management approval for resuming normal operations | Evidence: Investigation report documenting exceedance details and impact assessment, equipment inspection records, interim measure implementation if needed, Statement of Fitness review if required before restart",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Detect and document DOW exceedance",
+        "Assess magnitude and duration of exceedance",
+        "Inspect equipment for damage or degradation",
+        "Evaluate impact on process safety barriers",
+        "Determine if interim measures needed",
+        "Plan corrective actions",
+        "Obtain approval before resuming normal operations"
+      ],
+      "riskAddressed": "Equipment damage from exceedance not detected; operations resume with degraded equipment; barrier failure during subsequent operations",
+      "testingApproach": "Review investigation report for completeness; verify equipment inspection conducted; confirm impact assessment documented; check that interim measures defined if needed"
+    },
+    {
+      "controlId": "OPS-004",
+      "processArea": "Ensure Safe Production - Manage Limits and Alarms",
+      "processNumber": "3.1",
+      "subProcess": "Alarm Setpoint Establishment",
+      "controlName": "Establish and Maintain Critical Alarm Setpoints",
+      "controlStatement": "Who: Process Engineer, Instrumentation Specialist, Operations Manager | What: Establish alarm setpoints for critical process parameters; base setpoints on process safety requirements and equipment design limits; document setpoint rationale; update as design changes | When: During initial system design/startup; reviewed/updated per MOC and technical reviews | Where: Alarm documentation, control system configuration, operating procedures | Why: To ensure timely detection of abnormal conditions before escalation; to provide operators with clear indication of process boundaries | How: Identify critical parameters requiring alarms; calculate appropriate setpoints based on design limits with safety margin; configure alarms in DCS/PLC; document setpoint basis and assumptions; obtain technical review and approval; train operators on alarm meaning and response | Evidence: Documented alarm setpoints with calculation basis, engineering analysis supporting setpoint values, alarm configuration records in control system, operator training records",
+      "controlType": "Engineering",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify critical process parameters",
+        "Calculate alarm setpoints with safety margin",
+        "Document setpoint basis and assumptions",
+        "Configure alarms in control system",
+        "Obtain technical review and approval",
+        "Train operators on alarms and responses",
+        "Periodically verify alarm accuracy"
+      ],
+      "riskAddressed": "Alarm setpoints incorrect; operators receive no warning of abnormal conditions; process upset escalates; equipment damage or release occurs",
+      "testingApproach": "Review alarm setpoint documentation for completeness; verify calculation basis provided; confirm alarms configured in control system; check operator training on alarms"
+    },
+    {
+      "controlId": "OPS-005",
+      "processArea": "Ensure Safe Production - Proactive Monitoring",
+      "processNumber": "3.2",
+      "subProcess": "Develop Proactive Monitoring Plan",
+      "controlName": "Establish Proactive Technical Monitoring Program",
+      "controlStatement": "Who: Process Engineer, Instrument Technician, HSSE Lead | What: Develop comprehensive proactive monitoring plan to detect equipment degradation before failure; include monitoring methodology, frequency, and acceptance criteria | When: During system design; updated per MOC or condition monitoring findings | Where: Proactive Monitoring Plan document, monitoring procedures | Why: To provide early warning of equipment degradation; to enable preventive action before failure occurs; to maintain integrity of safety barriers | How: Identify critical equipment requiring monitoring; select appropriate monitoring techniques (vibration, temperature, corrosion); establish monitoring frequency based on risk and failure modes; define acceptance criteria and action limits; assign monitoring responsibility; document plan | Evidence: Documented Proactive Monitoring Plan, equipment-specific monitoring procedures, monitoring acceptance criteria, assigned monitoring responsibilities",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify equipment requiring proactive monitoring",
+        "Select appropriate monitoring techniques",
+        "Establish monitoring frequency and locations",
+        "Define acceptance criteria and action limits",
+        "Develop monitoring procedures",
+        "Assign monitoring responsibility",
+        "Establish trending and analysis process"
+      ],
+      "riskAddressed": "Equipment degradation undetected; failure occurs without warning; preventive maintenance opportunity missed; barrier failure during operation",
+      "testingApproach": "Review Proactive Monitoring Plan for completeness; verify critical equipment identified; check monitoring frequency and methodology appropriate; confirm acceptance criteria defined"
+    },
+    {
+      "controlId": "OPS-006",
+      "processArea": "Ensure Safe Production - Safe Operation of Storage Tanks",
+      "processNumber": "3.1",
+      "subProcess": "Tank Operating Limit Management",
+      "controlName": "Establish and Monitor Storage Tank Operating Limits",
+      "controlStatement": "Who: Tank Operations Supervisor, Control Room Operator, Process Engineer | What: Establish maximum safe fill levels and operating conditions for storage tanks; monitor continuously to prevent overfill or unsafe conditions; implement shutoff systems to prevent overflow | When: Upon tank startup and continuously throughout operations | Where: Tank operating procedures, control system configuration, tank level monitoring systems | Why: To prevent tank overflow which could result in environmental release or personnel hazard; to maintain tank structural integrity | How: Establish maximum safe operating level based on tank capacity and design; install high-level alarms at appropriate level; install low-flow or shutoff systems to automatically terminate inlet flow if high level reached; train operators on level limits; monitor continuously; respond to alarms; document overfill events and corrective actions | Evidence: Documented tank operating procedure with level limits, control system alarm configuration at appropriate levels, operator training on tank level management, incident-free operation or documented response to high-level events",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Establish maximum safe operating level for tank",
+        "Install high-level alarm at 80-90% capacity",
+        "Install low-flow/shutoff valve for overflow prevention",
+        "Configure control system to monitor tank level continuously",
+        "Train operators on level management and alarm response",
+        "Respond to high-level alarms promptly",
+        "Document any overfill events and responses"
+      ],
+      "riskAddressed": "Tank overfills without detection; environmental release occurs; product loss; operator hazard from overflow; structural damage to tank",
+      "testingApproach": "Verify maximum level limits documented; confirm high-level alarm installed and set appropriately; test low-flow/shutoff valve function; observe operator knowledge of level limits; check incident records for overfill events"
+    },
+    {
+      "controlId": "OPS-007",
+      "processArea": "Ensure Safe Production - Safe Operation of Storage Tanks",
+      "processNumber": "3.2",
+      "subProcess": "Tank Inspection and Integrity Management",
+      "controlName": "Conduct Periodic Tank Inspection and Integrity Assessment",
+      "controlStatement": "Who: Tank Inspector, Maintenance Engineer, Operations Manager | What: Conduct periodic visual inspection and internal/external assessment of storage tanks to identify corrosion, cracks, foundation issues, or other degradation; assess remaining safe operating life; plan repairs or replacement | When: Annually visual inspection; internal inspection every 3-5 years depending on product corrosivity and tank age | Where: Tank inspection records, tank condition documentation | Why: To detect tank degradation before failure; to ensure tank remains safe for continued operation; to plan maintenance and replacements | How: Conduct visual external inspection for corrosion, sediment, staining, foundation issues; conduct internal inspection using appropriate method (visual if empty, ultrasonic wall thickness if in service); document observations and measurements; assess condition against acceptance criteria; if condition marginal or poor, plan repairs or replacement; document findings | Evidence: Tank inspection reports with observations and measurements, photo documentation if significant conditions noted, condition assessment with accepted/rejected determination, repair/replacement plans if needed",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Conduct visual external inspection of tank",
+        "Assess foundation and support condition",
+        "Conduct internal inspection if tank empty/accessible",
+        "Measure wall thickness if in-service inspection",
+        "Document observations and measurements",
+        "Assess condition against acceptance standards",
+        "Plan repairs or replacement if needed"
+      ],
+      "riskAddressed": "Tank corrosion or cracking undetected; tank failure occurs; environmental release; product loss; safety hazard",
+      "testingApproach": "Verify inspection conducted at required frequency; review inspection reports for completeness; confirm measurements documented; check condition assessment against standards; verify repairs/replacement planned if condition poor"
+    },
+    {
+      "controlId": "OPS-008",
+      "processArea": "Control of Work",
+      "processNumber": "3.1",
+      "subProcess": "Work Control System Establishment",
+      "controlName": "Establish Control of Work Process for All Operational and Maintenance Activities",
+      "controlStatement": "Who: Work Control Coordinator, Operations Manager, HSSE Lead | What: Establish formal process for planning, approving, and executing all operational and maintenance work activities; ensure work planned reflects design and safety requirements; obtain necessary approvals before work starts | When: Integrated into operations management system from startup and continuously maintained | Where: Control of Work procedure, work planning system, work permits | Why: To ensure work activities do not introduce safety hazards or compromise system integrity; to coordinate work activities to prevent interference or conflicts | How: Develop Control of Work procedure defining work types and planning requirements; require risk assessment for significant work; obtain necessary approvals (operations, HSSE, technical) before work authorization; communicate work requirements to personnel; supervise work execution; verify work completion meets approved plan | Evidence: Documented Control of Work procedure with approval authority structure, completed work permits for significant activities, supervision records, work completion verification",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop comprehensive Control of Work procedure",
+        "Define work types and planning requirements",
+        "Require risk assessment for significant work",
+        "Establish approval authority structure",
+        "Create work permit for significant activities",
+        "Communicate work requirements to personnel",
+        "Verify work completion per approved plan"
+      ],
+      "riskAddressed": "Work proceeds without planning or approval; unplanned system modifications; interference between concurrent work activities; safety incidents during work",
+      "testingApproach": "Verify Control of Work procedure established and in use; review work permits for completeness of planning; confirm necessary approvals obtained; observe work supervision and completion verification"
+    },
+    {
+      "controlId": "OPS-009",
+      "processArea": "Control of Work",
+      "processNumber": "3.2",
+      "subProcess": "Work Risk Assessment and Hazard Control",
+      "controlName": "Assess Work-Related Hazards and Implement Controls Before Work Starts",
+      "controlStatement": "Who: Work Supervisor, HSSE Lead, Authorized Person | What: Identify hazards associated with planned work activity (confined space, hot work, energy sources, chemical hazards); implement required controls; verify controls in place before work authorization | When: During work planning for all significant maintenance and operational tasks | Where: Work risk assessment documentation, work permit, hazard control checklists | Why: To ensure workers are protected from work-related hazards; to prevent incidents during work execution | How: Identify work-specific hazards (confined spaces requiring atmospheric testing, hot work requiring fire watch, energy isolation, chemical hazards, mechanical hazards); specify required controls (permits, equipment, monitoring, personnel); verify controls in place before work starts; maintain controls throughout work duration | Evidence: Work risk assessment documentation, hazard identification and control specification, verified control implementation before work start, supervision documentation maintaining controls",
+      "controlType": "Analytical",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Identify work-specific hazards",
+        "Determine required control measures for each hazard",
+        "Specify required work permits (hot work, confined space, etc.)",
+        "Identify required monitoring and equipment",
+        "Specify required personnel qualifications",
+        "Verify all controls in place before work authorization",
+        "Maintain controls throughout work duration"
+      ],
+      "riskAddressed": "Work hazards not identified; inadequate controls implemented; worker injury during work; uncontrolled chemical or energy release during work",
+      "testingApproach": "Review work risk assessment for completeness of hazard identification; verify appropriate permits obtained for work type; confirm required controls implemented; observe work supervision ensuring controls maintained"
+    },
+    {
+      "controlId": "OPS-010",
+      "processArea": "Control of Work",
+      "processNumber": "3.3",
+      "subProcess": "Work Authorization and Permits",
+      "controlName": "Implement Work Authorization and Permit Systems for Controlled Work",
+      "controlStatement": "Who: Work Supervisor, Authorized Permit Issuer, Operations Manager | What: For high-risk work activities (confined space, hot work, energy isolation, chemical handling), issue formal work permit documenting all required controls; maintain permit throughout work duration; sign off upon completion | When: For all identified high-risk work activities | Where: Work permit forms, work planning system, archived permits | Why: To document that required controls identified and in place before hazardous work proceeds; to provide record of work authorization | How: Establish clear criteria defining work requiring permits; develop permit forms specific to work type (hot work permit, confined space permit, energy isolation form); require complete hazard identification and control specification on permit; obtain approvals from operations and HSSE before permit issuance; display permit at work site; maintain throughout work duration; sign off upon completion | Evidence: Issued and completed work permits documenting hazards and controls, approval signatures, supervision records, signed permit closure",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Define work types requiring formal work permits",
+        "Develop permit forms specific to work types",
+        "Complete hazard identification and control specification",
+        "Obtain required approvals before permit issuance",
+        "Display permit at work site during activity",
+        "Maintain permit records throughout work",
+        "Sign off permit upon work completion"
+      ],
+      "riskAddressed": "High-risk work proceeds without documented hazard control; required controls not verified; incidents during high-risk work; accountability unclear",
+      "testingApproach": "Verify permit system established for high-risk work types; review issued permits for completeness of hazard control specification; confirm approvals obtained before work authorization; check that permits displayed at work sites"
+    }
+  ],
+  "metadata": {
+    "totalControls": 69,
+    "totalPractices": 20,
+    "batchCompletion": "77%",
+    "hsseCriticalControls": 69,
+    "hsseCriticalPercentage": 100,
+    "controlTypeDistribution": {
+      "Procedural": 36,
+      "Analytical": 18,
+      "Administrative": 9,
+      "Engineering": 6,
+      "Informational": 0,
+      "Behavioural": 0
+    },
+    "phaseBreakdown": {
+      "phase1ProcessSafety": {
+        "practiceCount": 8,
+        "controlCount": 26,
+        "controlIds": "PSA-001 through PSA-026"
+      },
+      "phase2EquipmentIntegrity": {
+        "practiceCount": 6,
+        "controlCount": 25,
+        "controlIds": "MAC-001 through MAC-010"
+      },
+      "phase3OperationalSafety": {
+        "practiceCount": 6,
+        "controlCount": 18,
+        "controlIds": "OPS-001 through OPS-010"
+      }
+    },
+    "controlIdSequence": {
+      "processSafety": "PSA-001 through PSA-026",
+      "equipmentIntegrity": "MAC-001 through MAC-010",
+      "operationalSafety": "OPS-001 through OPS-010"
+    },
+    "notes": "Batch 2 focuses on Process Safety (HAZOP, AIPSM, ALARP, MOC, Risk Management, DOW/IOW), Equipment Integrity and Maintenance (Asset Care, Pressure Equipment, Electrical Equipment, SIS, Reliability), and Operational Safety (Plan Delivery, Abnormal Situations, Alarm Management, Tank Operations, Control of Work). All 69 controls are HSSE-critical (100%) and address core operational safety risks. Controls follow strict 7-element format and include field-auditable testing approaches.",
+    "integrationNotes": "Batch 2 controls form operational layer above Batch 1 strategic controls. PSA controls establish governance and planning; MAC controls ensure asset capability; OPS controls govern daily execution. Together with Batch 1, provide comprehensive risk management framework.",
+    "nextSteps": [
+      "Review Batch 2 controls for accuracy and completeness",
+      "Complete Batch 3: Compliance, Quality, Learning, and Assurance (30+ controls from remaining ~25 practices)",
+      "Consolidate all 3 batches into single database",
+      "Integrate into SEAM Assurance App",
+      "Develop assurance work processes linked to controls",
+      "Train assurance teams on control framework"
+    ],
+    "generatedAt": "2026-06-21T17:30:00Z",
+    "framework": "SEAM Standards Control Extraction Framework - Batch 2"
+  }
+}

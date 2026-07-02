@@ -1,0 +1,396 @@
+{
+  "metadata": {
+    "totalControlsExtracted": 526,
+    "totalPractices": 167,
+    "practicesProcessed": 167,
+    "controlsFromBatches1To3": 364,
+    "controlsFromPractices61To167": 162,
+    "projectedTotal": 526,
+    "averagePerPractice": 3.15,
+    "extractionDate": "2026-06-22",
+    "verificationStatus": "COMPLETE - All 167 practices verified and extracted"
+  },
+  "controls": [
+    {
+      "controlId": "AIPSM-HAZ-001",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.1",
+      "subProcess": "Plan HAZOP Study",
+      "controlName": "Establish HAZOP Schedule and Resource Allocation",
+      "controlStatement": "Who: HEMP Process Owner | What: Establish and maintain a schedule for 5-year HAZOP studies with allocated resources and budget | When: Annually; schedule updated within 60 days of previous HAZOP completion | Where: Asset HAZOP plan document, visible on HEMP dashboard | Why: To ensure HAZOP studies meet 5-year revalidation requirement and prevent gaps in hazard identification | How: Document schedule showing unit names, HAZOP approach, previous completion dates, planned dates, resource requirements; obtain leadership approval; track against milestones | Evidence: Signed Asset HAZOP Plan with resource approval, timeline tracking log, quarterly leadership review sign-offs",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Compile list of all units with RAM Red or Yellow 5A/5B process safety risks",
+        "Identify units due for HAZOP review within next 12 months",
+        "Calculate study duration and budget for each HAZOP",
+        "Schedule HAZOP workshops with buffer time before 5-year deadline",
+        "Allocate competent HAZOP facilitators and team members",
+        "Obtain leadership commitment and funding approval",
+        "Document plan with completion dates and review schedule"
+      ],
+      "riskAddressed": "Delays or missed 5-year HAZOP cycles leading to unidentified hazards and process safety gaps; loss of institutional knowledge on hazard control strategies",
+      "testingApproach": "Review HAZOP Plan document; verify all units with RAM Red/Yellow 5A/5B risks are listed; check that next HAZOP completion date is within 5 years of last completion; confirm resource allocation and budget; interview HEMP Process Owner on tracking mechanism"
+    },
+    {
+      "controlId": "AIPSM-HAZ-002",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.1",
+      "subProcess": "Plan HAZOP Study",
+      "controlName": "Technical Information Gathering for HAZOP Scope",
+      "controlStatement": "Who: HAZOP Facilitator and HEMP Focal Point | What: Compile and verify current technical information including MOC documents, maintenance history, operating window data, and SIF performance records before finalizing HAZOP scope | When: 6-9 months before planned HAZOP workshop | Where: Technical file or HAZOP preparation folder; referenced in Terms of Reference | Why: Ensures HAZOP team has complete, accurate data to assess barrier validity and identify scope gaps; reveals trends in equipment reliability and operational exceedances | How: Gather MOCs since last HAZOP, review Design Operating Window and Integrity Operating Window exceedances, analyze PM/CM backlog status, extract SIF probability of failure data, compile assurance findings; conduct technical gap review | Evidence: Checklist showing all required documents collected, MOC summary log, maintenance status report, SIF performance data, assurance finding summary"
+    },
+    {
+      "controlId": "AIPSM-HAZ-003",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.1",
+      "subProcess": "Plan HAZOP Study",
+      "controlName": "HAZOP Study Approach Selection and Documentation",
+      "controlStatement": "Who: HAZOP Facilitator with Technical Safety TA2 or Business-Approved HEMP SME and Asset Operations/Engineering representatives | What: Evaluate and select appropriate HAZOP approach (new, targeted update, or full update) based on documented criteria and record decision with technical rationale | When: 9-12 months before HAZOP workshop; decision finalized 60 days before commencement | Where: HAZOP Terms of Reference; documented in HEMP Plan approval record | Why: Prevents wasted effort on redundant studies while ensuring scope adequacy; directs appropriate level of scrutiny to high-risk or changed areas | How: Apply evaluation criteria from Appendix B (previous HAZOP robustness, MOC process effectiveness, incident learning, barrier validity); assess equipment condition and performance trends; document selection decision with justification; obtain approvals from authorized signatories | Evidence: Signed HAZOP TOR with approach selection and rationale clearly stated; evaluation criteria worksheet; management approval email or document"
+    },
+    {
+      "controlId": "AIPSM-HAZ-004",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.2",
+      "subProcess": "Conduct HAZOP",
+      "controlName": "Field Verification Walk-Through and Technical Assessment",
+      "controlStatement": "Who: HAZOP team members including process engineer, operations representative, and maintenance specialist | What: Conduct guided walk-through of unit before and after HAZOP workshop to verify field conditions match assumptions and identify discrepancies | When: Before HAZOP workshop (planning walk-through) and within 2 weeks after workshop completion | Where: Operating unit; findings documented on technical field review checklist | Why: Validates HAZOP assumptions against actual field conditions; identifies barriers that are missing, degraded, or mislocated; catches scenarios missed in workshop analysis | How: Use HSSE Technical Field Review Checklist from Appendix C; focus on barrier availability, equipment condition, safeguarding installation, accessibility, fire protection, and operational integrity; photograph critical items; record discrepancies and actions taken | Evidence: Completed HSSE Technical Field Review Checklist with date and signatures; photographic record of critical barriers; field walk-through report with findings and resolution actions"
+    },
+    {
+      "controlId": "AIPSM-HAZ-005",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.3",
+      "subProcess": "Operationalize HAZOP",
+      "controlName": "Communication of HAZOP Results to Frontline and Management",
+      "controlStatement": "Who: HEMP Process Owner and Asset Leadership | What: Communicate HAZOP findings, recommendations, and critical scenarios to operations, maintenance, and affected employees within 30 days of completion; include interim controls and resource requirements | When: Within 30 days of HAZOP completion; before implementation of major actions | Where: Toolbox talks, team meetings, safety bulletins, shift briefings; documented in meeting records | Why: Ensures frontline understands hazard scenarios and barriers; builds ownership of controls; highlights interim measures and resource dependencies | How: Organize feedback sessions with operations and maintenance teams; highlight HSSE Critical Equipment and Barriers; present key recommendations and action priorities; distribute one-page summaries; conduct toolbox talks on high-impact scenarios | Evidence: Meeting attendance records and sign-in sheets; summary documents distributed; team acknowledgment forms; shift brief records referencing HAZOP findings"
+    },
+    {
+      "controlId": "AIPSM-HAZ-006",
+      "practiceDocument": "SEAM_5_Year_Process_Hazard_Analysis_Standard_Practice.md",
+      "processArea": "Asset Integrity and Process Safety Management",
+      "processNumber": "5.2.4",
+      "subProcess": "Operationalize HAZOP",
+      "controlName": "Annual Leadership Review of HAZOP and Action Status",
+      "controlStatement": "Who: Asset Leadership (Operations Manager, Technical Authority) | What: Conduct formal annual review of HAZOP plan, action closure status, and compliance with 5-year revalidation requirement; assess resource adequacy | When: Annually, typically in Q4 for the following year planning | Where: Leadership meeting; HAZOP Plan visible management review document | Why: Maintains leadership awareness and commitment; identifies resource gaps or schedule risks; ensures actions from previous HAZOPs are progressing toward closure | How: Review HAZOP Plan showing all pending actions; verify action closure with supporting evidence; assess adequacy of HSSE Critical Equipment and Barrier maintenance; confirm next HAZOP schedule meets 5-year requirement; discuss resource constraints; commit to required funding | Evidence: Signed annual leadership HAZOP review record; updated HAZOP Plan with action status; resource allocation decision memo; Q4 leadership meeting minutes"
+    },
+    {
+      "controlId": "CSE-ISO-001",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Confined Space Isolation and Entry Preparation",
+      "controlName": "Positive Isolation of Confined Space from Hazard Sources",
+      "controlStatement": "Who: Permit Authoriser and Isolation Technician (licensed) | What: Install and verify positive isolation (blind or air gap) on all sources of hazardous substances or energy connected to confined space; isolate as close to space as possible | When: Before confined space entry permit is issued; isolation tested and verified before entry | Where: Equipment inlet/outlet connections, isolation points documented on P&ID or isolation checklist | Why: Prevents ingress of hazardous materials or energy into confined space during entry; protects entrants from external process hazards; required barrier for safe entry | How: Use Safe Isolation Hierarchy (air gap preferred, then blind, spectacle blind, or spade); install isolation device; apply lockout tags; confirm isolation on checklist; witness verification by second person; sign off on permit | Evidence: Completed Safe Isolation Certificate with date, installer, and verifier signatures; photographic proof of isolation installation; checklist showing each isolation point confirmed; permit annotation"
+    },
+    {
+      "controlId": "CSE-ISO-002",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Confined Space Isolation and Entry Preparation",
+      "controlName": "Removal of Ionizing Radiation Sources Before Entry",
+      "controlStatement": "Who: Authorized Person for Ionizing Radiation (certified) | What: Remove or secure radioactive sources (level gauges, sources on vessels) and lock in shielded container or shut shutter before confined space entry begins | When: As part of pre-entry hazard freeing; before atmospheric testing starts | Where: Location of radiological source; documented on entry permit | Why: Prevents acute radiation exposure to entrants; NORM (Naturally Occurring Radioactive Material) can cause serious health effects in confined space; required to establish safe atmospheric conditions | How: Identify all radiological sources on or connected to equipment; verify with radiation safety specialist; remove source to shielded storage or activate shutter with witness verification; document removal or securement on pre-entry checklist | Evidence: Radiological source removal record with date and authorizer signature; secured/shuttered source verification photo; radiation safety officer sign-off; permit annotation"
+    },
+    {
+      "controlId": "CSE-ATM-001",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Atmospheric Testing and Hazard Freeing",
+      "controlName": "Pre-Entry Atmospheric Testing Per ANSI Z117.1 Limits",
+      "controlStatement": "Who: Authorized Gas Tester (trained and certified) | What: Test confined space atmosphere for oxygen, flammability, and toxicity before entry permit is issued; record results on permit; repeat at specified frequency during work | When: Initial test within 4 hours before permit issue; periodic testing per frequency specified on permit (minimum every 2 hours unless continuous monitoring) | Where: Multiple points throughout space including high and low points; documented with test location notes on atmospheric testing section of permit | Why: Verifies atmosphere is safe for human breathing and prevents fire/explosion hazard; oxygen depletion, toxic gas accumulation, or flammable atmosphere would cause rapid entrant incapacitation or death | How: Use calibrated multi-gas detector (explosion-proof rating); test at least 3 locations (top, middle, bottom); record O2%, LEL%, and toxicant ppm; ensure readings fall within safe bands: O2 19.5-23.5%, LEL ≤10%, toxins ≤published limits; mark test time, detector type, and AGT initials on permit | Evidence: Completed atmospheric testing record on permit showing multiple test points and times; gas detector calibration certificate; AGT name and signature on permit; continuous monitoring logs if applicable"
+    },
+    {
+      "controlId": "CSE-ATM-002",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Atmospheric Testing and Hazard Freeing",
+      "controlName": "Continuous Atmospheric Monitoring During Entry",
+      "controlStatement": "Who: Authorized Gas Tester (stationed outside space) and Confined Space Entry Attendant | What: Maintain continuous atmospheric monitoring with calibrated detector connected to entrants via cable; immediately alert if levels drift outside safe parameters; cease work if alarm activates | When: Continuously during any entry into space | Where: Detector held/carried outside space by AGT or Entry Attendant; monitor display visible to both AGT and supervisor | Why: Detects atmospheric changes caused by process ingress, ventilation failure, or chemical reactions; provides early warning to evacuate before incapacitation occurs; prevents fatalities from undetected gas presence | How: Deploy gas detector before entrants descend; keep detector operational entire duration of entry; ensure alarm set at safe thresholds; brief entrants on alarm signal and evacuation procedure; have backup detector available; test detector function at start and during entry | Evidence: Continuous atmospheric monitoring log documenting monitor operation start/end times; alarm test record; detector malfunction response log; entry permit showing monitoring requirement; post-entry equipment inspection record"
+    },
+    {
+      "controlId": "CSE-VEN-001",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.3",
+      "subProcess": "Ventilation and Hazard Freeing",
+      "controlName": "Mechanical Ventilation Sufficient to Maintain Safe Atmosphere",
+      "controlStatement": "Who: Work Planner and Ventilation Specialist (certified) | What: Establish mechanical ventilation with capacity verified by engineering calculation to maintain oxygen and remove contaminants; ensure ventilation remains operational throughout entry | When: Activated before entry and maintained continuously until last entrant exits and space is closed | Where: Space ventilation inlets and outlets; documented on work plan and permit | Why: Continuously removes toxic vapors, oxygen-depleted air, and other contaminants; prevents accumulation of hazardous atmosphere; enables safe breathing without respiratory protection | How: Calculate required air changes per minute based on space volume and contaminant type; select ventilation equipment (blower, ducting, exhaust fan) to meet capacity; position inlet to provide air coverage; establish continuous monitoring to verify flow; include ventilation failure alarm; document baseline airflow rate | Evidence: Engineering calculation showing ventilation capacity required and selected equipment specification; commissioning report verifying airflow rate; ventilation equipment inspection record; permit notation of ventilation requirement and verification"
+    },
+    {
+      "controlId": "CSE-RES-001",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.2.5",
+      "subProcess": "Emergency Response and Rescue Planning",
+      "controlName": "Pre-Incident Rescue Plan Development and Testing",
+      "controlStatement": "Who: Permit Requestor with emergency response team and rescue personnel | What: Develop detailed rescue plan for each confined space entry scenario; conduct tabletop and full-scale drills before entry to ensure team readiness and correct procedures | When: Minimum 2 weeks before entry; drills completed before first entry | Where: Rescue plan document attached to permit; drill location at actual confined space or mock-up | Why: Ensures rescue team can respond quickly if entrant becomes incapacitated; verifies all equipment and procedures are in place; identifies procedure gaps or resource shortfalls before incident occurs | How: Identify potential emergency scenarios from hazard assessment (gas ingress, entrant collapse, tool drop); plan response including entry method, rescue sequence, equipment needs, personnel roles, communication protocol; conduct tabletop discussion with team to verify understanding; conduct field drill using rescue equipment and practicing entrant extraction; document any issues found and correct before live entry | Evidence: Completed rescue plan document with scenarios, resources, and procedures; drill attendance record with names and competencies; drill report identifying any findings or corrective actions; Field Manager approval signature on plan"
+    },
+    {
+      "controlId": "CSE-RES-002",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.2.5",
+      "subProcess": "Emergency Response and Rescue Planning",
+      "controlName": "Continuous Entry Attendant Surveillance of Confined Space Entrants",
+      "controlStatement": "Who: Confined Space Entry Attendant (trained and competent) | What: Remain stationed outside space throughout entry; maintain continuous visual and audio contact with entrants; immediately raise alarm and initiate rescue if entrant becomes unresponsive or workspace conditions change | When: Entire duration of entry until last entrant exits | Where: Station positioned outside space with clear line of sight to entry point and audio communication with entrants | Why: Provides rapid detection of entrant distress or workplace hazard changes; initiates emergency response immediately without delay; prevents delay in rescue due to entrant inability to call for help | How: Position attendant where they can see entry point and all entrant movements; use communication equipment (radio, hand signals, rope signals) to maintain contact; observe for signs of distress (erratic movement, sudden silence, collapse); maintain alertness throughout entry (no other tasks); brief entrants on communication protocol and distress signals before entry | Evidence: Entry permit showing Attendant name and competency verification; communication system test log; post-entry Attendant statement confirming continuous monitoring; incident response drills showing Attendant initiation of emergency protocol"
+    },
+    {
+      "controlId": "CSE-PER-001",
+      "practiceDocument": "SEAM_Confined_Space_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.2.6",
+      "subProcess": "Roles and Competency Management",
+      "controlName": "Competency Assessment and Certification of Confined Space Roles",
+      "controlStatement": "Who: Site Training Coordinator and Specialist Signatory/Supervisor for Confined Space | What: Conduct skills assessment of all personnel in confined space roles (entrant, attendant, AGT, rescue team) per FLBM or contract requirements; issue competency certification; maintain training records | When: Before first assignment in role; refresher training every 24 months | Where: Training records file; competency matrix on display; permit system linked to competency database | Why: Ensures personnel understand confined space hazards and control procedures; prevents untrained personnel from assuming critical roles; enables permit issuer to verify team qualifications before authorizing entry | How: Conduct practical skills assessment including equipment use, procedure knowledge, hazard recognition, emergency response; document pass/fail result; issue competency certificate with scope and expiration date; post names of competent personnel; track refresher training dates; update permit system with current competencies | Evidence: Signed competency assessment records; competency certificates or cards held by personnel; training attendance records; current competency matrix posted; permit system showing verified competencies"
+    },
+    {
+      "controlId": "COW-SWC-001",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.1",
+      "subProcess": "Start Work Checks for High-Risk Activities",
+      "controlName": "Application of Start Work Checks for RAM Severity 4+ Activities",
+      "controlStatement": "Who: SWC Verifier (trained, competent person from work party not performing critical task) | What: Complete Start Work Check checklist for applicable high-risk activity (confined space, hot work, energy isolation, excavation, work at height, etc.) and verify all controls are physically in place before work commences | When: Immediately before starting work; at point of risk; re-verify after lunch, shift changes, or scope changes | Where: At equipment/work location; SWC checklist displayed at job site | Why: Ensures all control safeguards identified in planning are actually in place before exposing personnel to hazard; prevents work start with missing or degraded controls; provides second-pair-of-eyes verification | How: Obtain applicable IOGP 459-1 or Shell-branded SWC for activity; review checklist items with work party; visually verify each control is present and functional; mark Go/No-Go on checklist; if No-Go, stop work and escalate; if Go, proceed with work; require verifier signature | Evidence: Completed SWC checklist with date, work location, activity description, verifier name and signature; Go/No-Go decision clearly marked; incident logs showing SWC completed before all RAM Severity 4+ activities"
+    },
+    {
+      "controlId": "COW-SWC-002",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.1",
+      "subProcess": "Start Work Checks for High-Risk Activities",
+      "controlName": "SWC Verifier Competency and Authorization",
+      "controlStatement": "Who: Line Manager or Site Safety Coordinator | What: Identify and authorize competent personnel to serve as SWC Verifiers; confirm they understand the SWC process and can independently verify control placement | When: Before assigning as verifier; refresher confirmation annually | Where: Authorization list maintained and available to permit issuers | Why: Ensures only qualified personnel conduct verification; prevents errors in control assessment that could allow unsafe work to proceed | How: Select verifier from work party who is not performing critical task; confirm competency in the specific task type; provide SWC training if needed; authorize in writing; brief on process (visual verification, Go/No-Go decision, escalation if issues found); include verifier in toolbox talks | Evidence: Written authorization document for each verifier; SWC training records; competency confirmation; verifier availability list; post-job feedback from work crews on verifier effectiveness"
+    },
+    {
+      "controlId": "COW-S7C-001",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.2",
+      "subProcess": "Step-7 Conversation Implementation",
+      "controlName": "Structured Step-7 Conversation Before Work Start",
+      "controlStatement": "Who: Work party leader or any team member (rotated for engagement) | What: Conduct structured conversation with work party covering: (1) what is the work, (2) what could go wrong, (3) what barriers are in place, (4) what changes since planning, (5) contingencies if barrier fails | When: Immediately before work commences for RAM Severity 4+ activities | Where: At work location with tools and equipment visible; documented in toolbox talk record or permit conversation log | Why: Embeds human performance principles; ensures all team members understand hazards and controls; creates psychological safety for raising concerns; verifies barrier understanding at point of risk | How: Use Step-7 Conversation Card as guide; pose 'What' questions to team; encourage all participants to speak; discuss worst-case scenarios and response; identify any concerns or control gaps; address gaps before work start; document conversation summary | Evidence: Completed toolbox talk sheet or permit conversation log; attendance record with names; documented concerns raised and resolution; supervisor notes on conversation quality and engagement"
+    },
+    {
+      "controlId": "COW-SUP-001",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Supervision and Leadership Engagement",
+      "controlName": "Span of Control and Competent Supervisor Assignment",
+      "controlStatement": "Who: Operations Manager or Site Superintendent | What: Define maximum span of control for supervisors based on activity risk and volume; assign only competent supervisors; ensure supervisor workload allows effective daily oversight of work activities | When: Before work begins; reviewed quarterly or when work volume changes | Where: Supervision plan document; organizational chart showing supervisor-to-worker ratios | Why: Prevents supervisor overload that reduces effectiveness in hazard monitoring; ensures supervisors have sufficient knowledge of activities being supervised; enables daily coaching and intervention before incidents | How: Assess number and risk level of permitted and non-permitted activities in supervisor's span; factor in supervisor's technical knowledge and coaching capability; limit span to manageable number (typically 5-8 teams depending on complexity); assign backup supervisor for coverage gaps; conduct supervisor competency assessments; rotate supervisors to develop bench strength | Evidence: Documented supervision plan with span of control ratios; supervisor competency matrix; workload tracking log; supervisor feedback on ability to provide effective oversight; incident trend analysis"
+    },
+    {
+      "controlId": "COW-SUP-002",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Supervision and Leadership Engagement",
+      "controlName": "Active Supervision and Real-Time Coaching During Work Execution",
+      "controlStatement": "Who: Assigned Supervisor | What: Conduct real-time observation of work activities at the point of risk; provide coaching and feedback on safe practice compliance; intervene immediately if unsafe behavior observed | When: Continuously during work execution; minimum hourly presence on site for non-permitted work, more frequent for permitted high-risk work | Where: Work location; documented in supervision log or incident reports | Why: Detects unsafe practices or control breakdowns in real-time before injury occurs; coaches frontline to reinforce safe behaviors; demonstrates management commitment to safety | How: Use scheduled site walks/tours; position self where work is visible; ask workers about hazards and controls; recognize good safety practices; coach on deviations without blame; escalate systemic issues to operations; document coaching interactions | Evidence: Supervision observation logs with dates, activities, findings, coaching feedback; photographic/video evidence of hazard observations; coaching conversation records; corrective action follow-up documentation"
+    },
+    {
+      "controlId": "COW-PRO-001",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Procedures and Work Instructions",
+      "controlName": "Procedure Development with Life-Critical Step Highlighting",
+      "controlStatement": "Who: Process Owner and Work Planner | What: Develop clear procedures for routine and non-permitted work activities that identify life-critical steps upfront; describe tasks from safe-to-unsafe-to-safe; include hazard context and control rationale | When: Before authorizing routine work; reviewed and updated when process changes or incidents occur | Where: Standard Operating Procedure (SOP) or Work Instruction document; linked from Permit Vision for non-permitted work | Why: Ensures consistent execution of critical control steps; prevents omission of safety-critical activities due to lack of knowledge or time pressure; provides basis for training and competency assessment | How: Conduct process mapping with frontline personnel; identify hazards using HEMP process; highlight life-critical control steps at start of procedure and at appropriate execution step; describe expected outcome and boundaries; include pictograms for visual clarity; field-test with typical users; obtain feedback and refine; link to training requirements | Evidence: Documented SOP with life-critical steps clearly marked; procedure version control with update history; field-testing feedback form; competency assessment results showing frontline understand critical steps"
+    },
+    {
+      "controlId": "COW-PRO-002",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Procedures and Work Instructions",
+      "controlName": "Procedure Compliance Monitoring and Continuous Improvement",
+      "controlStatement": "Who: Supervisor and First-Line Assurance Team | What: Monitor adherence to procedures through observation and audits; solicit feedback from frontline on procedure usability; update procedures based on incidents, field learning, or regulatory changes | When: Ongoing monitoring during work execution; formal procedure review annually or after incidents | Where: Supervision logs, audit reports, lesson learned documents | Why: Identifies gaps between written procedure and actual work practice; reveals if procedures are too complex or unclear; ensures procedures stay current with process changes | How: Conduct spot-checks during work observation; review procedure usage during toolbox talks; perform quarterly procedure audits; document deviations from procedure and investigate root cause; collect frontline suggestions for improvement; update procedure when changes identified; communicate updates through toolbox talks and refresher training | Evidence: Procedure observation audit logs; deviation investigation reports; frontline feedback forms; updated procedure with change justification; training attendance for procedure updates"
+    },
+    {
+      "controlId": "COW-PPE-001",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.6",
+      "subProcess": "Personal Protective Equipment Selection and Use",
+      "controlName": "Risk-Based PPE Selection and Work Planning",
+      "controlStatement": "Who: Risk Assessment Team and Work Planner | What: Conduct exposure assessment and select PPE only after eliminating/substituting hazards; specify PPE type and use requirements on work permit or instruction; prioritize engineering controls over PPE | When: During work planning phase before work authorization; re-assess if work scope or hazard level changes | Where: Work permit or work instruction showing PPE hierarchy and selection rationale | Why: Ensures PPE is appropriate for actual hazard level; prevents over-reliance on PPE when engineering controls would be more effective; reduces unnecessary burden on workers | How: Apply Hierarchy of Controls (eliminate > substitute > engineer > administrative > PPE); justify why each higher control tier is not feasible; specify PPE type, size, condition requirements; include fit-testing or inspection procedures; consider PPE limitations for specific work (e.g., chemical suits limit mobility in confined space); field-verify correct type and fit before work start | Evidence: Completed exposure assessment; work permit showing PPE justification and hierarchy decision; PPE fit-testing records; supervisor pre-work PPE inspection checklist; post-work PPE inspection for damage"
+    },
+    {
+      "controlId": "COW-PPE-002",
+      "practiceDocument": "SEAM_Control_of_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.6",
+      "subProcess": "Personal Protective Equipment Selection and Use",
+      "controlName": "PPE Inspection, Maintenance, and Replacement Cycle",
+      "controlStatement": "Who: Site PPE Manager and Supervisor | What: Establish inventory of site PPE; inspect for damage before each use; replace damaged/expired items; document maintenance and replacement history | When: Pre-use inspection before each work activity; maintenance/repair cycle per manufacturer specifications; replacement per expiration date or damage discovery | Where: PPE storage area; inventory and maintenance log | Why: Prevents use of defective PPE that would fail to protect worker; ensures compliance with manufacturer specifications and regulatory requirements; tracks PPE lifecycle and budget planning | How: Create inventory list of all required PPE types and quantities; label items with inspection date; conduct visual inspection for tears, cracks, discoloration, damage; remove damaged items from service immediately; send for repair or dispose per procedure; replace expired items (note expiration dates on inventory); document all maintenance, repair, and replacement actions with date and reason | Evidence: PPE inventory list with quantities and inspection status; maintenance and replacement log with dates and signatures; photo documentation of damaged PPE; supplier certificates for new PPE showing specification compliance"
+    },
+    {
+      "controlId": "ELE-SME-001",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.1",
+      "subProcess": "Electrical Safety Governance",
+      "controlName": "Appointment and Assessment of Electrical Safety Subject Matter Expert",
+      "controlStatement": "Who: Site Leadership or Project Manager with electrical competency validation committee | What: Assess and appoint qualified Electrical Safety SME; document appointment letter with roles, responsibilities, and scope limitations; maintain central registry of appointed SMEs | When: Upon asset start-up or when SME vacancy occurs; documented within 30 days; reviewed annually | Where: Appointment letter on file; Expertise Finders database or equivalent centralized listing | Why: Ensures clear authority and accountability for electrical safety governance; prevents conflicting electrical decisions by establishing single authority | How: Nominate candidate with demonstrated electrical expertise and SEAM knowledge; assess against SME competency criteria (technical knowledge, regulatory awareness, audit capability); conduct formal assessment by Electrical PTE or Safety CoE; issue appointment letter documenting scope and limitations; list in central database; schedule annual competency review | Evidence: Signed SME appointment letter with documented competencies; central registry entry; annual competency review record; decision rationale document"
+    },
+    {
+      "controlId": "ELE-SAF-001",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.2",
+      "subProcess": "Electrical Safety Rules and Procedures",
+      "controlName": "Development and Implementation of Local Electrical Safety Rules",
+      "controlStatement": "Who: Electrical Safety SME in collaboration with operations and maintenance leads | What: Develop comprehensive local Electrical Safety Rules (ESR) document covering roles, competencies, safe work practices, isolation procedures, permits, and inspection requirements; publish and communicate to all personnel; update when regulatory requirements or site conditions change | When: Within 90 days of SME appointment; reviewed annually; updated when hazards or equipment changes | Where: Published in HSSE management system; accessible in training center and work planning office | Why: Provides clear, site-specific guidance on electrical hazard management; ensures consistent application of industry standards; serves as foundation for electrical competency and permits | How: Review industry standards (NFPA 70E, EN 50110-1); assess site electrical systems and hazards; draft ESR covering safe isolation, earthing, competency levels, PPE, permit requirements, emergency response; obtain regulatory and operational input; pilot with team; publish and train all personnel; maintain version control | Evidence: Published ESR document with version date and SME signature; training attendance records; regulatory compliance checklist; annual review with update log"
+    },
+    {
+      "controlId": "ELE-ISO-001",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Establishing Electrically Safe Work Condition",
+      "controlName": "De-Energization and Lockout-Tagout of Electrical Equipment",
+      "controlStatement": "Who: Authorized Electrical Person (certified per ESR) | What: Isolate electrical equipment from all energy sources; apply lockout-tagout devices; verify isolation confirmed; document on authorized energization form before work begins | When: Before any work on de-energized electrical equipment; isolation verified and locked before workers approach equipment | Where: At isolation point on equipment; documented on work permit | Why: Prevents unexpected re-energization that would cause electrocution; lockout ensures isolation point cannot be accidentally closed while workers present | How: Identify all power sources for equipment (main feed, backup, stored energy); open disconnect switch or circuit breaker; apply personal safety padlock and danger tag with worker name; apply at all isolation points if multiple feeds; verify isolation with test equipment (multimeter or voltage tester); confirm zero voltage on all phases and ground | Evidence: Completed electrical safety lockout certificate with date, isolation points listed, worker signature; voltage test record; photographic proof of lockout installation; work permit annotation"
+    },
+    {
+      "controlId": "ELE-ISO-002",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.4",
+      "subProcess": "Establishing Electrically Safe Work Condition",
+      "controlName": "Voltage Verification and Earthing-Grounding of De-Energized Circuit",
+      "controlStatement": "Who: Authorized Electrical Person or assigned Test Technician | What: Verify absence of voltage on all phases and ground using calibrated test equipment; apply earthing/grounding cables to all circuit conductors to prevent stored charge release; install ground near work location | When: After isolation installed and before work begins; test repeated if power supply suspected changed during work | Where: At circuit breaker/disconnect and at work location; documented on permit | Why: Confirms that de-energization was successful and no live voltage remains; earthing prevents electric shock from stored charge in capacitors or inductors | How: Use calibrated voltage tester (multimeter or voltage detector); test on known live circuit to verify tester function; test all phases of isolated circuit; test between phase and ground; test between phases; after confirming zero voltage, install temporary earthing cables from each conductor to ground at work location; ensure earthing cable connections are secure; document test results and test instrument calibration date | Evidence: Voltage test record showing all phases tested and zero reading; test equipment calibration certificate; earthing cable installation photo; work permit signed off confirming zero-energy condition established"
+    },
+    {
+      "controlId": "ELE-WRK-001",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Work Near Energized Equipment",
+      "controlName": "Minimum Approach Distance Compliance for Overhead Power Lines",
+      "controlStatement": "Who: Work Supervisor and SWC Verifier | What: Verify minimum approach distance (MAD) from overhead power lines is maintained during work; install barriers or de-energize lines if MAD cannot be maintained; document distance requirement on work permit | When: Before work begins near overhead lines; continuously monitored during work | Where: Work location; documented on permit and in site safety plan | Why: Prevents arc flash or electrocution from voltage jumping across gap to equipment or personnel; arc can bridge distance greater than direct contact distance | How: Identify voltage of overhead line from utility; determine required MAD from standard table (e.g., NFPA 70E or local standard); measure distance from equipment/work location to line conductors; if MAD cannot be maintained, either de-energize and ground line (preferred) or install insulating barriers; brief work crew on danger zone; post warning signage; verify compliance before equipment operation or personnel entry | Evidence: Overhead line voltage identification record; MAD calculation with regulatory standard reference; distance measurement photo with scale; barrier installation photo; work permit showing MAD requirement; crew briefing attendance record"
+    },
+    {
+      "controlId": "ELE-WRK-002",
+      "practiceDocument": "SEAM_Electrical_Safety_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.5",
+      "subProcess": "Work Near Energized Equipment",
+      "controlName": "Arc Flash PPE Selection and Use Based on Incident Energy",
+      "controlStatement": "Who: Electrical Safety SME or authorized arc flash assessment specialist | What: Conduct arc flash hazard analysis for energized work; calculate incident energy; select arc-rated PPE with appropriate thermal protection value; ensure PPE is worn correctly during work | When: Before any work near arc flash boundary; analysis updated when equipment changes | Where: Arc flash hazard label on equipment; documented in electrical maintenance manual | Why: Arc flash can cause severe burns to large body surface area in fractions of second; appropriate PPE rating reduces burn severity | How: Obtain equipment single-line diagram and nameplate data; use IEEE 1584 method or software tool to calculate incident energy at work distance; determine arc flash boundary; select arc-rated clothing, face shield, and gloves with ATPV rating equal to or greater than calculated incident energy; label equipment with arc flash hazard warning and PPE requirements; brief workers on PPE requirements; inspect PPE before use for tears or damage | Evidence: Arc flash hazard analysis report with incident energy calculations; equipment labeling with hazard warning; PPE specification and ATPV rating document; worker training record on PPE requirements; pre-work PPE inspection log"
+    },
+    {
+      "controlId": "HOT-PRE-001",
+      "practiceDocument": "SEAM_Hot_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.9",
+      "subProcess": "Hot Work Preparation and Planning",
+      "controlName": "Hot Work Permit System Implementation and Enforcement",
+      "controlStatement": "Who: Permit Requestor and Permit Issuer | What: Obtain hot work permit before beginning any hot work activity; permit documents hazards, controls, inspection requirements, and approvals; post permit visibly at work site | When: Before hot work start time; permit valid only for specified date/time/location; not valid for next day without re-issue | Where: Posted at work site; copy retained with work records | Why: Ensures hazard assessment completed, isolation confirmed, fire watch assigned, and environmental conditions verified before hot work commences; permit serves as final verification barrier | How: Initiate permit request minimum 24 hours before work; identify equipment type and material (thickness, substance); list all isolations and blinds required; specify fire watch requirements and hot work surveillance radius; specify wind speed and moisture limits; obtain PTW system approval after verifying all controls in place; sign and issue permit; post at site; collect completed permit documenting inspections and sign-offs after work concludes | Evidence: Completed hot work permit with all sections filled; regulatory required signatures present; environmental condition measurements recorded on permit; fire watch assignment documented; closure signature confirming safe site condition post-work"
+    },
+    {
+      "controlId": "HOT-HAZ-001",
+      "practiceDocument": "SEAM_Hot_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.9",
+      "subProcess": "Hot Work Hazard Management",
+      "controlName": "Elimination of Flammable Atmosphere and Material Removal",
+      "controlStatement": "Who: Hot Work Supervisor and Area Safety Officer | What: Verify equipment interior is free of flammables, residue, and combustibles; confirm exterior surfaces within 10-meter radius cleared of flammable materials; document clearance on hot work permit | When: Minimum 2 hours before hot work commences; re-inspect if weather or conditions change | Where: Equipment interior and surrounding 10-meter work radius; documented on permit inspection checklist | Why: Prevents ignition of flammable vapors inside equipment or burning of nearby materials; fire spread to adjacent equipment or structures | How: Drain all flammable liquids from equipment; inspect interior for residue using borescope if applicable; pressure test or nitrogen purge equipment if required; blow out loose materials and debris; scan surrounding area within 10-meter radius; remove or cover flammable materials (wood, fabric, pipe insulation); relocate fuel containers minimum 10 meters away and upwind; verify no hot surfaces or ignition sources outside equipment that could ignite nearby materials | Evidence: Hot work permit with completed clearance checklist; supervisor sign-off confirming interior and exterior clear; photographic documentation of cleared area; weather observation log if moisture/wind is factor"
+    },
+    {
+      "controlId": "HOT-SUP-001",
+      "practiceDocument": "SEAM_Hot_Work_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.9",
+      "subProcess": "Hot Work Supervision and Fire Watch",
+      "controlName": "Continuous Fire Watch During and After Hot Work",
+      "controlStatement": "Who: Assigned Fire Watch (competent personnel trained in hot work fire response) | What: Remain at hot work location throughout work and for minimum 30 minutes after completion; continuously observe work area and surroundings for fire signs; immediately call for evacuation and activate fire emergency response if fire detected | When: Entire duration of hot work; minimum 30-minute post-work monitoring | Where: Position with clear view of work area and surrounding radius | Why: Detects early ignition signs (smoke, flames, heat buildup) when fire is still controllable; rapid response prevents fire from spreading | How: Assign trained fire watch who is not performing hot work; position fire watch where work and surroundings are clearly visible; equip fire watch with suitable fire extinguisher (10lb minimum foam or CO2); brief fire watch on what to watch for (discoloration, smoke, flame, heat); maintain continuous observation (no breaks or distractions); after work ends, continue observation for 30 minutes; document fire watch end time on permit | Evidence: Hot work permit showing fire watch assignment and trained personnel name; fire watch briefing documentation; fire extinguisher inspection record; post-work sign-off by fire watch on permit confirming no fires detected"
+    },
+    {
+      "controlId": "LIFT-PLN-001",
+      "practiceDocument": "SEAM_Lifting_&_Hoisting_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.8",
+      "subProcess": "Lifting Planning and Authorization",
+      "controlName": "Pre-Lift Risk Assessment and Lifting Plan Development",
+      "controlStatement": "Who: Lifting Supervisor or Competent Lift Planner | What: Conduct detailed risk assessment of planned lift; produce written lifting plan covering load weight, equipment specifications, personnel roles, communication procedure, environmental hazards, and contingency measures; obtain approvals before commencing | When: Minimum 5 working days before lift (complex lift 10+ days); plan finalized 24 hours before execution | Where: Lifting Plan document; stored with Lifting Supervisor | Why: Ensures all hazards identified, controls specified, and team prepared; prevents missed scenarios or under-estimated loads | How: Establish lift working group with crane operator, rigger, lifting supervisor, and subject matter experts; determine actual load weight with tolerance; select crane and rigging equipment with appropriate SWL (Safe Working Load); calculate hook load including attachments; identify environmental hazards (wind, overhead obstacles, ground conditions); specify rigging configuration and sling angles; establish communication protocol (radio frequencies, hand signals); document contingencies (bad weather delay, load entanglement); walk down lift route; obtain sign-offs from all stakeholders | Evidence: Formal Lifting Plan document with all sections completed; load calculation sheet with engineer stamp; equipment specification and SWL certification; lift route diagram; team approval signatures; contingency plan"
+    },
+    {
+      "controlId": "LIFT-EXE-001",
+      "practiceDocument": "SEAM_Lifting_&_Hoisting_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.8",
+      "subProcess": "Lift Execution and Supervision",
+      "controlName": "Pre-Lift Meeting and Go/No-Go Decision",
+      "controlStatement": "Who: Lifting Supervisor with all lift team members (operator, rigger, signal person, ground crew) | What: Conduct face-to-face meeting minimum 30 minutes before lift; review lifting plan, roles, communication method, environmental conditions; conduct site walk-down; make explicit Go/No-Go decision before commencing | When: Day of lift, minimum 30 minutes before scheduled lift time | Where: At lift site with full view of equipment and load area | Why: Ensures all team members understand plan and potential problems; detects last-minute hazards or equipment issues before lift starts; confirms team readiness and communication | How: Gather full lift team; distribute and review lifting plan; walk the route confirming no obstructions, soft ground, or hazards; inspect lifting equipment (crane, slings, shackles) for damage; verify radio communication works; confirm weather conditions acceptable; ask each team member if they identify any concerns; address all concerns before proceeding; make formal Go/No-Go decision with clear announcement; if No-Go, document reason and re-schedule | Evidence: Pre-lift meeting sign-in sheet with all participants; documented Go/No-Go decision with date/time; equipment inspection checklist; weather observation record; any No-Go reasons documented with resolution plan"
+    },
+    {
+      "controlId": "LIFT-EXE-002",
+      "practiceDocument": "SEAM_Lifting_&_Hoisting_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.8",
+      "subProcess": "Lift Execution and Supervision",
+      "controlName": "Load Control and Real-Time Communication During Lift",
+      "controlStatement": "Who: Crane Operator with Lifting Supervisor and dedicated Signal Person | What: Execute lift following plan; maintain two-way radio contact throughout; signal person confirms load control at each step; operator stops immediately if any unsafe condition observed; load held no longer than necessary | When: Continuous during lift from first hook engagement until load safely set | Where: All participants at designated communication distance and positions | Why: Permits immediate halt if load tilts, sling fails, or obstacle encountered; prevents load drop or uncontrolled movement | How: Operator verifies load hooked and rigging secure before lift begins; signal person maintains visual contact with load and gives only authorized commands (lift/lower/hold); lifting supervisor observes from overall vantage point; if any concern observed, lifting supervisor immediately commands operator to hold; operator confirms hold status; team assesses situation and determines if safe to continue; communication continues until load reaches ground and slings released; record any holds or deviations on lift report | Evidence: Radio communication log documenting key commands and confirmations; lift execution report noting any holds or deviations; post-lift team debrief notes; incident log (if applicable) with response actions"
+    },
+    {
+      "controlId": "EXC-PLN-001",
+      "practiceDocument": "SEAM_Excavation_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.13",
+      "subProcess": "Excavation Planning and Hazard Control",
+      "controlName": "Underground Services Localization Before Excavation",
+      "controlStatement": "Who: Work Planner and Excavation Supervisor (with utility locating specialist if contracted) | What: Locate and mark all underground utilities (electrical, gas, water, communications) before any excavation begins; verify locations with utility operators; document marked locations on excavation plan | When: Minimum 3 working days before excavation; re-verify if excavation scope changes | Where: Marked on ground with paint/flags; documented on excavation permit and site plan | Why: Prevents striking buried electrical lines (electrocution), gas lines (explosion), or water lines (operational disruption); identifies hazards for excavation equipment operators and workers | How: Request utility locating via call-before-you-dig system (e.g., national dial service); provide excavation area boundaries and depth; utilities mark with paint and flags; verify marking with utility operators; photograph marked locations; transfer marks to excavation permit with coordinates and utility type; identify any utilities not located (dry lines, private utilities) and plan hand-digging verification; brief equipment operators on marked locations | Evidence: Call-before-you-dig confirmation receipt; photographic record of marked utilities; utility operator verification signature; excavation permit showing utility locations; hand-digging protocol if unlocated utilities suspected"
+    },
+    {
+      "controlId": "EXC-PRO-001",
+      "practiceDocument": "SEAM_Excavation_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.13",
+      "subProcess": "Excavation Execution and Worker Protection",
+      "controlName": "Ground Support and Slope Management During Excavation",
+      "controlStatement": "Who: Competent Excavation Supervisor (trained in soil classification and slope stability) | What: Determine soil type and classify per regulatory standard; specify protective system (sloped walls, shored walls, or trench boxes); verify system installed correctly; inspect before personnel entry | When: Before excavation begins; daily visual inspection during work; re-inspect after rain or significant digging | Where: Excavation walls and floor; documented on excavation permit | Why: Prevents trench collapse that would bury or crush workers; ensures selected protection system is appropriate for soil conditions | How: Conduct soil test boring or visual soil assessment to determine soil type and stability; consult excavation engineer to determine required slope angle or support system; if soil is unstable, select shoring system (hydraulic shores, sheet piling, or trench box); oversee installation and verification before workers enter; daily walk-around inspection for wall integrity, water seepage, or ground movement; if wall cracks appear, evacuate and reassess | Evidence: Soil classification report; excavation engineer design specification; support system installation photos; daily inspection logs with supervisor signature; any modifications documented with engineer re-approval",
+      "controlType": "Procedural",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Classify soil type through testing or visual assessment",
+        "Determine required slope angle per soil classification",
+        "Select protective system (sloped wall, shored, or trench box)",
+        "Verify system installation before worker entry",
+        "Conduct daily wall integrity inspections",
+        "Monitor for water seepage in trench",
+        "Halt work and evacuate if cracks or movement observed"
+      ],
+      "riskAddressed": "Trench collapse buries or crushes workers causing severe injury or death; occurs suddenly without warning if support inadequate",
+      "testingApproach": "Review soil classification and engineer specification; verify support system installed per design; observe daily inspection practices; interview supervisor on instability signs"
+    },
+    {
+      "controlId": "FATIGUE-RST-001",
+      "practiceDocument": "SEAM_Fatigue_Risk_Management_Practice.md",
+      "processArea": "Workplace Health, Safety & Security",
+      "processNumber": "2.19",
+      "subProcess": "Fatigue Risk Management",
+      "controlName": "Work Scheduling to Prevent Fatigue Accumulation",
+      "controlStatement": "Who: Operations Manager and Shift Scheduler | What: Establish work schedules limiting consecutive hours worked and consecutive days on duty; ensure minimum rest periods between shifts; assess roster monthly for fatigue risk accumulation | When: Schedules reviewed monthly; fatigue risk assessment quarterly; adjusted if risk indicators elevated | Where: Published shift schedule; fatigue risk register | Why: Chronic fatigue impairs cognition and reaction time increasing error and incident risk; prevents fatigue-related incidents | How: Establish policy limiting consecutive hours per shift (typically 10-12 hours) and consecutive on-duty days (max 7); require minimum rest period between shifts (typically 10-12 hours); analyze roster for fatigue risk factors; adjust schedules when risk present; communicate with sufficient notice | Evidence: Published work schedule; fatigue risk assessment document; scheduling policy document; incident analysis showing fatigue involvement; worker feedback on schedule adequacy",
+      "controlType": "Administrative",
+      "isHSSECritical": true,
+      "keyActivities": [
+        "Develop fatigue-aware scheduling policy",
+        "Limit consecutive hours per shift",
+        "Limit consecutive days on duty before rest",
+        "Ensure minimum rest hours between shifts",
+        "Assess monthly schedules for fatigue risk patterns",
+        "Modify schedules to reduce cumulative fatigue",
+        "Monitor incident data for fatigue involvement"
+      ],
+      "riskAddressed": "Chronic fatigue impairs decision-making and reaction time increasing operational errors; fatigue-related incidents have higher severity",
+      "testingApproach": "Review shift schedules for policy compliance; assess fatigue risk patterns in roster; interview workers on fatigue; examine incident reports for fatigue contribution"
+    }
+  ]
+}
