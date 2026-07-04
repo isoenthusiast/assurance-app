@@ -1,8 +1,14 @@
 # SEAM Assurance App - Complete Design & Architecture Documentation
 
-**Last Updated:** June 30, 2026 (v1.8.0)  
+**Last Updated:** July 4, 2026 (v1.11.0)  
 **Status:** Production Ready with Data Management  
-**Database Version:** 1.8.0 (SQLite with Prisma ORM)
+**Database Version:** 1.11.0 (SQLite with Prisma ORM)
+
+> **What's new in v1.11.0 (2026-07-04):** Added `ControlSubProcess` many-to-many junction model (§3.3). Controls can now belong to multiple sub-processes (e.g. across different ISO standards) without duplication. The Process Details page (Tab 2) shows junction-linked controls, and the Edit Control modal includes a "Linked Sub-Processes" multi-select (§5.3). The Process Areas page control counts include junction links.
+
+> **What's new in v1.10.0 (2026-07-04):** Removed the legacy `AssessmentControl` junction table (v1.8.0) from the schema, database, and this document — `ControlAssignment` (v1.9.0) is now the sole Assessment↔Control junction (§16.5). Also rebaselined `prisma/migrations/` to a single clean `init` migration, replacing 17 mixed/out-of-order folders (§16.6).
+>
+> **What's new in v1.9.0 (doc reconciled with code on 2026-07-04):** The schema and app grew several subsystems the v1.8.0 doc did not cover. Added the **Control Effectiveness** subsystem (`ControlAssignment` model + `Effectiveness` enum), the **Findings & Actions** subsystem (`Finding` + `Action` models, `FindingSeverity` enum, human-readable `FID-XXXXXX` finding ids), and a CSV-driven **seed / reset pipeline** (`prisma/controls-data.ts`, `seed-controls.ts`, `reset-seed.ts`, plus `db:seed-controls` / `db:reset-seed` scripts). Also corrected the Prisma client output path, technology versions, and the enum count. See §3.2–3.3, §5.7, §6.10 and the changelog in §16.
 
 ---
 
@@ -24,13 +30,16 @@ The **SEAM Assurance App** is a gamified internal control testing platform desig
 
 | Layer | Technology | Version | Purpose |
 |-------|-----------|---------|---------|
-| **Framework** | Next.js | 14+ | App Router, server actions, hybrid rendering |
-| **Language** | TypeScript | Latest | Type-safe development |
+| **Framework** | Next.js | 16.2.9 | App Router, server actions, hybrid rendering |
+| **Language** | TypeScript | 5.x | Type-safe development |
 | **Database** | SQLite | 3.x | Self-contained, file-based, no external server |
-| **ORM** | Prisma | 5.x | Type-safe data access, migrations, introspection |
-| **Auth** | NextAuth.js | Latest | Session-based authentication with JWT |
-| **UI** | React 18+ | Latest | Component library, hooks |
-| **Styling** | Tailwind CSS | Latest | Utility-first CSS framework |
+| **DB Driver** | better-sqlite3 | 12.x | Synchronous SQLite driver used via Prisma driver adapter |
+| **ORM** | Prisma | 7.x | Type-safe data access, migrations, driver adapters (`@prisma/adapter-better-sqlite3`) |
+| **Auth** | NextAuth.js (Auth.js) | 5.x (beta) | Session-based authentication with JWT |
+| **UI** | React | 19.x | Component library, hooks |
+| **Styling** | Tailwind CSS | 4.x | Utility-first CSS framework |
+| **Validation** | Zod | 4.x | Server-action / API input validation |
+| **Seeding** | tsx scripts | — | CSV-driven control loader + full reset/reseed |
 | **Backup** | Node.js Scripts | CommonJS | Export/restore JSON-based data |
 
 ---
@@ -42,7 +51,7 @@ The **SEAM Assurance App** is a gamified internal control testing platform desig
 ```prisma
 generator client {
   provider = "prisma-client"
-  output   = ".prisma/client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -50,11 +59,14 @@ datasource db {
 }
 ```
 
-**Key Point:** Prisma generates client to custom directory `.prisma/client`. Backup/restore scripts import from this path.
+**Key Points (v1.9.0):**
+- The Prisma client is now generated to **`src/generated/prisma`** (imported as `../src/generated/prisma`). Application code imports the client from there via `src/lib/prisma.ts`. (A legacy `prisma/.prisma/client/` directory may still exist from an earlier generation but is not the active output.)
+- The `datasource` has **no inline `url`**; the connection is supplied at runtime through the **better-sqlite3 driver adapter** (`@prisma/adapter-better-sqlite3`) using `DATABASE_URL` from `.env` (`file:./dev.db`, resolved at the app root, not `prisma/`).
+- Seed/reset scripts (`prisma/seed*.ts`, `reset-seed.ts`) instantiate `PrismaClient` with `new PrismaBetterSqlite3({ url: process.env.DATABASE_URL })`.
 
 ---
 
-### 3.2 Enumerations (8 types)
+### 3.2 Enumerations (10 types)
 
 #### **Role**
 ```
@@ -103,6 +115,18 @@ Gamification motivators tied to badge earning and point transactions.
 Common | Uncommon | Rare | Epic | Legendary
 ```
 Achievement badge tiers.
+
+#### **Effectiveness** ⭐ NEW (v1.9.0)
+```
+Effective | NotEffective
+```
+Result of assessing a control's effectiveness within an assessment. Stored on `ControlAssignment.effective`; `null` means "Select One" / not yet assessed.
+
+#### **FindingSeverity** ⭐ NEW (v1.9.0)
+```
+Low | Medium | High | Serious
+```
+Severity classification for a Finding raised during an assessment.
 
 ---
 
@@ -180,6 +204,28 @@ model SubProcess {
 
 ---
 
+#### **ControlSubProcess** (Many-to-Many Junction) ⭐ NEW (v1.11.0)
+```prisma
+model ControlSubProcess {
+  id           String      @id @default(cuid())
+  controlId    String (FK)
+  subProcessId String (FK)
+  createdAt    DateTime    @default(now())
+  
+  // Relations
+  control      Control     @relation(..., onDelete: Cascade)
+  subProcess   SubProcess  @relation(..., onDelete: Cascade)
+  
+  @@unique([controlId, subProcessId])
+  @@index([controlId])
+  @@index([subProcessId])
+}
+```
+
+**Purpose:** Enables a Control to belong to multiple SubProcesses without duplicating the control record. The `Control.subProcessId` field remains the required "primary" home; this junction adds secondary linkages (e.g. the same control applies across ISO 9001, ISO 14001, and ISO 45001). Used in the Process Details page (Tab 2 edit modal) and counted in Process Areas page totals.
+
+---
+
 #### **Control** (28 Fields - Core Control Definition)
 ```prisma
 model Control {
@@ -231,7 +277,7 @@ model Control {
   createdAt          DateTime  @default(now())
   
   // Relations (DECOUPLED v1.8.0)
-  assessmentControls AssessmentControl[]
+  controlAssignments ControlAssignment[]                 // controls assigned + effectiveness
   templateLinkages   AssessmentTemplateControlLinkage[]
   subProcess         SubProcess @relation(...)
   processArea        ProcessArea @relation(...)
@@ -242,7 +288,7 @@ model Control {
 
 **Purpose:** Comprehensive control definition with 28 fields. Supports CSV import/export. See section 5.2 for full field documentation.
 
-**Key Change (v1.8.0):** Now links to assessments via `AssessmentControl` junction table (not via samples).
+**Key Change (v1.10.0):** Now links to assessments exclusively via the `ControlAssignment` junction table (not via samples). The earlier `AssessmentControl` junction table (v1.8.0) has been removed — see §16.5.
 
 ---
 
@@ -281,46 +327,47 @@ model Assessment {
   // Relations
   assessor           User @relation("AssessmentAssessor", ...)
   activityType       AssuranceActivityType @relation(...)
-  assessmentControls AssessmentControl[]
+  controlAssignments ControlAssignment[]   // controls assigned + effectiveness
   samples            Sample[]
+  findings           Finding[]             // ⭐ NEW v1.9.0
 }
 ```
 
 **Purpose:** Represents a single assessment instance with assigned controls and test samples.
 
-**Architecture (v1.8.0):**
-- `assessmentControls` → controls assigned to this assessment
+**Architecture (v1.8.0, junction consolidated in v1.10.0):**
+- `controlAssignments` → controls assigned to this assessment (+ effectiveness conclusion)
 - `samples` → evidence/test data collected independently
 - **Decoupled:** Changing controls doesn't delete samples
 
 ---
 
-#### **AssessmentControl** ⭐ Junction Table (v1.8.0)
+#### **ControlAssignment** — Control ↔ Assessment with Effectiveness
 ```prisma
-model AssessmentControl {
-  id           String @id @default(cuid())
-  assessmentId String (FK)
-  controlId    String (FK)
-  createdAt    DateTime @default(now())
-  
+model ControlAssignment {
+  id                 String         @id @default(cuid())
+  assessmentId       String (FK)
+  controlId          String (FK)
+  effective          Effectiveness? // null = "Select One" (not yet assessed)
+  effectiveUpdatedAt DateTime?      // set only when `effective` changes
+  createdAt          DateTime       @default(now())
+
   // Relations
-  assessment   Assessment @relation(..., onDelete: Cascade)
-  control      Control @relation(..., onDelete: Cascade)
-  
-  // Constraint
+  control            Control    @relation(..., onDelete: Cascade)
+  assessment         Assessment @relation(..., onDelete: Cascade)
+
   @@unique([assessmentId, controlId])
   @@index([assessmentId])
   @@index([controlId])
 }
 ```
 
-**Purpose:** Many-to-many relationship between Assessment and Control. Replaces direct `Sample.controlId` linking.
+**Purpose:** Assigns Controls to an Assessment from the FLA detail screen and records the assessor's **effectiveness conclusion** per control (`Effective` / `NotEffective`, or unset). `effectiveUpdatedAt` is stamped only when `effective` is changed, giving an audit point for when the conclusion was reached.
 
-**Key Benefits:**
-- ✅ Controls can belong to multiple assessments
-- ✅ Samples are independent (no cascading delete when controls change)
-- ✅ Supports flexible testing scenarios (multiple samples per assessment)
-- ✅ Clean separation of concerns
+**Behaviour:**
+- Adding/removing controls in the FLA UI creates/deletes `ControlAssignment` rows.
+- Editing the "Effective" dropdown calls `PUT /api/admin/control-assignments/[id]` (sets `effective` + `effectiveUpdatedAt`); an omitted field is never silently nulled.
+- Unassigning calls `DELETE /api/admin/control-assignments/[id]`.
 
 ---
 
@@ -348,7 +395,63 @@ model Sample {
 
 **Purpose:** Evidence/test record for an assessment. Completely decoupled from control selection.
 
-**Change (v1.8.0):** Removed `controlId` field. Control associations managed via `AssessmentControl`.
+**Change (v1.8.0):** Removed `controlId` field. Control associations managed via the assessment↔control junction (`ControlAssignment` as of v1.10.0).
+
+**Change (v1.9.0):** A Sample can now be the source of one or more `Finding` records (`findings Finding[]`).
+
+---
+
+#### **Finding** ⭐ NEW (v1.9.0) — Assessment Finding
+```prisma
+model Finding {
+  id           String          @id           // human-readable "FID-XXXXXX" (not a cuid)
+  assessmentId String (FK)                    // required
+  sampleId     String? (FK)                   // optional — the sample it was observed from
+  description  String
+  details      String?
+  controlIds   String?                        // controls implicated (delimited string)
+  risks        String?
+  repeat       Boolean         @default(false) // repeat finding?
+  severity     FindingSeverity
+  createdAt    DateTime        @default(now())
+
+  // Relations
+  assessment   Assessment @relation(..., onDelete: Cascade)
+  sample       Sample?    @relation(..., onDelete: SetNull)
+  actions      Action[]
+
+  @@index([assessmentId])
+  @@index([sampleId])
+}
+```
+
+**Purpose:** A finding raised during an assessment. Uses a **running human-readable id** in the `FID-XXXXXX` convention (e.g. `FID-000001`) generated in application code (`src/lib/findings.ts` → `generateFindingId()`), which scans existing ids for the highest suffix and increments — remaining correct even if earlier findings were deleted. A finding is always tied to an Assessment and optionally to the specific Sample it came from (deleting that sample sets `sampleId` to null rather than cascading).
+
+---
+
+#### **Action** ⭐ NEW (v1.9.0) — Remediation Action
+```prisma
+model Action {
+  id                      String    @id @default(cuid())
+  findingId               String (FK)
+  actionDescription       String
+  actionDetails           String?
+  actionParty             String?           // who is responsible
+  auditee                 String?
+  createdDate             DateTime  @default(now())
+  targetDate              DateTime?
+  apAgreed                Boolean   @default(false)  // action party agreed?
+  originalTargetDate      DateTime?
+  numberOfExtensions      Int       @default(0)
+  actionClosureEffective  Boolean   @default(false)
+  actionClosureApprovedBy String?
+  finding                 Finding   @relation(..., onDelete: Cascade)
+
+  @@index([findingId])
+}
+```
+
+**Purpose:** A remediation item tied to exactly one Finding. Tracks ownership (`actionParty`, `auditee`), agreement (`apAgreed`), scheduling with extension history (`targetDate`, `originalTargetDate`, `numberOfExtensions`), and closure (`actionClosureEffective`, `actionClosureApprovedBy`). Deleting a Finding cascades to its Actions.
 
 ---
 
@@ -609,14 +712,17 @@ User
 Assessment
   ├─ User (assessor)
   ├─ AssuranceActivityType
-  ├─ AssessmentControl[] ← NEW (v1.8.0)
+  ├─ ControlAssignment[]   (control + effectiveness; sole assessment↔control junction as of v1.10.0)
   │   └─ Control
-  └─ Sample[] (now independent)
+  ├─ Sample[] (independent)
+  └─ Finding[] ← NEW (v1.9.0)
+      ├─ Sample? (optional source)
+      └─ Action[] ← NEW (v1.9.0)
 
 Control
   ├─ ProcessArea
   ├─ SubProcess
-  ├─ AssessmentControl[] ← NEW (v1.8.0)
+  ├─ ControlAssignment[]
   └─ AssessmentTemplateControlLinkage[]
 
 AssessmentTemplate
@@ -626,7 +732,16 @@ AssessmentTemplate
 Sample (DECOUPLED v1.8.0)
   ├─ Assessment (only link to control selection)
   ├─ SampleType?
-  └─ RecordSourceType?
+  ├─ RecordSourceType?
+  └─ Finding[] ← NEW (v1.9.0, optional back-reference)
+
+Finding ← NEW (v1.9.0)
+  ├─ Assessment (required)
+  ├─ Sample? (optional)
+  └─ Action[]
+
+Action ← NEW (v1.9.0)
+  └─ Finding (parent)
 ```
 
 ---
@@ -668,7 +783,11 @@ seam-assurance-app/
 │   │   ├── setup/                     # Data management
 │   │   │   ├── process-areas/
 │   │   │   │   ├── page.tsx           # Process Areas list + pagination
-│   │   │   │   └── ProcessAreasTable.tsx     # Table with Standard filter
+│   │   │   │   ├── ProcessAreasTable.tsx     # Table with Standard filter
+│   │   │   │   └── ProcessAreaForm.tsx       # Add/edit form
+│   │   │   ├── processdetails/[id]/
+│   │   │   │   ├── page.tsx           # Process Details (3-tab drill-down)
+│   │   │   │   └── ProcessDetailsClient.tsx  # Tabs: Overview, Sub-process & Controls, Assessments
 │   │   │   ├── sub-processes/
 │   │   │   │   ├── page.tsx           # Sub-Processes list
 │   │   │   │   └── SubProcessesTable.tsx    # Paginated table
@@ -833,6 +952,42 @@ seam-assurance-app/
   - pId (optional, Process Identifier)
   - Standard (optional, e.g., "ISO 27001", "SOC 2")
 - **Actions:** Edit, Delete (with cascading confirmation if children exist)
+- **Process Area Name Link:** Clickable, navigates to `/setup/processdetails/[id]` for detailed drill-down
+
+#### Process Details (`/setup/processdetails/[id]`)
+- **Page Title:** "Process Details"
+- **Breadcrumb:** ← Process Areas (back to list)
+- **3-Tab Layout:**
+
+**Tab 1 — Process Overview:**
+- Summary stat cards: Total Controls, Total Assessments, Total Findings, Total Actions
+- **Process Health** section with health bars:
+  - Control Effectiveness (Effective / Not Effective / Not Yet Assessed)
+  - Assessment Activity (Planned / In Progress + Completed)
+  - Sample Testing (Tested / Failed)
+- **Outstanding Actions from Findings** — lists findings with actions, severity badges, links to assessment
+- **Sub-Process Summary** — grid of sub-process cards
+
+**Tab 2 — Sub-process & Controls:**
+- Grouped by sub-process (expandable sections)
+- Controls table per sub-process: Control Name | Type | Health Score | Risk | Last Tested | Result | Assignments
+- Control names are **clickable** → opens inline edit modal (Name, Statement, Control Type, Risk Weight, RAM Rating, Health Score, HSSE Critical, **Linked Sub-Processes** multi-select)
+  - Linked Sub-Processes section shows all sub-processes in this process area with checkboxes
+  - Primary sub-process is marked "(primary)" and cannot be unchecked
+  - Changes to links are saved when the modal's Save button is clicked
+- "+Add Control" button in the action column header → opens inline modal (Control Name, Statement, Control Type)
+- "Edit | Delete" action links per row (replaces assignment count column)
+  - Edit opens the same inline edit modal with prepopulated fields
+  - Delete shows a confirmation dialog with Cancel/Delete buttons
+
+**Tab 3 — Assessments:**
+- Lists all assessments with controls from this process area
+- Table: Name | Activity Type | Assessor | Status | Start Date | Findings | Actions | Controls
+- **"+Add Assessment" button:**
+  - Opens modal with Name, Start Date, and Control Selection
+  - All process controls are pre-selected by default
+  - User can toggle individual controls or Select All / Deselect All
+  - Creates assessment via `POST /api/admin/assessments` with `controlIds` → redirects to `/fla/[id]`
 
 #### Sub-Processes (`/setup/sub-processes`)
 - **Filter:** Process Area (required dropdown)
@@ -1017,19 +1172,39 @@ npm run dev
 
 ---
 
+### 5.7 Control Effectiveness, Findings & Actions (FLA Detail) ⭐ NEW (v1.9.0)
+
+The FLA assessment detail page (`/fla/[id]`) is now the hub for the full first-line-assurance workflow. `src/app/fla/[id]/page.tsx` loads the assessment with its `controlAssignments` (+ control/processArea/subProcess), `samples` (+ sampleType), and `findings` (+ actions and optional sample), and orchestrates several client components.
+
+**Workflow on the page:**
+
+1. **Assess Info** — editable Name, Activity Type, Assessor, Start/End Date, LOA, Status (server action `updateAssessment`).
+2. **Controls (assignment + effectiveness)**
+   - `ControlsSelectorWrapper` / `ControlsSelector` — filter (Process Area → Sub-Process → search) and multi-select controls to assign. Assigning creates `ControlAssignment` rows.
+   - `AssignedControlsTable` — lists assigned controls with an inline **Effective** dropdown (`Effective` / `NotEffective` / unset) and an **Unassign** action. Editing effectiveness calls `PUT /api/admin/control-assignments/[id]`; unassign calls `DELETE`.
+   - The page derives an `assignmentsKey` from each assignment's id + effectiveness + `effectiveUpdatedAt` so the client components remount and pick up fresh data after changes.
+3. **Evidence, Samples & Findings** — `EvidenceSection` renders:
+   - `SamplesTable` / `SampleRow` / `AddSamplesForm` — collect evidence samples (Sample Type, Record Source, Record Reference, Control Effective, Status, Comment). Sample/Record types are dynamic lookup tables (`SampleType`, `RecordSourceType`) with "Add New".
+   - `FindingsTable` — raise **Findings** against the assessment (and optionally a specific sample): description, details, implicated control ids, risks, repeat flag, and **severity** (`Low`/`Medium`/`High`/`Serious`). New findings get an `FID-XXXXXX` id.
+   - `ActionsPanel` — for each finding, manage **Actions**: description/details, action party, auditee, target date (with original target + extension count), action-party-agreed flag, and closure (effective + approved-by).
+
+**Supporting API:** `/api/admin/control-assignments/[id]` (PUT/DELETE), `/api/admin/samples` (+`/[id]`), `/api/admin/findings` (+`/[id]`), `/api/admin/actions` (+`/[id]`). See §6.10.
+
+---
+
 ## 6. API Routes (Complete Reference)
 
 ### 6.1 Assessment Management
 
 **PUT** `/api/admin/assessments/[id]/controls`
 - **Body:** `{ controlIds: string[] }`
-- **Purpose:** Manage AssessmentControl junction table (add/remove controls)
+- **Purpose:** Bulk set the assigned control set for an assessment via the `ControlAssignment` junction table (add/remove controls)
 - **Operation:**
   1. Validates assessment exists
   2. Validates all control IDs
-  3. Deletes old AssessmentControl records
-  4. Creates new records for selected controls
-- **Response:** `{ success: true, message: "Created X controls for assessment" }`
+  3. Diffs against existing `ControlAssignment` rows for the assessment
+  4. Deletes assignments for removed controls, creates assignments for newly added controls
+- **Response:** `{ success: true, message: "Updated controls: added X, removed Y, kept Z" }`
 
 ---
 
@@ -1178,6 +1353,42 @@ npm run dev
 **GET** `/api/admin/check`
 - Verify user is admin
 - Returns: `{ isAdmin: true/false }`
+
+---
+
+### 6.10 New Routes (v1.9.0)
+
+**Control Assignments**
+- **PUT** `/api/admin/control-assignments/[id]` — set a control's effectiveness. Body: `{ effective: "Effective" | "NotEffective" | null }`. Also stamps `effectiveUpdatedAt` (only when `effective` changes). Omitted fields are not touched. Auth required.
+- **DELETE** `/api/admin/control-assignments/[id]` — unassign the control from the assessment.
+- **PUT** `/api/admin/assessments/[id]/controls` — bulk set the assigned control set for an assessment (creates/removes `ControlAssignment` rows).
+
+**Assessments (admin)**
+- **GET / POST** `/api/admin/assessments` — list / create assessments.
+- **GET / PUT / DELETE** `/api/admin/assessments/[id]` — read / update / delete an assessment.
+
+**Findings**
+- **GET / POST** `/api/admin/findings` — list / create findings (server assigns the `FID-XXXXXX` id). Body includes `assessmentId`, optional `sampleId`, `description`, `details?`, `controlIds?`, `risks?`, `repeat?`, `severity`.
+- **GET / PUT / DELETE** `/api/admin/findings/[id]` — read / update / delete a finding (delete cascades to its actions).
+
+**Actions**
+- **GET / POST** `/api/admin/actions` — list / create remediation actions for a finding.
+- **GET / PUT / DELETE** `/api/admin/actions/[id]` — read / update (agreement, target dates, extensions, closure) / delete an action.
+
+**Samples**
+- **GET / POST** `/api/admin/samples`, **PUT / DELETE** `/api/admin/samples/[id]` — sample CRUD (also referenced in §6.2).
+
+**Gamification**
+- **POST** `/api/gamification/award` — award points/badges for an action.
+- **GET** `/api/gamification/stats` and `/api/gamification/stats/[userId]` — engagement stats for the current or a specific user.
+- **GET** `/api/gamification/leaderboard` — ranked users (recognition drive).
+
+**Admin / Database utilities**
+- **GET** `/api/admin/tables` and `/api/admin/table/[table]/stats` — table listing and per-table stats.
+- **GET** `/api/admin/table/[table]/export` and `/api/admin/export-all-tables` — export a table / all tables.
+- **GET** `/api/admin/table/[table]/template` — download a CSV template for a table.
+- **GET** `/api/admin/diagnose` — environment/schema diagnostics.
+- **GET/POST** `/api/admin/suggest-activity-types` — activity-type suggestions (supports the `admin/add-activity-types` page).
 
 ---
 
@@ -1451,6 +1662,8 @@ curl http://localhost:3000/api/admin/database/sync-check
 | `src/app/fla/[id]/page.tsx` | Assessment detail (controls + samples) | React |
 | `src/app/setup/controls/page.tsx` | Controls list with pagination | React |
 | `src/app/setup/process-areas/page.tsx` | Process areas with Standard filter | React |
+| `src/app/setup/processdetails/[id]/page.tsx` | Process Details server page (data fetching) | React |
+| `src/app/setup/processdetails/[id]/ProcessDetailsClient.tsx` | Process Details 3-tab client component | React |
 | `src/app/admin/templates/[id]/page.tsx` | Assessment template form | React |
 | `src/app/admin/table/[table]/page.tsx` | Generic table editor + SQL executor | React |
 | `src/app/api/admin/assessments/[id]/controls/route.ts` | Control selection API | Next.js API |
@@ -1485,7 +1698,7 @@ curl http://localhost:3000/api/admin/database/sync-check
 
 **Issue:** Assessment controls deleted when updating control selection
 - **Cause:** Old code deleted samples on control update
-- **Fix:** Upgraded to v1.8.0 with AssessmentControl junction table
+- **Fix:** Upgraded to v1.8.0 with a decoupled assessment↔control junction table (`ControlAssignment` as of v1.10.0)
 
 ---
 
@@ -1495,6 +1708,61 @@ curl http://localhost:3000/api/admin/database/sync-check
 - **API Documentation:** Each route documented in section 6
 - **Data Backup:** See section 5.6 and `scripts/` directory
 - **Gamification:** See section 8 for detailed emotional drive mappings
+
+---
+
+## 16. Changelog & Reconciliation Notes (v1.9.0 — 2026-07-04)
+
+This update reconciles the document with the actual code after a full re-read.
+
+### 16.1 Schema additions since v1.8.0
+- **`ControlAssignment`** model + **`Effectiveness`** enum (`Effective` / `NotEffective`) — control assignment with per-control effectiveness, used by the FLA detail UI.
+- **`Finding`** model + **`FindingSeverity`** enum (`Low`/`Medium`/`High`/`Serious`) — assessment findings with `FID-XXXXXX` ids.
+- **`Action`** model — remediation actions tied to a finding (ownership, agreement, target/extension tracking, closure).
+- New relations: `Assessment.controlAssignments`, `Assessment.findings`, `Control.controlAssignments`, `Sample.findings`.
+- Enum count is now **10** (was documented as 8).
+
+### 16.2 New / newly-documented files
+- **FLA components** (`src/app/fla/[id]/`): `ControlsSelector`, `ControlsSelectorWrapper`, `AssignedControlsTable`, `EvidenceSection`, `SamplesTable`, `SampleRow`, `AddSamplesForm`, `FindingsTable`, `ActionsPanel`.
+- **Admin pages**: `admin/assessments/{page,new,create,[id],from-template/[templateId]}`, `admin/add-activity-types`, plus existing templates / import-csv / export-data / columns / database-management / table editor.
+- **Setup**: `setup/process-areas/ProcessAreaForm`, `setup/sub-processes`, `setup/activity-types`, `setup/controls`.
+- **API**: `api/admin/{findings,actions,control-assignments,assessments,samples}` (+ `[id]`), `api/admin/table/[table]/{stats,export,template,columns,clear,data}`, `api/admin/{tables,export-all-tables,diagnose,suggest-activity-types,validate-csv,import-csv,execute-sql,check}`, `api/admin/database/*`, `api/gamification/{award,stats,stats/[userId],leaderboard}`.
+- **lib**: `prisma.ts`, `findings.ts` (FID generator), `gamification.ts`, `schema-introspection.ts`, `fallback-schemas.ts`.
+- **prisma seeds/utilities**: `seed.ts` (admin), `seed-controls.ts`, `controls-data.ts` (shared CSV loader), `reset-seed.ts` (full clear + admin + reseed), `gamification-seed.ts`, `reset-admin-password.ts/.js`, `list-users.ts`.
+- **scripts**: `export-data.js`, `restore-data.js`, `export-database.js`, `export-critical-data.ts`, `restore-critical-data.ts`, `validate-csv.ts`.
+
+### 16.3 Data & seed pipeline
+Controls are sourced from `Combined_Controls.csv` (1,048 controls / 38 process areas / 340 sub-processes). `prisma/controls-data.ts` parses it (RFC-4180) and both seeders build records from it:
+```bash
+npx prisma db push          # apply schema (adds columns) without migration-ordering issues
+npm run db:reset-seed       # clear all tables, recreate admin, reseed PA/SubProcess/Control
+# or, non-destructive:
+npm run db:seed-controls    # upsert controls only
+npm run db:seed             # (re)create admin user
+```
+
+### 16.4 Known inconsistencies to address (follow-ups)
+1. **ControlType mapping vs enum:** the enum now supports all 6 CSV values, but `controls-data.ts` `mapControlType()` still collapses `Administrative/Analytical/Informational → Procedural` and `Behavioral → Behavioural`, keeping the original only in `controlTypeDetail`. Now that the enum is complete, the loader could store the CSV value directly (and `controlTypeDetail` becomes redundant).
+2. ~~Two Assessment↔Control junctions~~ — **resolved in v1.10.0**, see §16.5.
+3. **Prisma client output:** now `src/generated/prisma`; the legacy `prisma/.prisma/client/` directory may be stale and can be removed.
+4. ~~Mixed/non-timestamped migration history~~ — **resolved in v1.10.0**, see §16.6.
+
+### 16.5 v1.10.0 — Removed `AssessmentControl` junction table (2026-07-04)
+
+The legacy `AssessmentControl` model (v1.8.0) was removed from the schema, database, and this document. It held no data (0 rows) at removal time; `ControlAssignment` (v1.9.0) is now the **sole** Assessment↔Control junction, used for both control assignment and effectiveness tracking.
+
+- **Schema:** Removed `model AssessmentControl` and the `Control.assessmentControls` / `Assessment.assessmentControls` relation fields from `prisma/schema.prisma`.
+- **Database:** Applied via `npx prisma db push` (dropped the `AssessmentControl` table) + `npx prisma generate`.
+- **Code:** Removed `AssessmentControl` references from `src/app/api/admin/table/[table]/[id]/route.ts` (child-record check on Control delete), `src/app/api/admin/database/tables/[name]/route.ts` (system-table guard list), and `src/app/api/admin/database/sync-check/route.ts` (critical-table check), replacing/keeping `ControlAssignment` in each.
+
+### 16.6 v1.10.0 — Rebaselined migration history (2026-07-04)
+
+`prisma/migrations/` previously mixed 15 properly timestamped migration folders with two non-timestamped ones (`create_assessment_control`, `reconcile_missing_decouple_history`) that had been applied out of Prisma's expected lexicographic folder order — a risk for a future fresh `prisma migrate deploy`, and no longer worth preserving now that the `AssessmentControl` table they created is gone (§16.5).
+
+- **All prior migration folders were deleted** (still recoverable from git history if ever needed) and replaced with a single **`20260704064114_init`** migration generated from the current `schema.prisma` via `prisma migrate diff --from-empty --to-schema` — its SQL matches the live `dev.db` exactly (21 tables, no `AssessmentControl`).
+- The `_prisma_migrations` bookkeeping table was cleared and re-seeded with just this one entry via `prisma migrate resolve --applied`, **without re-running any SQL** — `dev.db` already had this exact structure, so no tables were dropped/recreated and no data was touched (verified: 1048 Controls, 60 ProcessAreas, 403 SubProcesses, 4 Assessments, 23 ControlAssignments, 10 Samples, 4 Findings, 3 Actions all unchanged before/after).
+- `prisma migrate status` now reports a single migration, database up to date.
+- The stray `catchup.sql` at the repo root (an old, already-applied one-off script, not part of `prisma/migrations/`) was left as-is — historical record, not live schema.
 
 ---
 

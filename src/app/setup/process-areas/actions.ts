@@ -8,6 +8,8 @@ import { z } from "zod";
 const schema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
+  standard: z.string().min(1, "Standard is required"),
+  pId: z.string().optional(),
 });
 
 export async function saveProcessArea(formData: FormData) {
@@ -15,6 +17,8 @@ export async function saveProcessArea(formData: FormData) {
   const parsed = schema.parse({
     name: formData.get("name")?.toString() ?? "",
     description: formData.get("description")?.toString() || undefined,
+    standard: formData.get("standard")?.toString() ?? "",
+    pId: formData.get("pId")?.toString() || undefined,
   });
 
   if (id) {

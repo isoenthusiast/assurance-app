@@ -424,7 +424,6 @@ async function importControlAssignments(rows: string[][]): Promise<ImportStats> 
         data: {
           assessmentId: record.assessmentId,
           controlId: record.controlId,
-          lastTestedDate: record.lastTestedDate ? new Date(record.lastTestedDate) : null,
           effective: effectiveValue,
           effectiveUpdatedAt: effectiveValue ? new Date() : null,
         },

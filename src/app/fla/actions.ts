@@ -126,19 +126,6 @@ export async function updateAssessment(formData: FormData) {
     },
   });
 
-  // Each assigned control's "last tested date" tracks the assessment's end
-  // date (the date the FLA was completed), not a manually-entered value.
-  // Keep every ControlAssignment for this assessment in sync whenever the
-  // end date actually changes.
-  const previousEndTime = previousAssessment?.endDate ? previousAssessment.endDate.getTime() : null;
-  const newEndTime = assessment.endDate ? assessment.endDate.getTime() : null;
-  if (previousEndTime !== newEndTime) {
-    await prisma.controlAssignment.updateMany({
-      where: { assessmentId: parsed.id },
-      data: { lastTestedDate: assessment.endDate },
-    });
-  }
-
   // 🎮 Award points if assessment was just completed
   if (previousAssessment?.status !== "Completed" && parsed.status === "Completed") {
     try {

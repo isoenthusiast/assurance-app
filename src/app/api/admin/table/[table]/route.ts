@@ -148,7 +148,6 @@ export async function POST(
                 id: body.id,
                 assessmentId: body.assessmentId,
                 controlId: body.controlId,
-                lastTestedDate: body.lastTestedDate ? new Date(body.lastTestedDate) : null,
                 effective: effectiveValue,
                 effectiveUpdatedAt: effectiveValue ? new Date() : null,
               },

@@ -17,14 +17,11 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Only touch fields the caller actually sent. lastTestedDate is
-    // normally system-managed (synced from the assessment's end date), but
-    // the generic admin table editor may still send it explicitly — either
-    // way, an omitted field here must NOT be silently wiped to null.
+    // Only touch fields the caller actually sent — an omitted field must
+    // NOT be silently wiped to null.
     const data: {
       effective?: "Effective" | "NotEffective" | null;
       effectiveUpdatedAt?: Date | null;
-      lastTestedDate?: Date | null;
     } = {};
 
     if (body.effective !== undefined) {
@@ -39,14 +36,26 @@ export async function PUT(
       data.effectiveUpdatedAt = data.effective ? new Date() : null;
     }
 
-    if (body.lastTestedDate !== undefined) {
-      data.lastTestedDate = body.lastTestedDate ? new Date(body.lastTestedDate) : null;
-    }
-
     const updated = await prisma.controlAssignment.update({
       where: { id },
       data,
+      include: { control: { select: { id: true } } },
     });
+
+    // When effectiveness is confirmed (set to Effective or NotEffective),
+    // update the parent Control's lastTestedDate and lastTestResult so
+    // the control overview reflects actual testing history. A control with
+    // no tested assignments shows Health = 0 and "Never Tested".
+    if (body.effective !== undefined && body.effective !== null) {
+      const lastTestResult = body.effective === "Effective" ? "Pass" : "Fail";
+      await prisma.control.update({
+        where: { id: updated.control.id },
+        data: {
+          lastTestedDate: new Date(),
+          lastTestResult,
+        },
+      });
+    }
 
     return NextResponse.json(updated);
   } catch (error) {

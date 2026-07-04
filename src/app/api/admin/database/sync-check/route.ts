@@ -16,7 +16,7 @@ export async function GET(request: Request) {
       "SubProcess",
       "Control",
       "Assessment",
-      "AssessmentControl",
+      "ControlAssignment",
       "Sample",
     ];
 
@@ -34,18 +34,6 @@ export async function GET(request: Request) {
         needsMigration: true,
         message: `❌ Missing tables: ${missingTables.join(", ")}. Run: npx prisma migrate dev`,
         missingTables,
-        existingTables: existingTables.map((t) => t.name).sort(),
-      });
-    }
-
-    // Check AssessmentControl table specifically (new in v1.7.0)
-    if (!existingTableNames.has("AssessmentControl")) {
-      return NextResponse.json({
-        synced: false,
-        needsMigration: true,
-        message:
-          "❌ AssessmentControl table missing (decoupling migration not applied). Run: npx prisma migrate dev",
-        missingTables: ["AssessmentControl"],
         existingTables: existingTables.map((t) => t.name).sort(),
       });
     }

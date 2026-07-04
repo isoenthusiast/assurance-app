@@ -11,7 +11,21 @@ export default async function ControlsPage({
   const [controls, processAreas, subProcesses, editing] = await Promise.all([
     prisma.control.findMany({
       orderBy: [{ processArea: { name: "asc" } }, { name: "asc" }],
-      include: { processArea: true, subProcess: true, _count: { select: { controlAssignments: true } } },
+      include: {
+        processArea: true,
+        subProcess: true,
+        _count: { select: { controlAssignments: true } },
+        // Used to derive "Last Tested" / "Effective" from this control's most
+        // recently completed assessment, and to link that verdict back to
+        // the assessment it came from (see ControlsTable.tsx).
+        controlAssignments: {
+          select: {
+            assessmentId: true,
+            effective: true,
+            assessment: { select: { endDate: true } },
+          },
+        },
+      },
     }),
     prisma.processArea.findMany({ orderBy: { name: "asc" } }),
     prisma.subProcess.findMany({ orderBy: { name: "asc" } }),
@@ -37,7 +51,16 @@ export default async function ControlsPage({
             subProcesses={subProcesses}
           />
 
-          <ControlForm processAreas={processAreas} subProcesses={subProcesses} editing={editing} />
+          {/* Keyed on the editing target so the form/modal fully remounts
+              (and re-derives its open/closed state) whenever the user
+              switches between "Add" and "Edit <control>", or between
+              editing two different controls. */}
+          <ControlForm
+            key={editing?.id ?? "new"}
+            processAreas={processAreas}
+            subProcesses={subProcesses}
+            editing={editing}
+          />
         </>
       )}
     </div>

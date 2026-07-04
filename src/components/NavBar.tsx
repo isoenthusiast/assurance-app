@@ -5,7 +5,6 @@ const navLinks = [
   { href: "/fla", label: "FLA Dashboard" },
   { href: "/setup/activity-types", label: "Activity Types" },
   { href: "/setup/process-areas", label: "Process Areas" },
-  { href: "/setup/sub-processes", label: "Sub-Processes" },
   { href: "/setup/controls", label: "Controls" },
   { href: "/admin", label: "Admin" },
 ];

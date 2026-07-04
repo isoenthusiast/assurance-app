@@ -19,23 +19,32 @@ type LOAOption = {
 
 export default function ActivityTypesTable({
   types,
-  editing,
   loaOptions,
   deleteAction,
+  onAddClick,
 }: {
   types: ActivityType[];
-  editing: ActivityType | null;
   loaOptions: LOAOption[];
   deleteAction: (id: string) => Promise<void>;
+  onAddClick: () => void;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
   const [itemsPerPage, setItemsPerPage] = useState(10);
 
-  const totalPages = Math.ceil(types.length / itemsPerPage);
+  // Sorted by Default LOA in loaOptions order (1st Line, 2nd Line, 3rd Line)
+  // rather than the raw enum string; ties keep the incoming name-asc order
+  // (Array.sort is stable) since that's how `types` already arrives.
+  const sortedTypes = [...types].sort((a, b) => {
+    const aIndex = loaOptions.findIndex((o) => o.value === a.defaultLOA);
+    const bIndex = loaOptions.findIndex((o) => o.value === b.defaultLOA);
+    return aIndex - bIndex;
+  });
+
+  const totalPages = Math.ceil(sortedTypes.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const paginatedTypes = types.slice(startIndex, endIndex);
+  const paginatedTypes = sortedTypes.slice(startIndex, endIndex);
 
   const handlePageInputChange = (value: string) => {
     setPageInput(value);
@@ -64,7 +73,15 @@ export default function ActivityTypesTable({
             <th className="px-4 py-2">Default LOA</th>
             <th className="px-4 py-2">Description</th>
             <th className="px-4 py-2">Assessments</th>
-            <th className="px-4 py-2"></th>
+            <th className="px-4 py-2">
+              <button
+                type="button"
+                onClick={onAddClick}
+                className="font-medium text-slate-900 hover:underline"
+              >
+                +Add Activity Type
+              </button>
+            </th>
           </tr>
         </thead>
         <tbody>

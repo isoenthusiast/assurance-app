@@ -29,6 +29,23 @@ export async function saveSubProcess(formData: FormData) {
   redirect("/setup/sub-processes");
 }
 
+// Same create as saveSubProcess, but used by the inline "+Add SubProcess"
+// modal on the Process Areas page — stays on that page instead of
+// redirecting to /setup/sub-processes.
+export async function createSubProcessInline(formData: FormData) {
+  const parsed = schema.parse({
+    name: formData.get("name")?.toString() ?? "",
+    description: formData.get("description")?.toString() || undefined,
+    processAreaId: formData.get("processAreaId")?.toString() ?? "",
+  });
+
+  await prisma.subProcess.create({ data: parsed });
+
+  revalidatePath("/setup/process-areas");
+  revalidatePath("/setup/sub-processes");
+  revalidatePath("/setup/processdetails/[id]", "page");
+}
+
 export async function deleteSubProcess(id: string) {
   try {
     await prisma.subProcess.delete({ where: { id } });

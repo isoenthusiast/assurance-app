@@ -9,7 +9,6 @@ interface Assignment {
   id: string;
   effective: Effectiveness;
   effectiveUpdatedAt: string | Date | null;
-  lastTestedDate: string | Date | null;
   control: {
     name: string;
     processArea?: { name: string } | null;
@@ -110,7 +109,6 @@ export default function AssignedControlsTable({
             <th className="px-3 py-2 text-left font-medium text-slate-700">Control</th>
             <th className="px-3 py-2 text-left font-medium text-slate-700">Effective</th>
             <th className="px-3 py-2 text-left font-medium text-slate-700">Date Updated</th>
-            <th className="px-3 py-2 text-left font-medium text-slate-700">Last Tested Date</th>
             <th className="px-3 py-2"></th>
           </tr>
         </thead>
@@ -136,9 +134,6 @@ export default function AssignedControlsTable({
                 </select>
               </td>
               <td className="px-3 py-2 text-slate-600">{formatDate(ac.effectiveUpdatedAt)}</td>
-              <td className="px-3 py-2 text-slate-600" title="Follows the assessment's end date">
-                {formatDate(ac.lastTestedDate)}
-              </td>
               <td className="px-3 py-2 text-right">
                 <button
                   onClick={() => handleUnassign(ac.id, ac.control.name)}
@@ -152,7 +147,7 @@ export default function AssignedControlsTable({
           ))}
           {sorted.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-3 py-4 text-center text-slate-400">
+              <td colSpan={4} className="px-3 py-4 text-center text-slate-400">
                 No controls assigned yet
               </td>
             </tr>

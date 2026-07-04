@@ -33,21 +33,27 @@ async function checkForChildren(table: string, id: string): Promise<{ blocked: b
       if (controls.length > 0) {
         children.push({ type: "Control", count: controls.length, records: controls });
       }
-    } else if (table === "Control") {
-      const assessmentControls = await prisma.assessmentControl.findMany({
-        where: { controlId: id },
-        select: { id: true, assessmentId: true },
+      const junctionLinks = await prisma.controlSubProcess.findMany({
+        where: { subProcessId: id },
+        select: { id: true, controlId: true },
       });
-      if (assessmentControls.length > 0) {
-        children.push({ type: "AssessmentControl", count: assessmentControls.length, records: assessmentControls });
+      if (junctionLinks.length > 0) {
+        children.push({ type: "ControlSubProcess (junction links)", count: junctionLinks.length, records: junctionLinks });
       }
-
+    } else if (table === "Control") {
       const controlAssignments = await prisma.controlAssignment.findMany({
         where: { controlId: id },
         select: { id: true, assessmentId: true },
       });
       if (controlAssignments.length > 0) {
         children.push({ type: "ControlAssignment", count: controlAssignments.length, records: controlAssignments });
+      }
+      const junctionLinks = await prisma.controlSubProcess.findMany({
+        where: { controlId: id },
+        select: { id: true, subProcessId: true },
+      });
+      if (junctionLinks.length > 0) {
+        children.push({ type: "ControlSubProcess (junction links)", count: junctionLinks.length, records: junctionLinks });
       }
     } else if (table === "Assessment") {
       const samples = await prisma.sample.findMany({
@@ -248,7 +254,6 @@ export async function PUT(
           data: {
             ...(body.assessmentId !== undefined ? { assessmentId: body.assessmentId } : {}),
             ...(body.controlId !== undefined ? { controlId: body.controlId } : {}),
-            lastTestedDate: body.lastTestedDate ? new Date(body.lastTestedDate) : null,
             effective: effectiveValue,
             effectiveUpdatedAt: effectiveValue ? new Date() : null,
           },

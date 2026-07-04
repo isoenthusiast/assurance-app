@@ -26,7 +26,9 @@ CREATE TABLE "ProcessArea" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT NOT NULL,
     "description" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "pId" TEXT,
+    "standard" TEXT
 );
 
 -- CreateTable
@@ -69,8 +71,11 @@ CREATE TABLE "Control" (
     "riskAddressed" TEXT,
     "testingApproach" TEXT,
     "uncertainFlags" TEXT,
-    CONSTRAINT "Control_processAreaId_fkey" FOREIGN KEY ("processAreaId") REFERENCES "ProcessArea" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Control_subProcessId_fkey" FOREIGN KEY ("subProcessId") REFERENCES "SubProcess" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "standard" TEXT,
+    "pId" TEXT,
+    "Requirements" TEXT,
+    CONSTRAINT "Control_subProcessId_fkey" FOREIGN KEY ("subProcessId") REFERENCES "SubProcess" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Control_processAreaId_fkey" FOREIGN KEY ("processAreaId") REFERENCES "ProcessArea" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -88,8 +93,8 @@ CREATE TABLE "AssessmentTemplateControlLinkage" (
     "templateId" TEXT NOT NULL,
     "controlId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "AssessmentTemplateControlLinkage_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "AssessmentTemplate" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "AssessmentTemplateControlLinkage_controlId_fkey" FOREIGN KEY ("controlId") REFERENCES "Control" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "AssessmentTemplateControlLinkage_controlId_fkey" FOREIGN KEY ("controlId") REFERENCES "Control" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "AssessmentTemplateControlLinkage_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "AssessmentTemplate" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -98,8 +103,8 @@ CREATE TABLE "AssessmentTemplateActivityType" (
     "templateId" TEXT NOT NULL,
     "activityTypeId" TEXT NOT NULL,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "AssessmentTemplateActivityType_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "AssessmentTemplate" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "AssessmentTemplateActivityType_activityTypeId_fkey" FOREIGN KEY ("activityTypeId") REFERENCES "AssuranceActivityType" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "AssessmentTemplateActivityType_activityTypeId_fkey" FOREIGN KEY ("activityTypeId") REFERENCES "AssuranceActivityType" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "AssessmentTemplateActivityType_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "AssessmentTemplate" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -113,22 +118,86 @@ CREATE TABLE "Assessment" (
     "loa" TEXT NOT NULL,
     "status" TEXT NOT NULL DEFAULT 'Planned',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Assessment_activityTypeId_fkey" FOREIGN KEY ("activityTypeId") REFERENCES "AssuranceActivityType" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT "Assessment_assessorId_fkey" FOREIGN KEY ("assessorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Assessment_assessorId_fkey" FOREIGN KEY ("assessorId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "Assessment_activityTypeId_fkey" FOREIGN KEY ("activityTypeId") REFERENCES "AssuranceActivityType" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "ControlAssignment" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "assessmentId" TEXT NOT NULL,
+    "controlId" TEXT NOT NULL,
+    "effective" TEXT,
+    "effectiveUpdatedAt" DATETIME,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "ControlAssignment_controlId_fkey" FOREIGN KEY ("controlId") REFERENCES "Control" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "ControlAssignment_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "SampleType" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- CreateTable
+CREATE TABLE "RecordSourceType" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "name" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- CreateTable
 CREATE TABLE "Sample" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "assessmentId" TEXT NOT NULL,
-    "controlId" TEXT NOT NULL,
+    "sampleTypeId" TEXT,
+    "recordSourceId" TEXT,
+    "recordReference" TEXT,
+    "controlEffective" BOOLEAN NOT NULL DEFAULT false,
     "comment" TEXT,
     "status" TEXT NOT NULL DEFAULT 'NotTested',
     "conclusion" TEXT,
     "evidenceUrl" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "Sample_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "Sample_controlId_fkey" FOREIGN KEY ("controlId") REFERENCES "Control" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "Sample_recordSourceId_fkey" FOREIGN KEY ("recordSourceId") REFERENCES "RecordSourceType" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "Sample_sampleTypeId_fkey" FOREIGN KEY ("sampleTypeId") REFERENCES "SampleType" ("id") ON DELETE SET NULL ON UPDATE CASCADE,
+    CONSTRAINT "Sample_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Finding" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "assessmentId" TEXT NOT NULL,
+    "sampleId" TEXT,
+    "description" TEXT NOT NULL,
+    "details" TEXT,
+    "controlIds" TEXT,
+    "risks" TEXT,
+    "repeat" BOOLEAN NOT NULL DEFAULT false,
+    "severity" TEXT NOT NULL,
+    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT "Finding_assessmentId_fkey" FOREIGN KEY ("assessmentId") REFERENCES "Assessment" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT "Finding_sampleId_fkey" FOREIGN KEY ("sampleId") REFERENCES "Sample" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+-- CreateTable
+CREATE TABLE "Action" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "findingId" TEXT NOT NULL,
+    "actionDescription" TEXT NOT NULL,
+    "actionDetails" TEXT,
+    "actionParty" TEXT,
+    "auditee" TEXT,
+    "createdDate" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "targetDate" DATETIME,
+    "apAgreed" BOOLEAN NOT NULL DEFAULT false,
+    "originalTargetDate" DATETIME,
+    "numberOfExtensions" INTEGER NOT NULL DEFAULT 0,
+    "actionClosureEffective" BOOLEAN NOT NULL DEFAULT false,
+    "actionClosureApprovedBy" TEXT,
+    CONSTRAINT "Action_findingId_fkey" FOREIGN KEY ("findingId") REFERENCES "Finding" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -152,8 +221,8 @@ CREATE TABLE "UserAchievement" (
     "userId" TEXT NOT NULL,
     "badgeId" TEXT NOT NULL,
     "earnedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "UserAchievement_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT "UserAchievement_badgeId_fkey" FOREIGN KEY ("badgeId") REFERENCES "AchievementBadge" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "UserAchievement_badgeId_fkey" FOREIGN KEY ("badgeId") REFERENCES "AchievementBadge" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
+    CONSTRAINT "UserAchievement_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -255,6 +324,30 @@ CREATE INDEX "AssessmentTemplateActivityType_activityTypeId_idx" ON "AssessmentT
 CREATE UNIQUE INDEX "AssessmentTemplateActivityType_templateId_activityTypeId_key" ON "AssessmentTemplateActivityType"("templateId", "activityTypeId");
 
 -- CreateIndex
+CREATE INDEX "ControlAssignment_assessmentId_idx" ON "ControlAssignment"("assessmentId");
+
+-- CreateIndex
+CREATE INDEX "ControlAssignment_controlId_idx" ON "ControlAssignment"("controlId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ControlAssignment_assessmentId_controlId_key" ON "ControlAssignment"("assessmentId", "controlId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "SampleType_name_key" ON "SampleType"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RecordSourceType_name_key" ON "RecordSourceType"("name");
+
+-- CreateIndex
+CREATE INDEX "Finding_assessmentId_idx" ON "Finding"("assessmentId");
+
+-- CreateIndex
+CREATE INDEX "Finding_sampleId_idx" ON "Finding"("sampleId");
+
+-- CreateIndex
+CREATE INDEX "Action_findingId_idx" ON "Action"("findingId");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "AchievementBadge_name_key" ON "AchievementBadge"("name");
 
 -- CreateIndex
@@ -292,3 +385,4 @@ CREATE INDEX "Milestone_userId_idx" ON "Milestone"("userId");
 
 -- CreateIndex
 CREATE INDEX "Milestone_completedAt_idx" ON "Milestone"("completedAt");
+

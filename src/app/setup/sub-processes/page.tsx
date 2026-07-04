@@ -6,9 +6,9 @@ import SubProcessesTable from "./SubProcessesTable";
 export default async function SubProcessesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string }>;
+  searchParams: Promise<{ edit?: string; processAreaId?: string }>;
 }) {
-  const { edit } = await searchParams;
+  const { edit, processAreaId } = await searchParams;
   const [subProcesses, processAreas, editing] = await Promise.all([
     prisma.subProcess.findMany({
       orderBy: [{ processArea: { name: "asc" } }, { name: "asc" }],
@@ -46,7 +46,7 @@ export default async function SubProcessesPage({
               <label className="text-sm font-medium text-slate-700">Process Area</label>
               <select
                 name="processAreaId"
-                defaultValue={editing?.processAreaId ?? processAreas[0]?.id}
+                defaultValue={editing?.processAreaId ?? processAreaId ?? processAreas[0]?.id}
                 required
                 className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
               >

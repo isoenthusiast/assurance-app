@@ -52,16 +52,59 @@ export default function ControlForm({
   const [processAreaId, setProcessAreaId] = useState(
     editing?.processAreaId ?? processAreas[0]?.id ?? ""
   );
+  // Opens automatically when arriving via the "Edit" link (editing !== null).
+  // Otherwise starts closed behind a "+ Add Control" trigger button.
+  const [isOpen, setIsOpen] = useState(Boolean(editing));
 
   const filteredSubProcesses = subProcesses.filter((sp) => sp.processAreaId === processAreaId);
 
+  if (!isOpen) {
+    return (
+      <div className="mt-8">
+        <button
+          type="button"
+          onClick={() => setIsOpen(true)}
+          className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+        >
+          + Add Control
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <form
-      action={saveControl}
-      className="mt-8 max-w-4xl space-y-6 rounded border border-slate-200 bg-white p-6"
+    <div
+      className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-6"
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !editing) setIsOpen(false);
+      }}
     >
-      <h2 className="text-lg font-semibold text-slate-900">{editing ? "Edit Control" : "Add Control"}</h2>
-      {editing && <input type="hidden" name="id" value={editing.id} />}
+      <form
+        action={saveControl}
+        className="my-8 w-full max-w-4xl space-y-6 rounded border border-slate-200 bg-white p-6 shadow-xl"
+      >
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold text-slate-900">{editing ? "Edit Control" : "Add Control"}</h2>
+          {editing ? (
+            <Link
+              href="/setup/controls"
+              className="text-xl leading-none text-slate-400 hover:text-slate-600"
+              aria-label="Close"
+            >
+              ×
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="text-xl leading-none text-slate-400 hover:text-slate-600"
+              aria-label="Close"
+            >
+              ×
+            </button>
+          )}
+        </div>
+        {editing && <input type="hidden" name="id" value={editing.id} />}
 
       {/* BASIC INFORMATION */}
       <fieldset className="space-y-3 border-b border-slate-200 pb-6">
@@ -417,20 +460,29 @@ export default function ControlForm({
         </div>
       </fieldset>
 
-      {/* ACTIONS */}
-      <div className="flex items-center gap-3 pt-3">
-        <button
-          type="submit"
-          className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-        >
-          {editing ? "Save changes" : "Add Control"}
-        </button>
-        {editing && (
-          <Link href="/setup/controls" className="text-sm text-slate-500 hover:underline">
-            Cancel
-          </Link>
-        )}
-      </div>
-    </form>
+        {/* ACTIONS */}
+        <div className="flex items-center gap-3 pt-3">
+          <button
+            type="submit"
+            className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+          >
+            {editing ? "Save changes" : "Add Control"}
+          </button>
+          {editing ? (
+            <Link href="/setup/controls" className="text-sm text-slate-500 hover:underline">
+              Cancel
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="text-sm text-slate-500 hover:underline"
+            >
+              Cancel
+            </button>
+          )}
+        </div>
+      </form>
+    </div>
   );
 }

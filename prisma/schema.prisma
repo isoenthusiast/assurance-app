@@ -48,15 +48,33 @@ model ProcessArea {
 }
 
 model SubProcess {
-  id            String      @id @default(cuid())
-  name          String
-  description   String?
-  processAreaId String
-  createdAt     DateTime    @default(now())
-  controls      Control[]
-  processArea   ProcessArea @relation(fields: [processAreaId], references: [id])
+  id                  String               @id @default(cuid())
+  name                String
+  description         String?
+  processAreaId       String
+  createdAt           DateTime             @default(now())
+  controls            Control[]
+  processArea         ProcessArea          @relation(fields: [processAreaId], references: [id])
+  controlSubProcesses ControlSubProcess[]
 
   @@unique([processAreaId, name])
+}
+
+// Many-to-many: a Control can belong to multiple SubProcesses (e.g. the same
+// control logic applies across ISO 9001, ISO 14001, ISO 45001 without
+// duplicating the control record). The Control.subProcessId field remains the
+// "primary" home; this junction adds secondary linkages.
+model ControlSubProcess {
+  id           String      @id @default(cuid())
+  controlId    String
+  subProcessId String
+  createdAt    DateTime    @default(now())
+  control      Control     @relation(fields: [controlId], references: [id], onDelete: Cascade)
+  subProcess   SubProcess  @relation(fields: [subProcessId], references: [id], onDelete: Cascade)
+
+  @@unique([controlId, subProcessId])
+  @@index([controlId])
+  @@index([subProcessId])
 }
 
 model Control {
@@ -91,8 +109,8 @@ model Control {
   standard           String?
   pId                String?
   Requirements       String?
-  assessmentControls AssessmentControl[]
   controlAssignments ControlAssignment[]
+  controlSubProcesses ControlSubProcess[]
   templateLinkages   AssessmentTemplateControlLinkage[]
   subProcess         SubProcess                         @relation(fields: [subProcessId], references: [id])
   processArea        ProcessArea                        @relation(fields: [processAreaId], references: [id])
@@ -148,35 +166,18 @@ model Assessment {
   createdAt          DateTime              @default(now())
   assessor           User                  @relation("AssessmentAssessor", fields: [assessorId], references: [id])
   activityType       AssuranceActivityType @relation(fields: [activityTypeId], references: [id])
-  assessmentControls AssessmentControl[]
   controlAssignments ControlAssignment[]
   samples            Sample[]
   findings           Finding[]
 }
 
-model AssessmentControl {
-  id           String     @id @default(cuid())
-  assessmentId String
-  controlId    String
-  createdAt    DateTime   @default(now())
-  control      Control    @relation(fields: [controlId], references: [id], onDelete: Cascade)
-  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
-
-  @@unique([assessmentId, controlId])
-  @@index([assessmentId])
-  @@index([controlId])
-}
-
 // Assigns Controls to an Assessment from the assessment UI.
 // Many-to-many: an Assessment can have many Controls, a Control can be
-// assigned to many Assessments. Kept separate from AssessmentControl.
+// assigned to many Assessments.
 model ControlAssignment {
   id                 String         @id @default(cuid())
   assessmentId       String
   controlId          String
-  // Auto-synced from Assessment.endDate whenever it changes — not
-  // user-editable (see updateAssessment in src/app/fla/actions.ts).
-  lastTestedDate     DateTime?
   // null = "Select One" (not yet assessed).
   effective          Effectiveness?
   // Set whenever `effective` is changed, and only then.

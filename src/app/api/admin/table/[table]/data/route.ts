@@ -89,7 +89,6 @@ export async function GET(
           assessmentId: a.assessmentId,
           controlId: a.controlId,
           ControlID: a.control?.controlRef || a.control?.name || a.controlId,
-          lastTestedDate: a.lastTestedDate,
           effective: a.effective,
           effectiveUpdatedAt: a.effectiveUpdatedAt,
           createdAt: a.createdAt,

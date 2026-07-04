@@ -36,7 +36,6 @@ export async function DELETE(
       "SubProcess",
       "Control",
       "Assessment",
-      "AssessmentControl",
       "ControlAssignment",
       "Sample",
       "AssuranceActivityType",

@@ -65,12 +65,10 @@ export default async function AssessmentDetailPage({
     .map((ac) => ({ id: ac.control.id, name: ac.control.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
   // Forces the control-assignment client components to remount (and pick up
-  // fresh server data) whenever the assigned set OR any lastTestedDate
-  // changes — e.g. via router.refresh() after an unassign, or after the
-  // "Save changes" form updates the assessment's end date (which re-syncs
-  // every assignment's lastTestedDate).
+  // fresh server data) whenever the assigned set OR any assignment's
+  // effectiveness changes — e.g. via router.refresh() after an unassign.
   const assignmentsKey = assessment.controlAssignments
-    .map((ac) => `${ac.id}:${ac.lastTestedDate ? new Date(ac.lastTestedDate).getTime() : "null"}`)
+    .map((ac) => `${ac.id}:${ac.effective ?? "null"}:${ac.effectiveUpdatedAt ? new Date(ac.effectiveUpdatedAt).getTime() : "null"}`)
     .sort()
     .join(',');
 

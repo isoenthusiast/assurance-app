@@ -72,17 +72,13 @@ export async function PUT(
       });
     }
 
-    // Create control assignments for newly added controls. Seed each one's
-    // lastTestedDate with the assessment's current end date, so it starts
-    // in sync with its siblings (further changes to the end date keep it
-    // that way — see updateAssessment in src/app/fla/actions.ts).
+    // Create control assignments for newly added controls.
     let addedCount = 0;
     if (controlsToAdd.length > 0) {
       const result = await prisma.controlAssignment.createMany({
         data: controlsToAdd.map((controlId) => ({
           assessmentId: id,
           controlId,
-          lastTestedDate: assessment.endDate,
         })),
       });
       addedCount = result.count;

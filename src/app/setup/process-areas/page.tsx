@@ -1,7 +1,31 @@
 import { prisma } from "@/lib/prisma";
-import Link from "next/link";
-import { saveProcessArea, deleteProcessArea } from "./actions";
-import ProcessAreasTable from "./ProcessAreasTable";
+import { deleteProcessArea } from "./actions";
+import { deleteSubProcess } from "../sub-processes/actions";
+import ProcessAreasClient from "./ProcessAreasClient";
+
+// Preferred display order for standards. Items not in this list are appended
+// alphabetically. "International Standards (ISO)" is intentionally placed
+// after the domain-specific standards.
+const STANDARD_ORDER = [
+  "Carbon, Environment, Social Performance, Product Stewardship & Quality",
+  "HSSE & SP and Asset Management Foundations",
+  "Process Safety & Asset Management",
+  "Transport Safety",
+  "Workplace Health, Safety & Security",
+  "International Standards (ISO)",
+];
+
+function sortStandards(standards: string[]): string[] {
+  const orderMap = new Map(STANDARD_ORDER.map((s, i) => [s, i]));
+  return [...standards].sort((a, b) => {
+    const ai = orderMap.get(a);
+    const bi = orderMap.get(b);
+    if (ai !== undefined && bi !== undefined) return ai - bi;
+    if (ai !== undefined) return -1;
+    if (bi !== undefined) return 1;
+    return a.localeCompare(b);
+  });
+}
 
 export default async function ProcessAreasPage({
   searchParams,
@@ -9,7 +33,7 @@ export default async function ProcessAreasPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
-  const [areas, editing, allAreas] = await Promise.all([
+  const [areas, editing, allAreas, subProcesses, testedAssignments] = await Promise.all([
     prisma.processArea.findMany({
       orderBy: { name: "asc" },
       select: {
@@ -28,13 +52,89 @@ export default async function ProcessAreasPage({
       distinct: ['standard'],
       orderBy: { standard: 'asc' },
     }),
+    // Fetched up front (not per-expand) so expanding a row is instant — the
+    // table just filters this list by processAreaId client-side.
+    prisma.subProcess.findMany({
+      orderBy: { name: "asc" },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        processAreaId: true,
+        _count: { select: { controls: true, controlSubProcesses: true } },
+      },
+    }),
+    // Every control assignment belonging to a *completed* assessment (i.e.
+    // one that actually tested the control), used below to count distinct
+    // assessments per sub-process.
+    prisma.controlAssignment.findMany({
+      where: { assessment: { endDate: { not: null } } },
+      select: { assessmentId: true, control: { select: { subProcessId: true } } },
+    }),
   ]);
 
-  // Get unique standards in alphabetical order
-  const uniqueStandards = allAreas
-    .map((pa) => pa.standard)
-    .filter((s) => s !== null)
-    .sort() as string[];
+  // Get unique standards in custom display order
+  const uniqueStandards = sortStandards(
+    allAreas
+      .map((pa) => pa.standard)
+      .filter((s) => s !== null)
+  ) as string[];
+
+  // Distinct assessment ids per sub-process — "assessments that tested the
+  // controls in this sub-process".
+  const assessmentIdsBySubProcess = new Map<string, Set<string>>();
+  for (const ca of testedAssignments) {
+    const subProcessId = ca.control.subProcessId;
+    const set = assessmentIdsBySubProcess.get(subProcessId) ?? new Set<string>();
+    set.add(ca.assessmentId);
+    assessmentIdsBySubProcess.set(subProcessId, set);
+  }
+
+  // Pull the actual assessment records (title, end date, status, findings /
+  // actions counts) for every assessment referenced above, so the
+  // sub-process row's "Assessments" expand panel doesn't need a per-row
+  // fetch.
+  const allAssessmentIds = Array.from(
+    new Set(Array.from(assessmentIdsBySubProcess.values()).flatMap((set) => Array.from(set)))
+  );
+  const assessmentRecords = await prisma.assessment.findMany({
+    where: { id: { in: allAssessmentIds } },
+    select: {
+      id: true,
+      name: true,
+      endDate: true,
+      status: true,
+      _count: { select: { findings: true } },
+      findings: { select: { _count: { select: { actions: true } } } },
+    },
+  });
+  const assessmentDetailsById = new Map(
+    assessmentRecords.map((a) => [
+      a.id,
+      {
+        id: a.id,
+        name: a.name,
+        endDate: a.endDate,
+        status: a.status,
+        findingsCount: a._count.findings,
+        actionsCount: a.findings.reduce((sum, f) => sum + f._count.actions, 0),
+      },
+    ])
+  );
+
+  const subProcessesWithAssessmentCounts = subProcesses.map((sp) => {
+    const totalControls = sp._count.controls + sp._count.controlSubProcesses;
+    const assessments = Array.from(assessmentIdsBySubProcess.get(sp.id) ?? [])
+      .map((id) => assessmentDetailsById.get(id))
+      .filter((a): a is NonNullable<typeof a> => Boolean(a))
+      .sort((a, b) => {
+        const aTime = a.endDate ? new Date(a.endDate).getTime() : 0;
+        const bTime = b.endDate ? new Date(b.endDate).getTime() : 0;
+        return bTime - aTime;
+      });
+
+    return { ...sp, _count: { ...sp._count, controls: totalControls }, assessmentCount: assessments.length, assessments };
+  });
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
@@ -43,69 +143,19 @@ export default async function ProcessAreasPage({
         The work processes (Abilities) that Sub-Processes and Controls roll up under — e.g. ESP, AIPSM, MAC.
       </p>
 
-      <ProcessAreasTable areas={areas} standards={uniqueStandards} deleteAction={deleteProcessArea} />
-
-      <form
-        action={saveProcessArea}
-        className="mt-8 max-w-md space-y-3 rounded border border-slate-200 bg-white p-5"
-      >
-        <h2 className="font-medium text-slate-900">{editing ? "Edit Process Area" : "Add Process Area"}</h2>
-        {editing && <input type="hidden" name="id" value={editing.id} />}
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Name</label>
-          <input
-            name="name"
-            defaultValue={editing?.name ?? ""}
-            required
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Description</label>
-          <textarea
-            name="description"
-            defaultValue={editing?.description ?? ""}
-            rows={2}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">Standard (optional)</label>
-          <input
-            name="standard"
-            defaultValue={editing?.standard ?? ""}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            placeholder="e.g., ISO 27001, SOC 2"
-          />
-        </div>
-
-        <div className="space-y-1">
-          <label className="text-sm font-medium text-slate-700">pId (optional)</label>
-          <input
-            name="pId"
-            defaultValue={editing?.pId ?? ""}
-            className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Process identifier"
-          />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-          >
-            {editing ? "Save changes" : "Add"}
-          </button>
-          {editing && (
-            <Link href="/setup/process-areas" className="text-sm text-slate-500 hover:underline">
-              Cancel
-            </Link>
-          )}
-        </div>
-      </form>
+      {/* Keyed on the editing target so the add/edit form modal fully
+          remounts (and re-derives its open/closed state) whenever the user
+          switches between "Add" and "Edit <area>", or between editing two
+          different process areas. */}
+      <ProcessAreasClient
+        key={editing?.id ?? "new"}
+        areas={areas}
+        standards={uniqueStandards}
+        deleteAction={deleteProcessArea}
+        subProcesses={subProcessesWithAssessmentCounts}
+        deleteSubProcessAction={deleteSubProcess}
+        editing={editing}
+      />
     </div>
   );
 }
