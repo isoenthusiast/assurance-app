@@ -7,23 +7,23 @@ import { useState, useRef, useEffect } from "react";
 const EMOJI_CATEGORIES = [
   {
     name: "Trophies",
-    emojis: ["🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🏆", "👑", "💍", "🔱", "🎪", "🏟️"],
+    emojis: ["🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "👑", "💍", "🔱", "🎪", "🏟️", "🎗️"],
   },
   {
     name: "Stars",
-    emojis: ["⭐", "🌟", "💫", "✨", "🌠", "⭐", "🔆", "💥", "🎇", "🎆", "☀️", "🔥"],
+    emojis: ["⭐", "🌟", "💫", "✨", "🌠", "🔆", "💥", "🎇", "🎆", "☀️", "🔥", "🌈"],
   },
   {
     name: "Medals",
-    emojis: ["🎯", "✅", "✔️", "☑️", "🏁", "🎗️", "🏷️", "🔰", "💮", "🉐", "㊗️", "🈴"],
+    emojis: ["🎯", "✅", "✔️", "☑️", "🏁", "🏷️", "🔰", "💮", "🉐", "㊗️", "🈴", "🪪"],
   },
   {
     name: "Gems",
-    emojis: ["💎", "🔮", "💠", "🪩", "🔷", "🔶", "💎", "🟣", "🟦", "🟩", "🟨", "🟧"],
+    emojis: ["💎", "🔮", "💠", "🪩", "🔷", "🔶", "🟣", "🟦", "🟩", "🟨", "🟧", "🟥"],
   },
   {
     name: "Shields",
-    emojis: ["🛡️", "🔒", "🔐", "🗝️", "⚔️", "🛡️", "🗡️", "🏹", "💂", "⛓️", "🔗", "🧲"],
+    emojis: ["🛡️", "🔒", "🔐", "🗝️", "⚔️", "🗡️", "🏹", "💂", "⛓️", "🔗", "🧲", "🏰"],
   },
   {
     name: "Growth",
@@ -65,6 +65,19 @@ const EMOJI_CATEGORIES = [
       "🏋️", "🦺", "🚧", "🛂", "👥", "🪜",
     ],
   },
+];
+
+const PREDEFINED_ACHIEVEMENT_TYPES = [
+  "first_fla", "first_test", "perfect_assessment",
+  "diversity_explorer", "weekly_diversity",
+  "team_player", "community_champion",
+  "quality_leader", "milestone_master",
+  "perfect_week", "excellence_seeker",
+  "learner", "growth_trajectory",
+  "mentor", "org_builder",
+  "safety_focused", "compliance_leader",
+  "process_assurance", "hse_excellence",
+  "audit_champion", "continuous_improvement",
 ];
 
 type Badge = {
@@ -117,6 +130,25 @@ export default function BadgeForm({
   const [selectedEmoji, setSelectedEmoji] = useState(editing?.icon ?? "🏆");
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [emojiCategory, setEmojiCategory] = useState(0);
+  const [achTypeQuery, setAchTypeQuery] = useState(editing?.achievementType ?? "");
+  const [achTypeOpen, setAchTypeOpen] = useState(false);
+  const achTypeRef = useRef<HTMLDivElement>(null);
+
+  // Close achievement type dropdown on click outside
+  useEffect(() => {
+    if (!achTypeOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (achTypeRef.current && !achTypeRef.current.contains(e.target as Node)) {
+        setAchTypeOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [achTypeOpen]);
+
+  const filteredAchTypes = PREDEFINED_ACHIEVEMENT_TYPES.filter(t =>
+    t.toLowerCase().includes(achTypeQuery.toLowerCase())
+  );
 
   // Close emoji picker on click outside
   useEffect(() => {
@@ -259,8 +291,32 @@ export default function BadgeForm({
             <label className="text-sm font-medium text-slate-700" title="Internal code used by the gamification engine to identify this achievement type">
               Achievement Type <span className="text-slate-400 font-normal">— Internal code</span>
             </label>
-            <input name="achievementType" defaultValue={editing?.achievementType ?? ""} required
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+            <div ref={achTypeRef} className="relative">
+              <input type="hidden" name="achievementType" value={achTypeQuery} />
+              <input
+                type="text"
+                value={achTypeQuery}
+                onChange={e => { setAchTypeQuery(e.target.value); setAchTypeOpen(true); }}
+                onFocus={() => setAchTypeOpen(true)}
+                placeholder="Select or type a new type…"
+                autoComplete="off"
+                required
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+              />
+              {achTypeOpen && filteredAchTypes.length > 0 && (
+                <ul className="absolute left-0 top-full z-20 mt-1 max-h-40 w-full overflow-y-auto rounded border border-slate-200 bg-white shadow-lg">
+                  {filteredAchTypes.map(t => (
+                    <li
+                      key={t}
+                      className={`cursor-pointer px-3 py-1.5 text-sm hover:bg-slate-100 ${t === achTypeQuery ? "bg-blue-50 font-medium" : ""}`}
+                      onMouseDown={() => { setAchTypeQuery(t); setAchTypeOpen(false); }}
+                    >
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
 
