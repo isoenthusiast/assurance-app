@@ -1,12 +1,27 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import UserSearchSelect from "@/components/UserSearchSelect";
+
+function daysBetween(a: string, b: string): number {
+  if (!a || !b) return 0;
+  return Math.round((new Date(b).getTime() - new Date(a).getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr);
+  d.setDate(d.getDate() + days);
+  return d.toISOString().slice(0, 10);
+}
 
 export default function AssessmentInfoForm({ assessment, users, activityTypes, loaOptions, statusOptions }: any) {
   const router = useRouter();
-  const [endDate, setEndDate] = useState(toDateInput(assessment.endDate));
+  const initialStart = toDateInput(assessment.startDate);
+  const initialEnd = toDateInput(assessment.endDate) || initialStart; // default null end to start
+  const [startDate, setStartDate] = useState(initialStart);
+  const [endDate, setEndDate] = useState(initialEnd);
+  const durationRef = useRef(daysBetween(initialStart, initialEnd));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,14 +69,29 @@ export default function AssessmentInfoForm({ assessment, users, activityTypes, l
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Start Date</label>
-        <input name="startDate" type="date" defaultValue={toDateInput(assessment.startDate)} required
-          onChange={e => { if (endDate < e.target.value) setEndDate(e.target.value); }}
+        <input name="startDate" type="date" value={startDate} required
+          onChange={e => {
+            const newStart = e.target.value;
+            setStartDate(newStart);
+            if (!endDate) {
+              setEndDate(newStart);
+              durationRef.current = 0;
+            } else {
+              setEndDate(addDays(newStart, durationRef.current));
+            }
+          }}
           className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">End Date</label>
         <input name="endDate" type="date" value={endDate}
-          onChange={e => setEndDate(e.target.value)}
+          onChange={e => {
+            const newEnd = e.target.value;
+            setEndDate(newEnd);
+            if (newEnd) {
+              durationRef.current = daysBetween(startDate, newEnd);
+            }
+          }}
           className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
       </div>
       <div className="space-y-1">
