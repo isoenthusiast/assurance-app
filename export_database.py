@@ -65,13 +65,13 @@ def export_table_to_json(connection, table_name):
 def main():
     # Get paths
     script_dir = Path(__file__).parent
-    db_path = script_dir / "prisma" / "dev.db"
+    db_path = script_dir / "data" / "dev.db"
     backup_dir = script_dir.parent / "dbBackup"
 
     # Check if database exists
     if not db_path.exists():
         print(f"❌ Database not found at: {db_path}")
-        print(f"\nPlease ensure the database file exists in: prisma/dev.db")
+        print(f"\nPlease ensure the database file exists in: data/dev.db")
         sys.exit(1)
 
     # Create backup directory if it doesn't exist

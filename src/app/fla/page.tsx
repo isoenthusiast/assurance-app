@@ -2,32 +2,103 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { GamificationDashboard } from "@/components/GamificationDashboard";
+import FlaDashboardClient from "./FlaDashboardClient";
 
-const statusStyles: Record<string, string> = {
-  Planned: "bg-slate-100 text-slate-700",
-  InProgress: "bg-blue-100 text-blue-700",
-  Completed: "bg-green-100 text-green-700",
-  Cancelled: "bg-red-100 text-red-700",
-};
+// Preferred display order for standards.
+const STANDARD_ORDER = [
+  "Carbon, Environment, Social Performance, Product Stewardship & Quality",
+  "HSSE & SP and Asset Management Foundations",
+  "Process Safety & Asset Management",
+  "Transport Safety",
+  "Workplace Health, Safety & Security",
+  "International Standards (ISO)",
+];
+
+function sortStandards(standards: string[]): string[] {
+  const orderMap = new Map(STANDARD_ORDER.map((s, i) => [s, i]));
+  return [...standards].sort((a, b) => {
+    const ai = orderMap.get(a);
+    const bi = orderMap.get(b);
+    if (ai !== undefined && bi !== undefined) return ai - bi;
+    if (ai !== undefined) return -1;
+    if (bi !== undefined) return 1;
+    return a.localeCompare(b);
+  });
+}
 
 export default async function FlaDashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
 
-  const assessments = await prisma.assessment.findMany({
+  // Fetch assessments with control assignments for filtering
+  const rawAssessments = await prisma.assessment.findMany({
     orderBy: { startDate: "desc" },
     include: {
       activityType: true,
       assessor: true,
       samples: true,
+      controlAssignments: {
+        include: {
+          control: {
+            include: {
+              processArea: { select: { id: true, standard: true } },
+              subProcess: { select: { id: true } },
+            },
+          },
+        },
+      },
     },
   });
+
+  // Flatten: each assessment gets the standard/processArea/subProcess from
+  // its first control assignment (for filtering purposes).
+  const assessments = rawAssessments.map((a) => {
+    const firstControl = a.controlAssignments[0]?.control;
+    return {
+      id: a.id,
+      name: a.name,
+      status: a.status,
+      startDate: a.startDate.toISOString(),
+      endDate: a.endDate?.toISOString() ?? null,
+      activityType: { name: a.activityType.name },
+      assessor: { id: a.assessor.id, name: a.assessor.name },
+      samples: a.samples.map((s) => ({
+        status: s.status,
+        conclusion: s.conclusion,
+      })),
+      standard: firstControl?.processArea?.standard ?? null,
+      processAreaId: firstControl?.processArea?.id ?? null,
+      subProcessId: firstControl?.subProcess?.id ?? null,
+    };
+  });
+
+  // Fetch filter options
+  const [allStandards, allProcessAreas, allSubProcesses] = await Promise.all([
+    prisma.processArea.findMany({
+      select: { standard: true },
+      where: { standard: { not: null } },
+      distinct: ["standard"],
+      orderBy: { standard: "asc" },
+    }),
+    prisma.processArea.findMany({
+      select: { id: true, name: true, standard: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.subProcess.findMany({
+      select: { id: true, name: true, processAreaId: true },
+      orderBy: { name: "asc" },
+    }),
+  ]);
+
+  const standards = sortStandards(
+    allStandards.map((s) => s.standard!).filter(Boolean)
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Assurance Activities</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
           <p className="mt-1 text-sm text-slate-500">
             Plan and track Front Line Assurances and other assurance activities.
           </p>
@@ -42,53 +113,14 @@ export default async function FlaDashboardPage() {
 
       <div className="grid grid-cols-3 gap-6">
         {/* Main content */}
-        <div className="col-span-2 space-y-3">
-        {assessments.map((a) => {
-          const total = a.samples.length;
-          const tested = a.samples.filter((s) => s.status === "Tested").length;
-          const failed = a.samples.filter((s) => s.conclusion === "Fail").length;
-          const pct = total === 0 ? 0 : Math.round((tested / total) * 100);
-
-          return (
-            <Link
-              key={a.id}
-              href={`/fla/${a.id}`}
-              className="block rounded border border-slate-200 bg-white p-4 hover:border-slate-300"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-slate-900">{a.name}</span>
-                    <span className={`rounded px-2 py-0.5 text-xs font-medium ${statusStyles[a.status]}`}>
-                      {a.status}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm text-slate-500">
-                    {a.activityType.name} · {a.assessor.name} · {a.startDate.toLocaleDateString()}
-                    {a.endDate ? ` – ${a.endDate.toLocaleDateString()}` : ""}
-                  </div>
-                </div>
-                <div className="w-40 text-right">
-                  <div className="text-sm text-slate-600">
-                    {tested}/{total} sampled{failed > 0 ? ` · ${failed} fail` : ""}
-                  </div>
-                  <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
-                    <div
-                      className={`h-2 rounded-full ${failed > 0 ? "bg-amber-500" : "bg-green-500"}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-
-          {assessments.length === 0 && (
-            <p className="rounded border border-slate-200 bg-white px-4 py-6 text-center text-slate-400">
-              No assurance activities planned yet.
-            </p>
-          )}
+        <div className="col-span-2">
+          <FlaDashboardClient
+            assessments={assessments}
+            standards={standards}
+            processAreas={allProcessAreas}
+            subProcesses={allSubProcesses}
+            userId={userId}
+          />
         </div>
 
         {/* Gamification Sidebar */}

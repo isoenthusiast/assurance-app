@@ -158,12 +158,12 @@ console.log("⏳ Attempting to load Prisma client...\n");
 
 // Simple fallback: direct SQLite query
 const Database = require("better-sqlite3");
-const dbPath = path.join(projectRoot, "prisma", "dev.db");
+const dbPath = path.join(projectRoot, "data", "dev.db");
 
 if (!fs.existsSync(dbPath)) {
   console.error(`❌ Database not found at: ${dbPath}`);
   console.error("\nPlease ensure:");
-  console.error("1. The database exists at prisma/dev.db");
+  console.error("1. The database exists at data/dev.db");
   console.error("2. You've run: npm install");
   console.error("3. You've run: npx prisma migrate dev (or similar)");
   process.exit(1);

@@ -16,7 +16,7 @@ const fs = require("fs");
 const path = require("path");
 
 const projectRoot = __dirname;
-const dbPath = path.join(projectRoot, "prisma", "dev.db");
+const dbPath = path.join(projectRoot, "data", "dev.db");
 const dbBackupDir = path.join(projectRoot, "..", "dbBackup");
 
 // Ensure backup directory exists

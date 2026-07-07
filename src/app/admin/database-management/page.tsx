@@ -13,8 +13,10 @@ interface Column {
   name: string;
   type: string;
   required: boolean;
-  isPrimaryKey: boolean;
+  isId: boolean;
 }
+
+const DATA_TYPES = ['String', 'Int', 'Float', 'Boolean', 'DateTime', 'Json'];
 
 export default function DatabaseManagementPage() {
   const [tables, setTables] = useState<TableInfo[]>([]);
@@ -31,22 +33,29 @@ export default function DatabaseManagementPage() {
   const [newColumnRequired, setNewColumnRequired] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [checkingSync, setCheckingSync] = useState(false);
+  const [editingColumn, setEditingColumn] = useState<string | null>(null);
+  const [editType, setEditType] = useState('String');
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchTables();
   }, []);
 
+  useEffect(() => {
+    if (selectedTable) {
+      fetchColumns(selectedTable);
+      setEditingColumn(null);
+    }
+  }, [selectedTable]);
+
   const checkDatabaseSync = async () => {
     try {
       setCheckingSync(true);
       setSyncStatus(null);
-
       const res = await fetch('/api/admin/database/sync-check');
       if (!res.ok) throw new Error('Failed to check sync status');
-
       const data = await res.json();
       setSyncStatus(data.message);
-
       if (data.needsMigration) {
         setError('Database schema is out of sync. Run: npx prisma migrate dev');
       }
@@ -56,12 +65,6 @@ export default function DatabaseManagementPage() {
       setCheckingSync(false);
     }
   };
-
-  useEffect(() => {
-    if (selectedTable) {
-      fetchColumns(selectedTable);
-    }
-  }, [selectedTable]);
 
   const fetchTables = async () => {
     try {
@@ -83,7 +86,8 @@ export default function DatabaseManagementPage() {
       const res = await fetch(`/api/admin/table/${tableName}/columns`);
       if (!res.ok) throw new Error('Failed to fetch columns');
       const data = await res.json();
-      setColumns(data);
+      // API returns { name, columns: [...] }
+      setColumns(data.columns || []);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load columns');
@@ -96,19 +100,16 @@ export default function DatabaseManagementPage() {
       setError('Table name is required');
       return;
     }
-
     try {
       const res = await fetch('/api/admin/database/tables', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: newTableName }),
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to create table');
       }
-
       setSuccess(`Table '${newTableName}' created successfully`);
       setNewTableName('');
       setShowCreateTable(false);
@@ -122,17 +123,12 @@ export default function DatabaseManagementPage() {
     if (!confirm(`Are you sure you want to drop table '${tableName}'? This cannot be undone.`)) {
       return;
     }
-
     try {
-      const res = await fetch(`/api/admin/database/tables/${tableName}`, {
-        method: 'DELETE',
-      });
-
+      const res = await fetch(`/api/admin/database/tables/${tableName}`, { method: 'DELETE' });
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to drop table');
       }
-
       setSuccess(`Table '${tableName}' dropped successfully`);
       setSelectedTable(null);
       await fetchTables();
@@ -147,23 +143,20 @@ export default function DatabaseManagementPage() {
       setError('Table and column name are required');
       return;
     }
-
     try {
       const res = await fetch(`/api/admin/table/${selectedTable}/columns`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          columnName: newColumnName,
+          name: newColumnName,
           type: newColumnType,
           required: newColumnRequired,
         }),
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to add column');
       }
-
       setSuccess(`Column '${newColumnName}' added successfully`);
       setNewColumnName('');
       setNewColumnType('String');
@@ -178,21 +171,50 @@ export default function DatabaseManagementPage() {
   const handleRemoveColumn = async (columnName: string) => {
     if (!selectedTable) return;
     if (!confirm(`Remove column '${columnName}'? This cannot be undone.`)) return;
-
     try {
       const res = await fetch(`/api/admin/table/${selectedTable}/columns/${columnName}`, {
         method: 'DELETE',
       });
-
       if (!res.ok) {
         const data = await res.json();
         throw new Error(data.error || 'Failed to remove column');
       }
-
       setSuccess(`Column '${columnName}' removed successfully`);
       await fetchColumns(selectedTable);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove column');
+    }
+  };
+
+  const startEditing = (col: Column) => {
+    setEditingColumn(col.name);
+    setEditType(col.type);
+  };
+
+  const cancelEditing = () => {
+    setEditingColumn(null);
+  };
+
+  const handleUpdateColumn = async (columnName: string) => {
+    if (!selectedTable) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/admin/table/${selectedTable}/columns/${columnName}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: editType }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update column');
+      }
+      setSuccess(`Column '${columnName}' type updated to ${editType}`);
+      setEditingColumn(null);
+      await fetchColumns(selectedTable);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update column');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -342,21 +364,60 @@ export default function DatabaseManagementPage() {
                   {columns.map((col) => (
                     <tr key={col.name} className="border-t border-slate-200 hover:bg-slate-50">
                       <td className="px-4 py-3 font-medium text-slate-900">{col.name}</td>
-                      <td className="px-4 py-3 text-slate-600">{col.type}</td>
+                      <td className="px-4 py-3 text-slate-600">
+                        {editingColumn === col.name ? (
+                          <select
+                            value={editType}
+                            onChange={(e) => setEditType(e.target.value)}
+                            className="rounded border border-slate-300 px-2 py-1 text-sm"
+                          >
+                            {DATA_TYPES.map((dt) => (
+                              <option key={dt} value={dt}>{dt}</option>
+                            ))}
+                          </select>
+                        ) : (
+                          col.type
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-center text-slate-600">
                         {col.required ? '✓' : '—'}
                       </td>
                       <td className="px-4 py-3 text-center text-slate-600">
-                        {col.isPrimaryKey ? '✓' : '—'}
+                        {col.isId ? '✓' : '—'}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        {!col.isPrimaryKey && (
-                          <button
-                            onClick={() => handleRemoveColumn(col.name)}
-                            className="text-red-600 hover:text-red-700 hover:underline text-sm font-medium"
-                          >
-                            Remove
-                          </button>
+                        {!col.isId && editingColumn !== col.name && (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => startEditing(col)}
+                              className="text-blue-600 hover:text-blue-700 hover:underline text-sm font-medium"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleRemoveColumn(col.name)}
+                              className="text-red-600 hover:text-red-700 hover:underline text-sm font-medium"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        )}
+                        {!col.isId && editingColumn === col.name && (
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleUpdateColumn(col.name)}
+                              disabled={saving}
+                              className="text-green-600 hover:text-green-700 hover:underline text-sm font-medium disabled:opacity-50"
+                            >
+                              {saving ? 'Saving...' : 'Save'}
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="text-slate-500 hover:text-slate-700 hover:underline text-sm font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>

@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
+  url: process.env.DATABASE_URL ?? "file:./data/dev.db",
 });
 
 const prisma = new PrismaClient({ adapter });

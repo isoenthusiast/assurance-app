@@ -18,11 +18,11 @@ export async function GET(request: Request) {
     const tableInfo = await Promise.all(
       tables.map(async (table) => {
         try {
-          // Count rows
-          const rowCountResult = await prisma.$queryRawUnsafe<Array<{ count: number }>>(
+          // Count rows – SQLite COUNT returns BigInt, must convert to Number
+          const rowCountResult = await prisma.$queryRawUnsafe<Array<{ count: unknown }>>(
             `SELECT COUNT(*) as count FROM "${table.name}"`
           );
-          const rowCount = rowCountResult[0]?.count || 0;
+          const rowCount = Number(rowCountResult[0]?.count) || 0;
 
           // Get columns
           const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(

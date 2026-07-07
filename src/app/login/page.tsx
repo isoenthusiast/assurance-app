@@ -42,7 +42,7 @@ export default function LoginPage() {
         className="w-full max-w-sm space-y-4 rounded-lg border border-slate-200 bg-white p-8 shadow-sm"
       >
         <div>
-          <h1 className="text-xl font-semibold text-slate-900">SEAM Assurance</h1>
+          <h1 className="text-xl font-semibold text-slate-900">CONAN PROJECT</h1>
           <p className="text-sm text-slate-500">Sign in to continue</p>
         </div>
 

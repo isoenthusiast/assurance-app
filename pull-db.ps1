@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 Write-Host "Pulling dev.db from Railway..." -ForegroundColor Cyan
 
 # Download from Railway volume (mount path /data)
-railway volume files download /data/dev.db ./dev.db
+railway volume files download /data/dev.db ./data/dev.db
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "Failed to download dev.db from Railway." -ForegroundColor Red
@@ -21,4 +21,4 @@ Push-Location (Split-Path -Parent (Split-Path -Parent $PSScriptRoot))
 python backup.py
 Pop-Location
 
-Write-Host "Done. dev.db is now in your repo." -ForegroundColor Green
+Write-Host "Done. dev.db is now in data/." -ForegroundColor Green

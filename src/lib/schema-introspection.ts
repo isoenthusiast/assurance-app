@@ -89,6 +89,7 @@ export function getAllTableNames(): string[] {
     'UserAchievement',
     'EmotionalDriveMetric',
     'Milestone',
+    'ActivityLog',
   ];
 
   try {

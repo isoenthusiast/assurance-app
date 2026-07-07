@@ -8,7 +8,7 @@ const passwordHash = bcrypt.hashSync(adminPassword, 10);
 
 try {
   // Open database
-  const db = new Database('dev.db');
+  const db = new Database('data/dev.db');
 
   // Check if admin already exists
   const existing = db.prepare('SELECT id FROM "User" WHERE username = ?').get('admin');

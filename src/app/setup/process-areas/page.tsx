@@ -35,7 +35,7 @@ export default async function ProcessAreasPage({
   const { edit } = await searchParams;
   const [areas, editing, allAreas, subProcesses, testedAssignments] = await Promise.all([
     prisma.processArea.findMany({
-      orderBy: { name: "asc" },
+      orderBy: { pId: "asc" },
       select: {
         id: true,
         name: true,

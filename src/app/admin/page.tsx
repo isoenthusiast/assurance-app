@@ -22,6 +22,7 @@ const tables: Table[] = [
   { name: 'AchievementBadge', displayName: 'Achievement Badges', description: 'Manage badges and achievements', icon: '🏆' },
   { name: 'BehaviorMeasurement', displayName: 'Behavior Measurements', description: 'Manage behavior metrics', icon: '📊' },
   { name: 'PointTransaction', displayName: 'Point Transactions', description: 'Manage point history', icon: '💰' },
+  { name: 'ActivityLog', displayName: 'Activity Log', description: 'View user activity log', icon: '📝' },
 ];
 
 export default function AdminDashboard() {

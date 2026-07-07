@@ -2,38 +2,49 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import SignOutButton from "./SignOutButton";
 
-const navLinks = [
-  { href: "/fla", label: "FLA Dashboard" },
-  { href: "/setup/activity-types", label: "Activity Types" },
-  { href: "/setup/process-areas", label: "Process Areas" },
-  { href: "/setup/controls", label: "Controls" },
-  { href: "/admin", label: "Admin" },
-];
-
 export default async function NavBar() {
   const session = await auth();
-  if (!session) return null;
+  const role = (session?.user as { role?: string })?.role;
 
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
         <div className="flex items-center gap-6">
           <Link href="/" className="font-semibold text-slate-900">
-            SEAM Assurance
+            CONAN PROJECT
           </Link>
-          <nav className="flex gap-4 text-sm text-slate-600">
-            {navLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="hover:text-slate-900">
-                {link.label}
+          {session && (
+            <nav className="flex gap-4 text-sm text-slate-600">
+              <Link href="/fla" className="hover:text-slate-900">
+                FLA
               </Link>
-            ))}
-          </nav>
+              <Link href="/setup/process-areas" className="hover:text-slate-900">
+                Setup Process Area
+              </Link>
+              <Link href="/setup/controls" className="hover:text-slate-900">
+                Setup Controls
+              </Link>
+              {role === "Admin" && (
+                <Link href="/admin" className="hover:text-slate-900">
+                  Admin
+                </Link>
+              )}
+            </nav>
+          )}
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-500">
-          <span>
-            {session.user?.name} ({(session.user as { role?: string })?.role})
-          </span>
-          <SignOutButton />
+          {session ? (
+            <>
+              <span>
+                {session.user?.name} ({(session.user as { role?: string })?.role})
+              </span>
+              <SignOutButton />
+            </>
+          ) : (
+            <Link href="/login" className="hover:text-slate-700">
+              Sign in
+            </Link>
+          )}
         </div>
       </div>
     </header>

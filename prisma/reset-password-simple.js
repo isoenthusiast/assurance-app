@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
 
 // Open the database
-const db = new Database("./dev.db");
+const db = new Database("./data/dev.db");
 
 // Generate new password
 const newPassword = crypto.randomBytes(9).toString("base64url");

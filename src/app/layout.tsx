@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SEAM Assurance",
+  title: "CONAN PROJECT",
   description: "Gamified assurance management for SEAM Conduct Assurance",
 };
 

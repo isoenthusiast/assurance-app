@@ -1,5 +1,9 @@
 # Railway deployment config for seam-assurance-app
 # See: https://docs.railway.com/reference/config-as-code
+#
+# Prerequisites on Railway dashboard:
+#   - Environment variable: DATABASE_URL=file:/data/dev.db
+#   - Volume mounted at: /data
 
 [build]
 builder = "nixpacks"

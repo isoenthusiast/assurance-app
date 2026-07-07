@@ -137,9 +137,6 @@ export function GamificationDashboard({ userId }: { userId: string }) {
         <AchievementsCard stats={stats} />
       </div>
 
-      {/* Emotional Drives Meter */}
-      <EmotionalDrivesMeter drives={stats.emotionalDrives} />
-
       {/* Active Milestones */}
       <MilestoneTracker milestones={stats.milestones} />
 
@@ -186,61 +183,6 @@ function AchievementsCard({ stats }: { stats: GamificationStats }) {
           <p className="text-xs text-slate-500 mt-1">Day streak: {streak}</p>
         </div>
         <div className="text-5xl">⭐</div>
-      </div>
-    </div>
-  );
-}
-
-function EmotionalDrivesMeter({ drives }: { drives: GamificationStats['emotionalDrives'] }) {
-  const driveNames = [
-    { key: 'diversity', label: 'Diversity', emoji: '🎨' },
-    { key: 'belonging', label: 'Belonging', emoji: '👥' },
-    { key: 'recognition', label: 'Recognition', emoji: '👁️' },
-    { key: 'achievement', label: 'Achievement', emoji: '✅' },
-    { key: 'excellence', label: 'Excellence', emoji: '💎' },
-    { key: 'growth', label: 'Growth', emoji: '📈' },
-    { key: 'contribution', label: 'Contribution', emoji: '🤝' },
-    { key: 'security', label: 'Security', emoji: '🛡️' },
-  ];
-
-  if (!drives) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-slate-500">No emotional drive data yet.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Emotional Drives</h2>
-      <div className="grid grid-cols-2 gap-4">
-        {driveNames.map(({ key, label, emoji }) => {
-          const value = drives[key as keyof typeof drives] || 0;
-          const percentage = (value / 100) * 100;
-
-          return (
-            <div key={key}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm font-medium text-slate-600">
-                  {emoji} {label}
-                </span>
-                <span className="text-xs text-slate-500">{value}</span>
-              </div>
-              <div className="w-full bg-slate-100 rounded-full h-2">
-                <div
-                  className="bg-gradient-to-r from-blue-400 to-blue-600 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(percentage, 100)}%` }}
-                />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <div className="mt-4 p-3 bg-blue-50 rounded">
-        <p className="text-xs text-blue-900">
-          Overall Engagement: <span className="font-bold">{drives.overallEngagement}%</span>
-        </p>
       </div>
     </div>
   );
