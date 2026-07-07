@@ -35,6 +35,9 @@ const TABLE_ORDER = [
   "SampleType",
   "RecordSourceType",
   "Sample",
+  "Finding",
+  "Action",
+  "ControlSubProcess",
   "AchievementBadge",
   "UserAchievement",
   "PointTransaction",
@@ -58,7 +61,8 @@ function convertValue(value: unknown, colName: string): unknown {
     const boolColumns = [
       "isMineOnly", "isTemplate", "isActive", "isMandatory",
       "isRequired", "isCompleted", "isDeleted", "isSampled",
-      "isDefault",
+      "isDefault", "repeat", "apAgreed", "actionClosureEffective",
+      "controlEffective",
     ];
     if (boolColumns.includes(colName)) {
       return value === 1;
@@ -71,6 +75,8 @@ function convertValue(value: unknown, colName: string): unknown {
       "createdAt", "updatedAt", "startDate", "endDate",
       "completedAt", "assignedAt", "achievedAt", "lastLoginAt",
       "dueDate", "scheduledDate", "timestamp",
+      "createdDate", "targetDate", "originalTargetDate",
+      "effectiveUpdatedAt",
     ];
     if (dateColumns.includes(colName) && /^\d{4}-\d{2}-\d{2}T/.test(value)) {
       return new Date(value);
