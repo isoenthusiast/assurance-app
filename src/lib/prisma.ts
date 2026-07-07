@@ -21,7 +21,7 @@ export const prisma = new Proxy({} as PrismaClient, {
         globalForPrisma.prisma = cachedPrisma;
       }
     }
-    const value = (cachedPrisma as Record<string | symbol, unknown>)[prop];
+    const value = (cachedPrisma as unknown as Record<string | symbol, unknown>)[prop];
     if (typeof value === "function") {
       return value.bind(cachedPrisma);
     }
