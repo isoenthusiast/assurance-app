@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import CreateAssessmentForm from "./CreateAssessmentForm";
 import Link from "next/link";
 
@@ -11,6 +12,8 @@ const loaOptions = [
 ];
 
 export default async function NewAssessmentPage() {
+  const session = await auth();
+  const currentUserId = (session?.user as { id?: string })?.id;
   const [activityTypes, users] = await Promise.all([
     prisma.assuranceActivityType.findMany({ orderBy: { name: "asc" } }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
@@ -34,7 +37,7 @@ export default async function NewAssessmentPage() {
     <div className="mx-auto max-w-lg px-6 py-8">
       <h1 className="text-2xl font-semibold text-slate-900">Plan Assessment</h1>
 
-      <CreateAssessmentForm activityTypes={activityTypes} users={users} loaOptions={loaOptions} />
+      <CreateAssessmentForm activityTypes={activityTypes} users={users} loaOptions={loaOptions} currentUserId={currentUserId} />
     </div>
   );
 }

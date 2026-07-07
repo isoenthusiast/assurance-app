@@ -1,9 +1,11 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export default function AssessmentInfoForm({ assessment, activityTypes, loaOptions, statusOptions }: any) {
   const router = useRouter();
+  const [endDate, setEndDate] = useState(toDateInput(assessment.endDate));
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -55,11 +57,15 @@ export default function AssessmentInfoForm({ assessment, activityTypes, loaOptio
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Start Date</label>
-        <input name="startDate" type="date" defaultValue={toDateInput(assessment.startDate)} required className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+        <input name="startDate" type="date" defaultValue={toDateInput(assessment.startDate)} required
+          onChange={e => { if (endDate < e.target.value) setEndDate(e.target.value); }}
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">End Date</label>
-        <input name="endDate" type="date" defaultValue={toDateInput(assessment.endDate)} className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+        <input name="endDate" type="date" value={endDate}
+          onChange={e => setEndDate(e.target.value)}
+          className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">LOA</label>

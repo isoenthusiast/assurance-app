@@ -3,8 +3,11 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function CreateAssessmentForm({ activityTypes, users, loaOptions }: any) {
+export default function CreateAssessmentForm({ activityTypes, users, loaOptions, currentUserId }: any) {
   const router = useRouter();
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
   const [selectedPA, setSelectedPA] = useState("all");
   const [selectedSP, setSelectedSP] = useState("all");
   const [selectedControls, setSelectedControls] = useState<Set<string>>(new Set());
@@ -78,7 +81,7 @@ export default function CreateAssessmentForm({ activityTypes, users, loaOptions 
         </div>
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Assessor</label>
-          <select name="assessorId" required className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+          <select name="assessorId" required defaultValue={currentUserId} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
             {users.map((u: any) => (
               <option key={u.id} value={u.id}>{u.name}</option>
             ))}
@@ -90,11 +93,15 @@ export default function CreateAssessmentForm({ activityTypes, users, loaOptions 
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Start Date</label>
-          <input name="startDate" type="date" required className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+          <input name="startDate" type="date" required defaultValue={todayStr}
+            onChange={e => { setStartDate(e.target.value); if (endDate < e.target.value) setEndDate(e.target.value); }}
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
         </div>
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">End Date</label>
-          <input name="endDate" type="date" className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
+          <input name="endDate" type="date" value={endDate}
+            onChange={e => setEndDate(e.target.value)}
+            className="w-full rounded border border-slate-300 px-3 py-2 text-sm" />
         </div>
       </div>
 
