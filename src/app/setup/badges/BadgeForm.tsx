@@ -53,6 +53,18 @@ const EMOJI_CATEGORIES = [
     name: "Fun",
     emojis: ["🎨", "🎵", "🎭", "🎉", "🎊", "🎈", "🔔", "📯", "🎺", "🥁", "🎸", "🎪"],
   },
+  {
+    name: "Process",
+    emojis: [
+      "🌬️", "🦋", "♻️", "⚡", "📦", "🤲", "🏞️", "🗑️", "💧",
+      "🔄", "👷", "🚨", "🏢", "📊", "🤝", "📚", "🔀", "⚠️",
+      "📈", "📋", "🏗️", "✅", "💻", "✏️", "🛡️", "✔️", "🔒",
+      "🎯", "📅", "🔧", "🏚️", "📆", "🚛", "🔍", "🔐", "🛢️",
+      "🪛", "🔁", "📐", "🚗", "⛴️", "🏛️", "🎉", "⛑️", "🎛️",
+      "🤿", "🔌", "⛏️", "😴", "🏃", "☣️", "🔥", "🧠", "☢️",
+      "🏋️", "🦺", "🚧", "🛂", "👥", "🪜",
+    ],
+  },
 ];
 
 type Badge = {
@@ -226,7 +238,7 @@ export default function BadgeForm({
                     ))}
                   </div>
                   {/* Emoji grid */}
-                  <div className="grid grid-cols-6 gap-1 p-2">
+                  <div className="grid grid-cols-6 gap-1 p-2 max-h-64 overflow-y-auto">
                     {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji) => (
                       <button
                         key={emoji}
