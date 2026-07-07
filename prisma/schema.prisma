@@ -69,8 +69,6 @@ model SubProcess {
   controls            Control[]
   processArea         ProcessArea          @relation(fields: [processAreaId], references: [id])
   controlSubProcesses ControlSubProcess[]
-
-  @@unique([processAreaId, name])
 }
 
 // Many-to-many: a Control can belong to multiple SubProcesses (e.g. the same
