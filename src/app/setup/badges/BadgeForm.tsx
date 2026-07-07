@@ -4,34 +4,55 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useState, useRef, useEffect } from "react";
 
-const EMOJI_OPTIONS = [
-  // Awards & Stars
-  "🏆", "🥇", "🥈", "🥉", "⭐", "🌟", "💫", "✨", "🎖️", "🏅",
-  // Medals & Badges
-  "🎯", "🔰", "✅", "☑️", "✔️", "💎", "🔮", "🎪", "🎗️", "🏷️",
-  // Shields & Protection
-  "🛡️", "🔒", "🔐", "🗝️", "⚔️", "🗡️", "🏹", "💂", "👑", "💍",
-  // Growth & Nature
-  "🌱", "🌿", "🌳", "🌻", "🌸", "🔥", "💡", "📈", "📊", "🧠",
-  // Hands & People
-  "🤝", "👥", "👤", "🙌", "👏", "💪", "🦾", "🧑‍🏫", "👨‍🔬", "👷",
-  // Tools & Science
-  "🔬", "🔭", "📋", "📝", "✏️", "🖊️", "📌", "📎", "🔗", "🧲",
-  // Hearts & Emotions
-  "❤️", "🧡", "💛", "💚", "💙", "💜", "🤍", "🖤", "💖", "💝",
-  // Misc Cool
-  "🎨", "🎵", "🎭", "🚀", "🌍", "🏗️", "⚡", "💎", "🔔", "🎉",
-];
-
 const EMOJI_CATEGORIES = [
-  { name: "Awards", emojis: EMOJI_OPTIONS.slice(0, 10) },
-  { name: "Badges", emojis: EMOJI_OPTIONS.slice(10, 20) },
-  { name: "Shields", emojis: EMOJI_OPTIONS.slice(20, 30) },
-  { name: "Growth", emojis: EMOJI_OPTIONS.slice(30, 40) },
-  { name: "People", emojis: EMOJI_OPTIONS.slice(40, 50) },
-  { name: "Tools", emojis: EMOJI_OPTIONS.slice(50, 60) },
-  { name: "Hearts", emojis: EMOJI_OPTIONS.slice(60, 70) },
-  { name: "Misc", emojis: EMOJI_OPTIONS.slice(70, 80) },
+  {
+    name: "Trophies",
+    emojis: ["🏆", "🥇", "🥈", "🥉", "🏅", "🎖️", "🏆", "👑", "💍", "🔱", "🎪", "🏟️"],
+  },
+  {
+    name: "Stars",
+    emojis: ["⭐", "🌟", "💫", "✨", "🌠", "⭐", "🔆", "💥", "🎇", "🎆", "☀️", "🔥"],
+  },
+  {
+    name: "Medals",
+    emojis: ["🎯", "✅", "✔️", "☑️", "🏁", "🎗️", "🏷️", "🔰", "💮", "🉐", "㊗️", "🈴"],
+  },
+  {
+    name: "Gems",
+    emojis: ["💎", "🔮", "💠", "🪩", "🔷", "🔶", "💎", "🟣", "🟦", "🟩", "🟨", "🟧"],
+  },
+  {
+    name: "Shields",
+    emojis: ["🛡️", "🔒", "🔐", "🗝️", "⚔️", "🛡️", "🗡️", "🏹", "💂", "⛓️", "🔗", "🧲"],
+  },
+  {
+    name: "Growth",
+    emojis: ["🌱", "🌿", "🌳", "🌻", "🌸", "📈", "📊", "🧠", "💡", "🔬", "🔭", "🧬"],
+  },
+  {
+    name: "Rockets",
+    emojis: ["🚀", "🛸", "✈️", "🌍", "🌎", "🌏", "⚡", "💨", "🌀", "🎢", "⏫", "🆙"],
+  },
+  {
+    name: "People",
+    emojis: ["🤝", "👥", "🙌", "👏", "💪", "🦾", "🧑‍🏫", "👨‍💼", "👷", "🦸", "🧑‍🔬", "👨‍🔧"],
+  },
+  {
+    name: "Tools",
+    emojis: ["📋", "📝", "✏️", "🖊️", "📌", "📎", "📐", "📏", "🗂️", "📁", "📓", "🔍"],
+  },
+  {
+    name: "Hearts",
+    emojis: ["❤️", "🧡", "💛", "💚", "💙", "💜", "🤍", "🖤", "💖", "💝", "💘", "💕"],
+  },
+  {
+    name: "Flags",
+    emojis: ["🚩", "🏳️", "🏴", "🎌", "🏁", "⛳", "📍", "📌", "🔖", "📑", "🗞️", "📰"],
+  },
+  {
+    name: "Fun",
+    emojis: ["🎨", "🎵", "🎭", "🎉", "🎊", "🎈", "🔔", "📯", "🎺", "🥁", "🎸", "🎪"],
+  },
 ];
 
 type Badge = {
@@ -190,9 +211,9 @@ export default function BadgeForm({
                 <span className="text-slate-400">Choose…</span>
               </button>
               {emojiOpen && (
-                <div className="absolute left-0 top-full z-20 mt-1 w-72 rounded border border-slate-200 bg-white shadow-xl">
+                <div className="absolute left-0 top-full z-20 mt-1 w-80 rounded border border-slate-200 bg-white shadow-xl">
                   {/* Category tabs */}
-                  <div className="flex flex-wrap border-b border-slate-100 bg-slate-50 px-1 pt-1">
+                  <div className="flex flex-wrap gap-0.5 border-b border-slate-100 bg-slate-50 px-1 pt-1">
                     {EMOJI_CATEGORIES.map((cat, i) => (
                       <button
                         key={cat.name}
@@ -205,7 +226,7 @@ export default function BadgeForm({
                     ))}
                   </div>
                   {/* Emoji grid */}
-                  <div className="grid grid-cols-10 gap-0.5 p-2">
+                  <div className="grid grid-cols-6 gap-1 p-2">
                     {EMOJI_CATEGORIES[emojiCategory].emojis.map((emoji) => (
                       <button
                         key={emoji}
