@@ -182,7 +182,7 @@ async function importProcessAreas(rows: string[][]): Promise<ImportStats> {
       data.id = `pa_${Date.now()}_${i}`;
       data.name = record.name; // Ensure name is set
 
-      await prisma.processArea.create({ data });
+      await (prisma.processArea.create as any)({ data });
 
       stats.rowsImported++;
     } catch (error) {
@@ -232,7 +232,7 @@ async function importSubProcesses(rows: string[][]): Promise<ImportStats> {
       data.name = record.name; // Ensure required fields
       data.processAreaId = record.processAreaId;
 
-      await prisma.subProcess.create({ data });
+      await (prisma.subProcess.create as any)({ data });
 
       stats.rowsImported++;
     } catch (error) {
@@ -279,7 +279,7 @@ async function importAssuranceActivityType(rows: string[][]): Promise<ImportStat
       data.name = record.name;
       data.defaultLOA = loaValue;
 
-      await prisma.assuranceActivityType.create({ data });
+      await (prisma.assuranceActivityType.create as any)({ data });
 
       stats.rowsImported++;
     } catch (error) {
@@ -369,7 +369,7 @@ async function importControls(rows: string[][]): Promise<ImportStats> {
       data.processAreaId = record.processAreaId;
       data.subProcessId = record.subProcessId;
 
-      await prisma.control.create({ data });
+      await (prisma.control.create as any)({ data });
 
       stats.rowsImported++;
     } catch (error) {

@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getTableSchema, convertToAdminFormat } from "@/lib/schema-introspection";
 import { getFallbackSchema } from "@/lib/fallback-schemas";

@@ -22,14 +22,15 @@ const DEFAULT_STATS = {
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
-    if (!params.userId) {
+    const { userId } = await params;
+    if (!userId) {
       return NextResponse.json(DEFAULT_STATS);
     }
 
-    const stats = await getUserGamificationStats(params.userId);
+    const stats = await getUserGamificationStats(userId);
 
     // Ensure response has the right structure
     if (!stats || typeof stats !== 'object') {

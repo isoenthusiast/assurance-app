@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { auth, signOut } from "@/auth";
+import { auth } from "@/auth";
+import SignOutButton from "./SignOutButton";
 
 const navLinks = [
   { href: "/fla", label: "FLA Dashboard" },
@@ -32,16 +33,7 @@ export default async function NavBar() {
           <span>
             {session.user?.name} ({(session.user as { role?: string })?.role})
           </span>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/login" });
-            }}
-          >
-            <button type="submit" className="text-slate-600 hover:text-slate-900 hover:underline">
-              Sign out
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </div>
     </header>

@@ -24,6 +24,8 @@ interface Control {
 interface ActivityType {
   id: string;
   name: string;
+  description: string | null;
+  defaultLOA: string;
 }
 
 interface ProcessArea {

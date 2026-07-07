@@ -86,13 +86,14 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ table: string; id: string }> }
 ) {
+  const deleteParams = await params;
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "Admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
-    const { table, id } = await params;
+    const { table, id } = deleteParams;
     const url = new URL(request.url);
     const cascade = url.searchParams.get("cascade") === "true";
 
@@ -177,7 +178,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true, deleted: result });
   } catch (error: any) {
-    console.error(`Error deleting from ${params.table}:`, error);
+    console.error(`Error deleting from ${deleteParams.table}:`, error);
     
     // Handle specific errors
     if (error.code === "P2025") {
@@ -205,13 +206,14 @@ export async function PUT(
   request: Request,
   { params }: { params: Promise<{ table: string; id: string }> }
 ) {
+  const putParams = await params;
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "Admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
-    const { table, id } = await params;
+    const { table, id } = putParams;
     const body = await request.json();
 
     if (!id) {
@@ -281,7 +283,7 @@ export async function PUT(
 
     return NextResponse.json({ success: true, updated: result });
   } catch (error: any) {
-    console.error(`Error updating ${params.table}:`, error);
+    console.error(`Error updating ${putParams.table}:`, error);
     
     if (error.code === "P2025") {
       return NextResponse.json(

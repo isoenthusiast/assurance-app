@@ -1,7 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveActivityType } from "./actions";
 
 type ActivityType = {
   id: string;
@@ -26,6 +26,36 @@ export default function ActivityTypeForm({
   isOpen: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const id = formData.get("id")?.toString();
+    const data = {
+      name: formData.get("name")?.toString() ?? "",
+      description: formData.get("description")?.toString() || null,
+      defaultLOA: formData.get("defaultLOA")?.toString() ?? "FirstLine",
+    };
+
+    if (id) {
+      await fetch(`/api/admin/table/AssuranceActivityType/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } else {
+      await fetch("/api/admin/table/AssuranceActivityType", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    }
+
+    router.refresh();
+    router.push("/setup/activity-types");
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -38,7 +68,7 @@ export default function ActivityTypeForm({
       }}
     >
       <form
-        action={saveActivityType}
+        onSubmit={handleSubmit}
         className="my-8 w-full max-w-md space-y-3 rounded border border-slate-200 bg-white p-5 shadow-xl"
       >
         <div className="flex items-center justify-between">

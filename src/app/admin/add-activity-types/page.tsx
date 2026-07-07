@@ -35,7 +35,7 @@ export default function AddActivityTypesPage() {
         const data = await res.json();
         setSuggestions(data);
         // Pre-select all suggested types
-        const allSuggested = new Set(
+        const allSuggested = new Set<string>(
           data.suggestedActivityTypes.map((a: ActivityType) => a.name)
         );
         setSelectedTypes(allSuggested);

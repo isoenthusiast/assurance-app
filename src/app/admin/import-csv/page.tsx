@@ -160,7 +160,7 @@ export default function ImportCSVPage() {
     }
 
     // Prevent import if validation shows critical errors
-    if (validation && !validation.canImport) {
+    if (validation?.canImport === false) {
       setError('Cannot import: CSV has critical errors. Please fix them first.');
       return;
     }
@@ -458,9 +458,9 @@ export default function ImportCSVPage() {
               <div className="flex gap-3">
                 <button
                   type="submit"
-                  disabled={!file || importing || validating || (validation && !validation.canImport)}
+                  disabled={!file || importing || validating || (validation?.canImport === false)}
                   className="flex-1 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
-                  title={validation && !validation.canImport ? 'Fix CSV errors before importing' : ''}
+                  title={validation?.canImport === false ? 'Fix CSV errors before importing' : ''}
                 >
                   {importing ? '⏳ Importing...' : validating ? '🔍 Validating...' : '📤 Import Data'}
                 </button>

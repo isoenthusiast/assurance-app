@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateSample, deleteSample } from "../actions";
-import DeleteButton from "@/components/DeleteButton";
+import { useRouter } from "next/navigation";
 
 type Sample = {
   id: string;
@@ -19,7 +18,32 @@ type Sample = {
 };
 
 export default function SampleRow({ sample }: { sample: Sample }) {
+  const router = useRouter();
   const [status, setStatus] = useState(sample.status);
+
+  const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const data: Record<string, any> = {
+      status: fd.get("status")?.toString() ?? "NotTested",
+      comment: fd.get("comment")?.toString() || null,
+    };
+    const conclusion = fd.get("conclusion")?.toString();
+    if (conclusion) data.conclusion = conclusion;
+
+    await fetch(`/api/admin/samples/${sample.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    router.refresh();
+  };
+
+  const handleDelete = async () => {
+    if (!confirm("Delete this sample? This cannot be undone.")) return;
+    await fetch(`/api/admin/samples/${sample.id}`, { method: "DELETE" });
+    router.refresh();
+  };
 
   return (
     <tr className="border-t border-slate-100 align-top">
@@ -30,7 +54,7 @@ export default function SampleRow({ sample }: { sample: Sample }) {
         </div>
       </td>
       <td className="px-4 py-2">
-        <form action={updateSample} className="flex flex-col gap-2">
+        <form onSubmit={handleUpdate} className="flex flex-col gap-2">
           <input type="hidden" name="id" value={sample.id} />
           <input type="hidden" name="assessmentId" value={sample.assessmentId} />
 
@@ -73,7 +97,13 @@ export default function SampleRow({ sample }: { sample: Sample }) {
             >
               Save
             </button>
-            <DeleteButton action={deleteSample.bind(null, sample.id, sample.assessmentId)} />
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="text-sm text-red-600 hover:underline"
+            >
+              Delete
+            </button>
           </div>
         </form>
       </td>

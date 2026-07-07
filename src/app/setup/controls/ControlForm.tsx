@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveControl } from "./actions";
 
 type SubProcess = { id: string; name: string; processAreaId: string };
 type ProcessArea = { id: string; name: string };
@@ -33,7 +33,7 @@ type Editing = {
   testingApproach?: string | null;
   uncertainFlags?: string | null;
   rawHealthScore?: number | null;
-  lastTestedDate?: string | null;
+  lastTestedDate?: string | Date | null;
   lastTestResult?: string | null;
 } | null;
 
@@ -58,6 +58,52 @@ export default function ControlForm({
 
   const filteredSubProcesses = subProcesses.filter((sp) => sp.processAreaId === processAreaId);
 
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const fd = new FormData(e.currentTarget);
+    const id = fd.get("id")?.toString();
+    const data: Record<string, any> = {
+      name: fd.get("name")?.toString() ?? "",
+      statement: fd.get("statement")?.toString() ?? "",
+      controlType: fd.get("controlType")?.toString(),
+      processAreaId: fd.get("processAreaId")?.toString() ?? "",
+      subProcessId: fd.get("subProcessId")?.toString() ?? "",
+      isHsseCritical: fd.get("isHsseCritical") === "on",
+      ramRating: fd.get("ramRating")?.toString() || null,
+      riskWeight: parseInt(fd.get("riskWeight")?.toString() || "1"),
+      sourceFile: fd.get("sourceFile")?.toString() || null,
+      controlRef: fd.get("controlRef")?.toString() || null,
+      practiceDocument: fd.get("practiceDocument")?.toString() || null,
+      controlTypeDetail: fd.get("controlTypeDetail")?.toString() || null,
+      csfWho: fd.get("csfWho")?.toString() || null,
+      csfWhat: fd.get("csfWhat")?.toString() || null,
+      csfWhen: fd.get("csfWhen")?.toString() || null,
+      csfWhere: fd.get("csfWhere")?.toString() || null,
+      csfWhy: fd.get("csfWhy")?.toString() || null,
+      csfHow: fd.get("csfHow")?.toString() || null,
+      csfEvidence: fd.get("csfEvidence")?.toString() || null,
+      keyActivities: fd.get("keyActivities")?.toString() || null,
+      riskAddressed: fd.get("riskAddressed")?.toString() || null,
+      testingApproach: fd.get("testingApproach")?.toString() || null,
+      uncertainFlags: fd.get("uncertainFlags")?.toString() || null,
+      rawHealthScore: parseInt(fd.get("rawHealthScore")?.toString() || "80"),
+      lastTestedDate: fd.get("lastTestedDate")?.toString() || null,
+      lastTestResult: fd.get("lastTestResult")?.toString() || null,
+    };
+
+    const endpoint = id ? `/api/admin/table/Control/${id}` : "/api/admin/table/Control";
+    const res = await fetch(endpoint, {
+      method: id ? "PUT" : "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error("Failed to save control");
+    router.refresh();
+    router.push("/setup/controls");
+  };
+
   if (!isOpen) {
     return (
       <div className="mt-8">
@@ -80,7 +126,7 @@ export default function ControlForm({
       }}
     >
       <form
-        action={saveControl}
+        onSubmit={handleSubmit}
         className="my-8 w-full max-w-4xl space-y-6 rounded border border-slate-200 bg-white p-6 shadow-xl"
       >
         <div className="flex items-center justify-between">
@@ -443,7 +489,7 @@ export default function ControlForm({
             <input
               name="lastTestedDate"
               type="date"
-              defaultValue={editing?.lastTestedDate ? editing.lastTestedDate.split('T')[0] : ""}
+              defaultValue={editing?.lastTestedDate ? (typeof editing.lastTestedDate === 'string' ? editing.lastTestedDate.split('T')[0] : editing.lastTestedDate.toISOString().split('T')[0]) : ""}
               className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
             />
           </div>

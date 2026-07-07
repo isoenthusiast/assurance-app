@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { saveProcessArea } from "./actions";
 
 type Editing = {
   id: string;
@@ -21,18 +21,45 @@ export default function ProcessAreaForm({
 }: {
   editing: Editing;
   standards: string[];
-  // Pre-selects the Standard dropdown when adding (not editing) — e.g. the
-  // Standard filter tab active on the table when "+Add Process" was clicked.
   defaultStandard?: string;
   isOpen: boolean;
   onClose: () => void;
 }) {
-  // Defaults to the free-text "new standard" input if editing an area whose
-  // standard isn't in the known list (legacy/imported data), so the value
-  // isn't silently dropped by the dropdown.
+  const router = useRouter();
   const [isAddingNewStandard, setIsAddingNewStandard] = useState(
     () => Boolean(editing?.standard) && !standards.includes(editing?.standard as string)
   );
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const id = formData.get("id")?.toString();
+
+    const data = {
+      name: formData.get("name")?.toString() ?? "",
+      description: formData.get("description")?.toString() || null,
+      standard: formData.get("standard")?.toString() ?? "",
+      pId: formData.get("pId")?.toString() || null,
+    };
+
+    if (id) {
+      await fetch(`/api/admin/table/ProcessArea/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+    } else {
+      const res = await fetch("/api/admin/table/ProcessArea", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to create");
+    }
+
+    router.refresh();
+    router.push("/setup/process-areas");
+  };
 
   if (!isOpen) {
     return null;
@@ -46,7 +73,7 @@ export default function ProcessAreaForm({
       }}
     >
       <form
-        action={saveProcessArea}
+        onSubmit={handleSubmit}
         className="my-8 w-full max-w-md space-y-3 rounded border border-slate-200 bg-white p-5 shadow-xl"
       >
         <div className="flex items-center justify-between">

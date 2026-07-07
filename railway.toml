@@ -1,0 +1,9 @@
+# Railway deployment config for seam-assurance-app
+# See: https://docs.railway.com/reference/config-as-code
+
+[build]
+builder = "nixpacks"
+buildCommand = "npx prisma generate && npm run build"
+
+[deploy]
+startCommand = "npm run start"

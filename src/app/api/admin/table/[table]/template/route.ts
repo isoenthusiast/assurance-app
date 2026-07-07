@@ -41,13 +41,11 @@ function generateSampleValue(fieldName: string, fieldType: string): string {
     controlName: 'Example Control',
     controlStatement: 'Example control statement',
     controlRef: 'CTRL-001',
-    controlId: 'CTRL-001',
     sourceFile: '01 Example',
     practiceDocument: 'Practice.md',
     processAreaId: 'pa_001',
     subProcessId: 'sp_001',
     assessmentId: 'assess_001',
-    controlId: 'ctrl_001',
     commentText: 'Example comment',
     status: 'Active',
     conclusion: 'Compliant',
@@ -104,6 +102,10 @@ export async function GET(
         return NextResponse.json({ error: 'Table not found' }, { status: 404 });
       }
       columns = Object.keys(fallbackSchema);
+    }
+
+    if (!tableSchema) {
+      return NextResponse.json({ error: 'Schema not available for this table' }, { status: 500 });
     }
 
     // Generate sample row

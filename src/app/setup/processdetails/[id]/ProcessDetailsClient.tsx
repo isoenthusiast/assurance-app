@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createSubProcessInline } from "../../sub-processes/actions";
+// Sub-process creation uses fetch API directly (avoid server action host validation)
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -180,7 +180,7 @@ export default function ProcessDetailsClient({
           .filter((row: any) => row.controlId === control.id)
           .map((row: any) => row.subProcessId);
         // Always include the primary sub-process
-        const withPrimary = new Set(linkedIds);
+        const withPrimary = new Set<string>(linkedIds);
         withPrimary.add(control.subProcessId);
         setLinkedSubProcessIds(withPrimary);
       }
@@ -1079,8 +1079,18 @@ export default function ProcessDetailsClient({
           }}
         >
           <form
-            action={async (formData: FormData) => {
-              await createSubProcessInline(formData);
+            onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
+              e.preventDefault();
+              const fd = new FormData(e.currentTarget);
+              await fetch("/api/admin/table/SubProcess", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  name: fd.get("name")?.toString() ?? "",
+                  description: fd.get("description")?.toString() || null,
+                  processAreaId: fd.get("processAreaId")?.toString() ?? "",
+                }),
+              });
               setShowAddSubProcess(false);
               router.refresh();
             }}

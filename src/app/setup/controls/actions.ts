@@ -65,10 +65,15 @@ export async function saveControl(formData: FormData) {
     lastTestResult: formData.get("lastTestResult")?.toString() || undefined,
   });
 
+  const data = {
+    ...parsed,
+    controlType: parsed.controlType as any,
+  };
+
   if (id) {
-    await prisma.control.update({ where: { id }, data: parsed });
+    await prisma.control.update({ where: { id }, data });
   } else {
-    await prisma.control.create({ data: parsed });
+    await prisma.control.create({ data });
   }
 
   revalidatePath("/setup/controls");

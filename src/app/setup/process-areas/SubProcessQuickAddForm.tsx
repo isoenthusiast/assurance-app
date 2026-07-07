@@ -1,6 +1,6 @@
 "use client";
 
-import { createSubProcessInline } from "../sub-processes/actions";
+import { useRouter } from "next/navigation";
 
 export default function SubProcessQuickAddForm({
   processAreaId,
@@ -11,8 +11,22 @@ export default function SubProcessQuickAddForm({
   processAreaName: string;
   onClose: () => void;
 }) {
-  async function handleSubmit(formData: FormData) {
-    await createSubProcessInline(formData);
+  const router = useRouter();
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      name: formData.get("name")?.toString() ?? "",
+      description: formData.get("description")?.toString() || null,
+      processAreaId: formData.get("processAreaId")?.toString() ?? "",
+    };
+    await fetch("/api/admin/table/SubProcess", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    router.refresh();
     onClose();
   }
 
@@ -24,7 +38,7 @@ export default function SubProcessQuickAddForm({
       }}
     >
       <form
-        action={handleSubmit}
+        onSubmit={handleSubmit}
         className="my-8 w-full max-w-md space-y-3 rounded border border-slate-200 bg-white p-5 shadow-xl"
       >
         <div className="flex items-center justify-between">

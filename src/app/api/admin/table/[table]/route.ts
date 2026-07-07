@@ -1,7 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { v4 as uuidv4 } from 'crypto';
 
 function generateId(): string {
   return `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -58,6 +57,8 @@ export async function POST(
               id: body.id,
               name: body.name || 'New Process Area',
               description: body.description || null,
+              standard: body.standard || null,
+              pId: body.pId || null,
             },
           });
           break;
@@ -123,7 +124,9 @@ export async function POST(
             data: {
               id: body.id,
               assessmentId: body.assessmentId,
-              controlId: body.controlId,
+              sampleTypeId: body.sampleTypeId || null,
+              recordSourceId: body.recordSourceId || null,
+              recordReference: body.recordReference || null,
               comment: body.comment || null,
               status: body.status || 'NotTested',
               conclusion: body.conclusion || null,

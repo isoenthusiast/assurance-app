@@ -1,18 +1,26 @@
 "use client";
 
-export default function DeleteButton({ action }: { action: () => Promise<void> }) {
+export default function DeleteButton({
+  action,
+}: {
+  action: () => Promise<void>;
+}) {
+  const handleSubmit = async () => {
+    if (!confirm("Delete this item? This cannot be undone.")) return;
+    try {
+      await action();
+    } catch {
+      // Error handled by caller
+    }
+  };
+
   return (
-    <form
-      action={action}
-      onSubmit={(e) => {
-        if (!confirm("Delete this item? This cannot be undone.")) {
-          e.preventDefault();
-        }
-      }}
+    <button
+      type="button"
+      onClick={handleSubmit}
+      className="text-sm text-red-600 hover:underline"
     >
-      <button type="submit" className="text-sm text-red-600 hover:underline">
-        Delete
-      </button>
-    </form>
+      Delete
+    </button>
   );
 }

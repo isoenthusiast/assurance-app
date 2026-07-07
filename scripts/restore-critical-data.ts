@@ -27,11 +27,13 @@ interface SubProcess {
   createdAt: string;
 }
 
+import { ControlType, LOA } from "@/generated/prisma/enums";
+
 interface Control {
   id: string;
   name: string;
   statement: string;
-  controlType: string;
+  controlType: ControlType;
   processAreaId: string;
   subProcessId: string;
   isHsseCritical: boolean;
@@ -65,7 +67,7 @@ interface ActivityType {
   id: string;
   name: string;
   description?: string;
-  defaultLOA: string;
+  defaultLOA: LOA;
   createdAt: string;
 }
 

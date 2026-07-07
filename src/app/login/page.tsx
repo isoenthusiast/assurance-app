@@ -1,15 +1,44 @@
 "use client";
 
-import { useActionState } from "react";
-import { loginAction } from "./actions";
+import { useState, FormEvent } from "react";
+import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
-  const [state, formAction, pending] = useActionState(loginAction, { error: null });
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setPending(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const username = (formData.get("username") as string) ?? "";
+    const password = (formData.get("password") as string) ?? "";
+
+    try {
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Invalid username or password.");
+        setPending(false);
+      } else {
+        window.location.href = "/";
+      }
+    } catch {
+      setError("Sign in failed. Please try again.");
+      setPending(false);
+    }
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50">
       <form
-        action={formAction}
+        onSubmit={handleSubmit}
         className="w-full max-w-sm space-y-4 rounded-lg border border-slate-200 bg-white p-8 shadow-sm"
       >
         <div>
@@ -45,7 +74,7 @@ export default function LoginPage() {
           />
         </div>
 
-        {state.error && <p className="text-sm text-red-600">{state.error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"

@@ -13,12 +13,12 @@ import * as path from "path";
 //   Behavioral/Behavioural -> Behavioural
 //   everything else        -> Procedural   (Administrative, Analytical,
 //                                            Informational, Procedural)
-export type DbControlType = "Engineering" | "Procedural" | "Behavioural";
+export type DbControlType = "Engineering" | "Procedural" | "Behavioral";
 
 export function mapControlType(raw: string): DbControlType {
   const t = (raw || "").trim().toLowerCase();
   if (t === "engineering") return "Engineering";
-  if (t === "behavioural" || t === "behavioral") return "Behavioural";
+  if (t === "behavioural" || t === "behavioral") return "Behavioral";
   return "Procedural";
 }
 
