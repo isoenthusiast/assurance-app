@@ -38,6 +38,11 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+
+# playwright
+/playwright-report/
+/tests/.auth/
+test-results/
 next-env.d.ts
 
 /src/generated/prisma

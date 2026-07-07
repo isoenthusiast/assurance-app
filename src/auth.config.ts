@@ -9,6 +9,11 @@ export const authConfig: NextAuthConfig = {
   },
   providers: [],
   callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isLoginPage = nextUrl.pathname === "/login";
+      return isLoggedIn || isLoginPage;
+    },
     jwt: ({ token, user }) => {
       if (user) {
         token.id = (user as { id: string }).id;
