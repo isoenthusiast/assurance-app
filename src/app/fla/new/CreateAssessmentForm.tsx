@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import UserSearchSelect from "@/components/UserSearchSelect";
 
 export default function CreateAssessmentForm({ activityTypes, users, loaOptions, currentUserId }: any) {
   const router = useRouter();
@@ -81,11 +82,7 @@ export default function CreateAssessmentForm({ activityTypes, users, loaOptions,
         </div>
         <div className="space-y-1">
           <label className="text-sm font-medium text-slate-700">Assessor</label>
-          <select name="assessorId" required defaultValue={currentUserId} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-            {users.map((u: any) => (
-              <option key={u.id} value={u.id}>{u.name}</option>
-            ))}
-          </select>
+          <UserSearchSelect name="assessorId" users={users} defaultValue={currentUserId} required />
         </div>
       </div>
 
