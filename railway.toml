@@ -2,8 +2,10 @@
 # See: https://docs.railway.com/reference/config-as-code
 #
 # Prerequisites on Railway dashboard:
-#   - Environment variable: DATABASE_URL=file:/data/dev.db
-#   - Volume mounted at: /data
+#   - Add PostgreSQL plugin to your project
+#   - Environment variable: DATABASE_URL (auto-set by Railway PG plugin)
+#   - Environment variable: AUTH_SECRET
+#   - Environment variable: ADMIN_PASSWORD
 
 [build]
 builder = "RAILPACK"

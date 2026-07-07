@@ -9,24 +9,24 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
-    // Get list of all tables from SQLite
+    // Get list of all tables from PostgreSQL
     const tables = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name`
+      `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name`
     );
 
     // Get row and column counts for each table
     const tableInfo = await Promise.all(
       tables.map(async (table) => {
         try {
-          // Count rows – SQLite COUNT returns BigInt, must convert to Number
+          // Count rows
           const rowCountResult = await prisma.$queryRawUnsafe<Array<{ count: unknown }>>(
             `SELECT COUNT(*) as count FROM "${table.name}"`
           );
           const rowCount = Number(rowCountResult[0]?.count) || 0;
 
           // Get columns
-          const columns = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-            `PRAGMA table_info("${table.name}")`
+          const columns = await prisma.$queryRawUnsafe<Array<{ column_name: string }>>(
+            `SELECT column_name FROM information_schema.columns WHERE table_name = '${table.name}' AND table_schema = 'public'`
           );
           const columnCount = columns.length;
 
@@ -82,7 +82,7 @@ export async function POST(request: Request) {
 
     // Check if table already exists
     const existing = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name = '${name}'`
+      `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '${name}'`
     );
 
     if (existing.length > 0) {

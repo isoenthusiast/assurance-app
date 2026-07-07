@@ -61,7 +61,7 @@ export async function DELETE(
 
     // Check if table exists
     const existing = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name = '${name}'`
+      `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public' AND table_name = '${name}'`
     );
 
     if (existing.length === 0) {

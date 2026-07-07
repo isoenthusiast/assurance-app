@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     // Safety check: prevent dangerous operations
     const dangerousPatterns = [
       /DROP\s+DATABASE/i,
-      /DELETE\s+FROM\s+sqlite_master/i,
+      /DELETE\s+FROM\s+information_schema/i,
       /PRAGMA\s+database_list/i,
     ];
 

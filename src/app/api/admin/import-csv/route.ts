@@ -67,9 +67,9 @@ interface ImportStats {
  */
 async function getTableColumns(tableName: string): Promise<string[]> {
   try {
-    // Query SQLite PRAGMA to get actual database columns
+    // Query PostgreSQL information_schema to get actual database columns
     const result = await (prisma as any).$queryRawUnsafe(
-      `PRAGMA table_info("${tableName}")`
+      `SELECT column_name as name FROM information_schema.columns WHERE table_name = '${tableName}' AND table_schema = 'public'`
     );
     if (Array.isArray(result)) {
       return result.map((col: any) => col.name);

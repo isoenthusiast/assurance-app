@@ -22,7 +22,7 @@ export async function GET(request: Request) {
 
     // Get list of actual tables in database
     const existingTables = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'`
+      `SELECT table_name as name FROM information_schema.tables WHERE table_schema = 'public'`
     );
 
     const existingTableNames = new Set(existingTables.map((t) => t.name));
