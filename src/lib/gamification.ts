@@ -10,14 +10,14 @@ import { EmotionalDrive, BadgeRarity } from "../generated/prisma/enums";
 export const BADGE_DEFINITIONS = [
   // DIVERSITY - Drive for new experiences
   {
-    name: "Explorer",
+    badgeName: "Explorer",
     description: "Test controls from 5 different Process Areas",
     emotionalDrive: "Diversity" as EmotionalDrive,
     rarity: "Uncommon" as BadgeRarity,
     achievementType: "diversity_explorer",
   },
   {
-    name: "Week of Change",
+    badgeName: "Week of Change",
     description: "Complete 7 different daily behavior patterns in one week",
     emotionalDrive: "Diversity" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
@@ -26,14 +26,14 @@ export const BADGE_DEFINITIONS = [
 
   // BELONGING - Drive to be with people, community
   {
-    name: "Team Player",
+    badgeName: "Team Player",
     description: "Participate in 3 team FLA planning sessions",
     emotionalDrive: "Belonging" as EmotionalDrive,
     rarity: "Uncommon" as BadgeRarity,
     achievementType: "team_player",
   },
   {
-    name: "Community Champion",
+    badgeName: "Community Champion",
     description: "Help 5 different team members complete their assessments",
     emotionalDrive: "Belonging" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
@@ -42,14 +42,14 @@ export const BADGE_DEFINITIONS = [
 
   // RECOGNITION - Drive to feel valuable
   {
-    name: "First Test",
+    badgeName: "First Test",
     description: "Complete your first control test",
     emotionalDrive: "Recognition" as EmotionalDrive,
     rarity: "Common" as BadgeRarity,
     achievementType: "first_test",
   },
   {
-    name: "Recognized Expert",
+    badgeName: "Recognized Expert",
     description: "Earn 1000 points for test quality and consistency",
     emotionalDrive: "Recognition" as EmotionalDrive,
     rarity: "Epic" as BadgeRarity,
@@ -59,21 +59,21 @@ export const BADGE_DEFINITIONS = [
 
   // ACHIEVEMENT - Drive to complete things
   {
-    name: "Starter",
+    badgeName: "Starter",
     description: "Plan your first FLA",
     emotionalDrive: "Achievement" as EmotionalDrive,
     rarity: "Common" as BadgeRarity,
     achievementType: "first_fla",
   },
   {
-    name: "Milestone Getter",
+    badgeName: "Milestone Getter",
     description: "Complete 5 milestone achievements",
     emotionalDrive: "Achievement" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
     achievementType: "milestone_master",
   },
   {
-    name: "Perfect Week",
+    badgeName: "Perfect Week",
     description: "Complete daily activities 7 days in a row",
     emotionalDrive: "Achievement" as EmotionalDrive,
     rarity: "Epic" as BadgeRarity,
@@ -83,7 +83,7 @@ export const BADGE_DEFINITIONS = [
 
   // EXCELLENCE - Drive to do better than expected
   {
-    name: "Quality Obsessed",
+    badgeName: "Quality Obsessed",
     description: "Document evidence for 10 consecutive controls with >90% quality score",
     emotionalDrive: "Excellence" as EmotionalDrive,
     rarity: "Epic" as BadgeRarity,
@@ -91,7 +91,7 @@ export const BADGE_DEFINITIONS = [
     achievementType: "excellence_seeker",
   },
   {
-    name: "Perfect Assessor",
+    badgeName: "Perfect Assessor",
     description: "Complete assessment with 100% control pass rate",
     emotionalDrive: "Excellence" as EmotionalDrive,
     rarity: "Legendary" as BadgeRarity,
@@ -100,7 +100,7 @@ export const BADGE_DEFINITIONS = [
 
   // GROWTH - Drive to improve yourself
   {
-    name: "Learner",
+    badgeName: "Learner",
     description: "Test controls from 3 different Sub-Processes",
     emotionalDrive: "Growth" as EmotionalDrive,
     rarity: "Uncommon" as BadgeRarity,
@@ -108,7 +108,7 @@ export const BADGE_DEFINITIONS = [
     achievementType: "learner",
   },
   {
-    name: "Rising Star",
+    badgeName: "Rising Star",
     description: "Improve your quality score by 20% month-over-month",
     emotionalDrive: "Growth" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
@@ -117,14 +117,14 @@ export const BADGE_DEFINITIONS = [
 
   // CONTRIBUTION - Drive for purpose beyond self
   {
-    name: "Mentor",
+    badgeName: "Mentor",
     description: "Document 5 control test guides for team reuse",
     emotionalDrive: "Contribution" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
     achievementType: "mentor",
   },
   {
-    name: "Organization Builder",
+    badgeName: "Organization Builder",
     description: "Identify and document 3 HSSE-critical control improvements",
     emotionalDrive: "Contribution" as EmotionalDrive,
     rarity: "Epic" as BadgeRarity,
@@ -133,14 +133,14 @@ export const BADGE_DEFINITIONS = [
 
   // SECURITY - Drive for safety and control
   {
-    name: "Safety First",
+    badgeName: "Safety First",
     description: "Test all HSSE-critical controls in your assigned area",
     emotionalDrive: "Security" as EmotionalDrive,
     rarity: "Rare" as BadgeRarity,
     achievementType: "safety_focused",
   },
   {
-    name: "Compliance Champion",
+    badgeName: "Compliance Champion",
     description: "Zero deficiencies in 3 consecutive assessments",
     emotionalDrive: "Security" as EmotionalDrive,
     rarity: "Legendary" as BadgeRarity,

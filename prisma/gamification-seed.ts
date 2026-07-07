@@ -29,11 +29,11 @@ async function main() {
 
   for (const badgeDef of BADGE_DEFINITIONS) {
     const existing = await prisma.achievementBadge.findUnique({
-      where: { name: badgeDef.name },
+      where: { badgeName: badgeDef.badgeName },
     });
 
     if (existing) {
-      console.log(`  ✓ Already exists: ${badgeDef.name}`);
+      console.log(`  ✓ Already exists: ${badgeDef.badgeName}`);
       skipped++;
       continue;
     }
@@ -42,7 +42,7 @@ async function main() {
 
     const badge = await prisma.achievementBadge.create({
       data: {
-        name: badgeDef.name,
+        badgeName: badgeDef.badgeName,
         description: badgeDef.description,
         emotionalDrive: badgeDef.emotionalDrive,
         rarity: badgeDef.rarity,
@@ -54,7 +54,7 @@ async function main() {
       },
     });
 
-    console.log(`  ✓ Created: ${emoji} ${badge.name} (${badge.rarity})`);
+    console.log(`  ✓ Created: ${emoji} ${badge.badgeName} (${badge.rarity})`);
     created++;
   }
 

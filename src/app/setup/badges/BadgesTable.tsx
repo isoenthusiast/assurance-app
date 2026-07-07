@@ -1,0 +1,206 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import DeleteButton from "@/components/DeleteButton";
+
+type Badge = {
+  id: string;
+  badgeName: string;
+  description: string;
+  icon: string;
+  badgeImage: string | null;
+  emotionalDrive: string;
+  rarity: string;
+  pointsRequired: number | null;
+  controlsChecked: number | null;
+  streakDays: number | null;
+  achievementType: string;
+  createdAt: Date;
+};
+
+const RARITY_COLORS: Record<string, string> = {
+  Common: "bg-slate-100 text-slate-700",
+  Uncommon: "bg-green-100 text-green-700",
+  Rare: "bg-blue-100 text-blue-700",
+  Epic: "bg-purple-100 text-purple-700",
+  Legendary: "bg-amber-100 text-amber-700",
+};
+
+const ITEMS_PER_PAGE_OPTIONS = [5, 10, 30, 100];
+
+export default function BadgesTable({
+  badges,
+  deleteAction,
+  onAddClick,
+}: {
+  badges: Badge[];
+  deleteAction: (id: string) => Promise<void>;
+  onAddClick: () => void;
+}) {
+  const [sortKey, setSortKey] = useState<keyof Badge>("badgeName");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(0);
+  const [perPage, setPerPage] = useState(10);
+
+  const sorted = [...badges].sort((a, b) => {
+    const av = a[sortKey] ?? "";
+    const bv = b[sortKey] ?? "";
+    const cmp = String(av).localeCompare(String(bv));
+    return sortDir === "asc" ? cmp : -cmp;
+  });
+
+  const total = sorted.length;
+  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const paged = sorted.slice(page * perPage, (page + 1) * perPage);
+
+  const toggleSort = (key: keyof Badge) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      setSortDir("asc");
+    }
+    setPage(0);
+  };
+
+  const sortIcon = (key: keyof Badge) => {
+    if (sortKey !== key) return " ↕";
+    return sortDir === "asc" ? " ↑" : " ↓";
+  };
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex items-center justify-between">
+        <button
+          onClick={onAddClick}
+          className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+        >
+          + Add Badge
+        </button>
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <span>Show</span>
+          <select
+            value={perPage}
+            onChange={(e) => { setPerPage(Number(e.target.value)); setPage(0); }}
+            className="rounded border border-slate-300 px-1 py-0.5 text-xs"
+          >
+            {ITEMS_PER_PAGE_OPTIONS.map((n) => (
+              <option key={n} value={n}>{n === total && total > 100 ? "All" : n}</option>
+            ))}
+            {!ITEMS_PER_PAGE_OPTIONS.includes(total) && <option value={total}>All ({total})</option>}
+          </select>
+          <span>entries</span>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded border border-slate-200">
+        <table className="min-w-full text-left text-sm">
+          <thead className="bg-slate-50">
+            <tr>
+              <th className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600" onClick={() => toggleSort("icon")}>
+                Icon{sortIcon("icon")}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600" onClick={() => toggleSort("badgeName")}>
+                Badge Name{sortIcon("badgeName")}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600" onClick={() => toggleSort("emotionalDrive")}>
+                Drive{sortIcon("emotionalDrive")}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600" onClick={() => toggleSort("rarity")}>
+                Rarity{sortIcon("rarity")}
+              </th>
+              <th className="cursor-pointer px-3 py-2 text-xs font-medium text-slate-600" onClick={() => toggleSort("achievementType")}>
+                Type{sortIcon("achievementType")}
+              </th>
+              <th className="px-3 py-2 text-xs font-medium text-slate-600">Image</th>
+              <th className="px-3 py-2 text-right text-xs font-medium text-slate-600">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {paged.map((b) => (
+              <tr key={b.id} className="border-t border-slate-100 hover:bg-slate-50">
+                <td className="px-3 py-2 text-lg" title={b.description}>{b.icon}</td>
+                <td className="px-3 py-2 font-medium text-slate-900" title={b.description}>{b.badgeName}</td>
+                <td className="px-3 py-2 text-slate-600">{b.emotionalDrive}</td>
+                <td className="px-3 py-2">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${RARITY_COLORS[b.rarity] || "bg-slate-100 text-slate-700"}`}>
+                    {b.rarity}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-slate-600">{b.achievementType}</td>
+                <td className="px-3 py-2">
+                  {b.badgeImage ? (
+                    <img src={b.badgeImage} alt={b.badgeName} className="h-8 w-8 rounded object-cover" />
+                  ) : (
+                    <span className="text-slate-300">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-right">
+                  <div className="flex items-center justify-end gap-2">
+                    <Link
+                      href={`/setup/badges?edit=${b.id}`}
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      Edit
+                    </Link>
+                    <DeleteButton action={deleteAction.bind(null, b.id)} />
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {paged.length === 0 && (
+              <tr>
+                <td colSpan={7} className="px-3 py-6 text-center text-slate-400">
+                  No badges found. Click "+ Add Badge" to create one.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-3 flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Showing {page * perPage + 1}–{Math.min((page + 1) * perPage, total)} of {total}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage(0)}
+              disabled={page === 0}
+              className="rounded border px-2 py-0.5 disabled:opacity-30"
+            >
+              First
+            </button>
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="rounded border px-2 py-0.5 disabled:opacity-30"
+            >
+              Prev
+            </button>
+            <span className="px-2">
+              Page {page + 1} of {totalPages}
+            </span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="rounded border px-2 py-0.5 disabled:opacity-30"
+            >
+              Next
+            </button>
+            <button
+              onClick={() => setPage(totalPages - 1)}
+              disabled={page >= totalPages - 1}
+              className="rounded border px-2 py-0.5 disabled:opacity-30"
+            >
+              Last
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -80,6 +80,15 @@ export default function AdminDashboard() {
 
       <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Link
+          href="/setup/badges"
+          className="rounded-lg border border-amber-200 bg-amber-50 p-4 hover:shadow-md transition-shadow"
+        >
+          <div className="text-2xl mb-2">🏆</div>
+          <h3 className="font-semibold text-amber-900">Badges</h3>
+          <p className="text-sm text-amber-700">Manage achievement badges</p>
+        </Link>
+
+        <Link
           href="/admin/database-management"
           className="rounded-lg border border-red-200 bg-red-50 p-4 hover:shadow-md transition-shadow"
         >

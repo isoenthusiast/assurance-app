@@ -302,9 +302,10 @@ enum FindingSeverity {
 
 model AchievementBadge {
   id               String            @id @default(cuid())
-  name             String            @unique
+  badgeName        String            @unique
   description      String
   icon             String
+  badgeImage       String?
   emotionalDrive   EmotionalDrive
   rarity           BadgeRarity       @default(Uncommon)
   pointsRequired   Int?

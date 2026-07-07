@@ -370,7 +370,7 @@ function BadgeGallery({ achievements }: { achievements: any[] }) {
                   ? '💎'
                   : '🏆'}
               </div>
-              <p className="text-xs font-medium text-slate-900">{a.badge.name}</p>
+              <p className="text-xs font-medium text-slate-900">{a.badge.badgeName}</p>
               <p className="text-xs text-slate-600 mt-1">
                 {new Date(a.earnedAt).toLocaleDateString()}
               </p>
