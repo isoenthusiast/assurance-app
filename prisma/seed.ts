@@ -17,7 +17,7 @@ async function main() {
     return;
   }
 
-  const password = crypto.randomBytes(9).toString("base64url");
+  const password = process.env.ADMIN_PASSWORD ?? crypto.randomBytes(9).toString("base64url");
   const passwordHash = await bcrypt.hash(password, 10);
 
   await prisma.user.create({
@@ -31,8 +31,12 @@ async function main() {
 
   console.log("Seeded admin user.");
   console.log("  username: admin");
-  console.log(`  password: ${password}`);
-  console.log("Save this password now — it will not be shown again.");
+  if (process.env.ADMIN_PASSWORD) {
+    console.log("  password: (from ADMIN_PASSWORD env var)");
+  } else {
+    console.log(`  password: ${password}`);
+    console.log("Save this password now — it will not be shown again.");
+  }
 }
 
 main()
