@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import ControlForm from "./ControlForm";
 import ControlsTable from "./ControlsTable";
 

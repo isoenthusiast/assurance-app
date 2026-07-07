@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import CreateAssessmentForm from "./CreateAssessmentForm";
 import Link from "next/link";
 
+export const dynamic = "force-dynamic";
+
 const loaOptions = [
   { value: "FirstLine", label: "1st Line" },
   { value: "SecondLine", label: "2nd Line" },

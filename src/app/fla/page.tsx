@@ -1,6 +1,8 @@
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { auth } from "@/auth";
+
+export const dynamic = "force-dynamic";
 import { GamificationDashboard } from "@/components/GamificationDashboard";
 import FlaDashboardClient from "./FlaDashboardClient";
 

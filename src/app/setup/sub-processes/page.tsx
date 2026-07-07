@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import Link from "next/link";
 import { deleteSubProcess } from "./actions";
 import SubProcessesTable from "./SubProcessesTable";

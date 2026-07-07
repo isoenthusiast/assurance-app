@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { deleteProcessArea } from "./actions";
 import { deleteSubProcess } from "../sub-processes/actions";
 import ProcessAreasClient from "./ProcessAreasClient";
