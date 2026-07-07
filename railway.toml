@@ -12,5 +12,5 @@ builder = "RAILPACK"
 buildCommand = "npx prisma generate && npm run build"
 
 [deploy]
-preDeployCommand = "npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts"
+preDeployCommand = "npx tsx prisma/seed.ts"
 startCommand = "npm run start"
