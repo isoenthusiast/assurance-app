@@ -9,7 +9,8 @@
 
 [build]
 builder = "RAILPACK"
-buildCommand = "npx prisma generate && npx prisma db push && npx tsx prisma/seed.ts && npm run build"
+buildCommand = "npx prisma generate && npm run build"
 
 [deploy]
+preDeployCommand = "npx prisma db push && npx tsx prisma/seed.ts"
 startCommand = "npm run start"
