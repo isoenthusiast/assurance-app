@@ -13,7 +13,7 @@ type Assessment = {
   endDate: string | null;
   activityType: { name: string };
   assessor: { id: string; name: string };
-  samples: { status: string; conclusion: string }[];
+  samples: { status: string; conclusion: string | null }[];
   standard: string | null;
   processAreaId: string | null;
   subProcessId: string | null;
