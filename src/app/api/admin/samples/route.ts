@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function POST(request: Request) {
   try {
@@ -40,6 +41,14 @@ export async function POST(request: Request) {
         sampleType: true,
         recordSource: true,
       },
+    });
+
+    logActivity({
+      activityType: "Add Sample",
+      description: `Added sample to assessment`,
+      username: getUsername(session),
+      refTable: "Sample",
+      refRecord: sample.id,
     });
 
     return NextResponse.json(sample, { status: 201 });

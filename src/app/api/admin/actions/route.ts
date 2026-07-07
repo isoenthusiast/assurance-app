@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function POST(request: Request) {
   try {
@@ -54,6 +55,14 @@ export async function POST(request: Request) {
         actionClosureEffective: !!actionClosureEffective,
         actionClosureApprovedBy: actionClosureApprovedBy || null,
       },
+    });
+
+    logActivity({
+      activityType: "Add Action",
+      description: `Added corrective action`,
+      username: getUsername(session),
+      refTable: "Action",
+      refRecord: action.id,
     });
 
     return NextResponse.json(action, { status: 201 });

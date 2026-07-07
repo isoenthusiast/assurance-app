@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateFindingId } from "@/lib/findings";
 import { NextResponse } from "next/server";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 const SEVERITIES = ["Low", "Medium", "High", "Serious"];
 
@@ -111,6 +112,14 @@ export async function POST(request: Request) {
         actions: true,
         sample: true,
       },
+    });
+
+    logActivity({
+      activityType: "Record Finding",
+      description: `Recorded finding "${description}"`,
+      username: getUsername(session),
+      refTable: "Finding",
+      refRecord: finding.id,
     });
 
     return NextResponse.json(finding, { status: 201 });

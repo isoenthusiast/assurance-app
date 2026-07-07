@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function GET(
   request: Request,
@@ -115,6 +116,14 @@ export async function PUT(
       },
     });
 
+    logActivity({
+      activityType: "Update Assessment Template",
+      description: `Updated assessment template "${name}"`,
+      username: getUsername(session),
+      refTable: "AssessmentTemplate",
+      refRecord: id,
+    });
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("Error updating template:", error);
@@ -144,6 +153,14 @@ export async function DELETE(
 
     await prisma.assessmentTemplate.delete({
       where: { id },
+    });
+
+    logActivity({
+      activityType: "Delete Assessment Template",
+      description: `Deleted assessment template`,
+      username: getUsername(session),
+      refTable: "AssessmentTemplate",
+      refRecord: id,
     });
 
     return NextResponse.json({ success: true });

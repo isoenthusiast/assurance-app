@@ -32,11 +32,22 @@ model ActivityLog {
   description  String
   activityType String
   username     String
+  refTable     String?
+  refRecord    String?
   createdAt    DateTime @default(now())
 
   @@index([timestamp])
   @@index([username])
   @@index([activityType])
+  @@index([refTable])
+}
+
+model ActivityLogType {
+  id           String @id @default(cuid())
+  activityType String @unique
+  refTable     String?
+  description  String?
+  createdAt    DateTime @default(now())
 }
 
 model AssuranceActivityType {

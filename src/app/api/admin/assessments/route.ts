@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function GET(request: Request) {
   try {
@@ -124,6 +125,14 @@ export async function POST(request: Request) {
         assessor: { select: { id: true, name: true } },
         controlAssignments: { include: { control: true } },
       },
+    });
+
+    logActivity({
+      activityType: "Plan Assessment",
+      description: `Planned assessment "${name}"`,
+      username: getUsername(session),
+      refTable: "Assessment",
+      refRecord: assessment.id,
     });
 
     return NextResponse.json(assessment, { status: 201 });

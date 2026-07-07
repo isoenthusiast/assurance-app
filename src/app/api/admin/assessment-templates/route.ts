@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function GET(request: Request) {
   try {
@@ -124,6 +125,15 @@ export async function POST(request: Request) {
         },
         activityTypes: { include: { activityType: true } },
       },
+    });
+
+    // Log activity
+    logActivity({
+      activityType: "Add Assessment Template",
+      description: `Added assessment template "${name}"`,
+      username: getUsername(session),
+      refTable: "AssessmentTemplate",
+      refRecord: template.id,
     });
 
     return NextResponse.json(template);
