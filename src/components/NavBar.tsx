@@ -3,7 +3,12 @@ import { auth } from "@/auth";
 import SignOutButton from "./SignOutButton";
 
 export default async function NavBar() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch {
+    // auth unavailable (e.g., missing AUTH_SECRET or DB not ready)
+  }
   const role = (session?.user as { role?: string })?.role;
 
   return (
