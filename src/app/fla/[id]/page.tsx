@@ -94,7 +94,7 @@ export default async function AssessmentDetailPage({
         {tested}/{total} samples tested{failed > 0 ? ` · ${failed} fail` : ""}
       </p>
 
-      <AssessmentInfoForm assessment={assessment} activityTypes={activityTypes} loaOptions={loaOptions} statusOptions={statusOptions} />
+      <AssessmentInfoForm assessment={assessment} users={users} activityTypes={activityTypes} loaOptions={loaOptions} statusOptions={statusOptions} />
 
       <EvidenceSection
         assessmentId={assessment.id}

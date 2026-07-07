@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import UserSearchSelect from "@/components/UserSearchSelect";
 
-export default function AssessmentInfoForm({ assessment, activityTypes, loaOptions, statusOptions }: any) {
+export default function AssessmentInfoForm({ assessment, users, activityTypes, loaOptions, statusOptions }: any) {
   const router = useRouter();
   const [endDate, setEndDate] = useState(toDateInput(assessment.endDate));
 
@@ -50,7 +50,7 @@ export default function AssessmentInfoForm({ assessment, activityTypes, loaOptio
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Assessor</label>
-        <UserSearchSelect name="assessorId" users={assessment._assessors ?? []} defaultValue={assessment.assessorId} />
+        <UserSearchSelect name="assessorId" users={users ?? []} defaultValue={assessment.assessorId} />
       </div>
       <div className="space-y-1">
         <label className="text-sm font-medium text-slate-700">Start Date</label>

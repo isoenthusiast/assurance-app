@@ -43,7 +43,7 @@ export default function UserSearchSelect({ name, users, defaultValue, required, 
   );
 
   return (
-    <div ref={ref} className={className}>
+    <div ref={ref} className={`relative ${className ?? ""}`}>
       <input type="hidden" name={name} value={selectedId} />
       <input
         type="text"

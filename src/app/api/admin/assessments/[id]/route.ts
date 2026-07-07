@@ -50,7 +50,7 @@ export async function PUT(
     }
 
     const { id } = await params;
-    const { name, status, endDate } = await request.json();
+    const { name, status, endDate, assessorId, activityTypeId, startDate, loa } = await request.json();
 
     const assessment = await prisma.assessment.update({
       where: { id },
@@ -58,6 +58,10 @@ export async function PUT(
         name,
         status,
         endDate: endDate ? new Date(endDate) : null,
+        ...(assessorId !== undefined && { assessorId }),
+        ...(activityTypeId !== undefined && { activityTypeId }),
+        ...(startDate !== undefined && { startDate: new Date(startDate) }),
+        ...(loa !== undefined && { loa }),
       },
       include: {
         activityType: true,
