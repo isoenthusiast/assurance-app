@@ -303,7 +303,7 @@ enum FindingSeverity {
 
 model AchievementBadge {
   id               String            @id @default(cuid())
-  badgeName        String            @unique
+  badgeName        String
   description      String
   icon             String
   badgeImage       String?
@@ -319,6 +319,7 @@ model AchievementBadge {
   createdAt        DateTime          @default(now())
   userAchievements UserAchievement[]
 
+  @@unique([badgeName, level])
   @@index([emotionalDrive])
   @@index([processAreaId])
   @@index([level])

@@ -28,8 +28,8 @@ async function main() {
   let skipped = 0;
 
   for (const badgeDef of BADGE_DEFINITIONS) {
-    const existing = await prisma.achievementBadge.findUnique({
-      where: { badgeName: badgeDef.badgeName },
+    const existing = await prisma.achievementBadge.findFirst({
+      where: { badgeName: badgeDef.badgeName, level: null },
     });
 
     if (existing) {

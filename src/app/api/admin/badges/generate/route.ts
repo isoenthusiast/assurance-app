@@ -35,14 +35,12 @@ export async function POST() {
     let skipped = 0;
 
     for (const pa of processAreas) {
-      const standardStr = pa.standard ? `${pa.standard} - ` : "";
-
       for (const level of LEVELS) {
-        const badgeName = `${standardStr}${pa.name} - ${level}`;
+        const badgeName = pa.name;
 
-        // Skip if badge already exists
-        const existing = await prisma.achievementBadge.findUnique({
-          where: { badgeName },
+        // Skip if badge with same name+level already exists
+        const existing = await prisma.achievementBadge.findFirst({
+          where: { badgeName, level },
         });
 
         if (existing) {
@@ -51,7 +49,7 @@ export async function POST() {
         }
 
         const description =
-          `Badge of Process Excellence Recognition for ${standardStr}${pa.name}.\n` +
+          `Badge of Process Excellence Recognition for ${pa.standard ? pa.standard + " - " : ""}${pa.name}.\n` +
           `${level} - ${LEVEL_DESCRIPTIONS[level]}`;
 
         await prisma.achievementBadge.create({
