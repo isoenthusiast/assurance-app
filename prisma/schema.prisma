@@ -19,7 +19,6 @@ model User {
   lastActivityDate     DateTime?
   confidenceInfluencer Boolean                @default(false)
   assessments          Assessment[]           @relation("AssessmentAssessor")
-  behaviors            BehaviorMeasurement[]
   emotionalDrives      EmotionalDriveMetric[]
   milestones           Milestone[]
   points               PointTransaction[]
@@ -374,24 +373,6 @@ model PointTransaction {
 
   @@index([userId])
   @@index([createdAt])
-}
-
-model BehaviorMeasurement {
-  id                 String   @id @default(cuid())
-  userId             String
-  date               DateTime
-  plansMade          Int      @default(0)
-  controlsTested     Int      @default(0)
-  evidenceDocumented Int      @default(0)
-  teamEngagement     Boolean  @default(false)
-  qualityScore       Float    @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date])
-  @@index([userId])
-  @@index([date])
 }
 
 model EmotionalDriveMetric {

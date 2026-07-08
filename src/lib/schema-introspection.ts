@@ -84,7 +84,6 @@ export function getAllTableNames(): string[] {
     'Sample',
     'AssuranceActivityType',
     'AchievementBadge',
-    'BehaviorMeasurement',
     'PointTransaction',
     'UserAchievement',
     'EmotionalDriveMetric',

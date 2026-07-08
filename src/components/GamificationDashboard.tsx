@@ -151,9 +151,6 @@ export function GamificationDashboard({ userId }: { userId: string }) {
       {/* Leaderboard */}
       <LeaderboardCard leaderboard={leaderboard} userRank={userRank} stats={stats} />
 
-      {/* Behavior Trends */}
-      <BehaviorTrends behaviors={stats.behaviors} />
-
       {/* Badge Gallery */}
       <BadgeGallery achievements={stats.achievements} allBadges={allBadges} />
     </div>
@@ -309,46 +306,6 @@ function LeaderboardCard({
             </div>
           </div>
         ))}
-      </div>
-    </div>
-  );
-}
-
-function BehaviorTrends({ behaviors }: { behaviors: GamificationStats['behaviors'] }) {
-  if (!behaviors || !behaviors.recent) {
-    return (
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <p className="text-slate-500">No behavior data yet.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Weekly Activity</h2>
-      <div className="space-y-3">
-        {behaviors.recent.slice(0, 7).map((b, idx) => (
-          <div key={idx} className="flex items-center gap-2">
-            <span className="text-xs text-slate-500 w-8">
-              {new Date(b.date).toLocaleDateString('en-US', { weekday: 'short' })}
-            </span>
-            <div className="flex-1 flex gap-1">
-              {Array.from({ length: b.plansMade }).map((_, i) => (
-                <span key={`p-${i}`} className="text-xs">📋</span>
-              ))}
-              {Array.from({ length: b.controlsTested }).map((_, i) => (
-                <span key={`c-${i}`} className="text-xs">✅</span>
-              ))}
-              {Array.from({ length: b.evidenceDocumented }).map((_, i) => (
-                <span key={`e-${i}`} className="text-xs">📝</span>
-              ))}
-              {b.teamEngagement && <span className="text-xs">👥</span>}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-4 text-xs text-slate-500">
-        📋 = Plan · ✅ = Control Tested · 📝 = Evidence · 👥 = Team Activity
       </div>
     </div>
   );

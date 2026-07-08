@@ -506,38 +506,6 @@
       "isId": false
     }
   },
-  "BehaviorMeasurement": {
-    "id": {
-      "type": "String",
-      "required": true,
-      "isId": true
-    },
-    "userId": {
-      "type": "String",
-      "required": true,
-      "isId": false
-    },
-    "date": {
-      "type": "DateTime",
-      "required": true,
-      "isId": false
-    },
-    "plansMade": {
-      "type": "Int",
-      "required": false,
-      "isId": false
-    },
-    "controlsTested": {
-      "type": "Int",
-      "required": false,
-      "isId": false
-    },
-    "createdAt": {
-      "type": "DateTime",
-      "required": true,
-      "isId": false
-    }
-  },
   "PointTransaction": {
     "id": {
       "type": "String",

@@ -27,7 +27,6 @@ async function clearAll() {
   await prisma.sample.deleteMany();
   await prisma.pointTransaction.deleteMany();
   await prisma.userAchievement.deleteMany();
-  await prisma.behaviorMeasurement.deleteMany();
   await prisma.emotionalDriveMetric.deleteMany();
   await prisma.milestone.deleteMany();
   await prisma.assessment.deleteMany();

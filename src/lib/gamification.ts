@@ -264,43 +264,6 @@ export async function awardPoints(
 }
 
 /**
- * Record daily behavior measurement
- */
-export async function recordDailyBehavior(
-  userId: string,
-  date: Date,
-  data: {
-    plansMade?: number;
-    controlsTested?: number;
-    evidenceDocumented?: number;
-    teamEngagement?: boolean;
-    qualityScore?: number;
-  }
-) {
-  const today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-
-  return prisma.behaviorMeasurement.upsert({
-    where: { userId_date: { userId, date: today } },
-    update: {
-      plansMade: { increment: data.plansMade || 0 },
-      controlsTested: { increment: data.controlsTested || 0 },
-      evidenceDocumented: { increment: data.evidenceDocumented || 0 },
-      teamEngagement: data.teamEngagement || false,
-      qualityScore: data.qualityScore || 0,
-    },
-    create: {
-      userId,
-      date: today,
-      plansMade: data.plansMade || 0,
-      controlsTested: data.controlsTested || 0,
-      evidenceDocumented: data.evidenceDocumented || 0,
-      teamEngagement: data.teamEngagement || false,
-      qualityScore: data.qualityScore || 0,
-    },
-  });
-}
-
-/**
  * Update emotional drive metrics for a user
  */
 export async function updateEmotionalDriveMetrics(
@@ -427,7 +390,7 @@ export async function awardBadge(userId: string, badgeName: string) {
  * Get user's gamification stats
  */
 export async function getUserGamificationStats(userId: string) {
-  const [user, achievements, points, behaviors, milestones, drives] =
+  const [user, achievements, points, milestones, drives] =
     await Promise.all([
       prisma.user.findUnique({ where: { id: userId } }),
       prisma.userAchievement.findMany({
@@ -436,10 +399,6 @@ export async function getUserGamificationStats(userId: string) {
       }),
       prisma.pointTransaction.findMany({
         where: { userId },
-      }),
-      prisma.behaviorMeasurement.findMany({
-        where: { userId },
-        orderBy: { date: "desc" },
       }),
       prisma.milestone.findMany({
         where: { userId },
@@ -465,7 +424,7 @@ export async function getUserGamificationStats(userId: string) {
         .reduce((sum, p) => sum + p.points, 0),
     },
     behaviors: {
-      recent: behaviors.slice(0, 7),
+      recent: [],
       streak: user?.dailyPointStreak || 0,
     },
     milestones: {

@@ -35,7 +35,6 @@ const tables = [
   "AchievementBadge",
   "UserAchievement",
   "PointTransaction",
-  "BehaviorMeasurement",
   "EmotionalDriveMetric",
   "Milestone",
 ];

@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   awardPoints,
   awardBadge,
-  recordDailyBehavior,
   POINT_RULES,
 } from '@/lib/gamification';
 
@@ -46,18 +45,11 @@ export async function POST(req: NextRequest) {
           multiplier = 1.5;
         }
 
-        // Record behavior
-        await recordDailyBehavior(userId, new Date(), {
-          controlsTested: 1,
-          qualityScore: qualityScore || 0,
-        });
-
         break;
 
       case 'fla_planned':
         points = POINT_RULES.FLA_PLANNED;
         emotionalDrive = 'Achievement';
-        await recordDailyBehavior(userId, new Date(), { plansMade: 1 });
         break;
 
       case 'evidence_documented':
@@ -67,9 +59,6 @@ export async function POST(req: NextRequest) {
           points = POINT_RULES.EVIDENCE_DOCUMENTED_QUALITY;
           emotionalDrive = 'Excellence';
         }
-        await recordDailyBehavior(userId, new Date(), {
-          evidenceDocumented: 1,
-        });
         break;
 
       case 'assessment_completed':

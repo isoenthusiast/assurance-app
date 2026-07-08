@@ -7,7 +7,6 @@ import { z } from "zod";
 import {
   awardPoints,
   awardBadge,
-  recordDailyBehavior,
   trackMilestone,
   POINT_RULES,
 } from "@/lib/gamification";
@@ -54,11 +53,6 @@ export async function createAssessment(formData: FormData) {
       "Achievement",
       assessment.id
     );
-
-    // Record daily behavior
-    await recordDailyBehavior(parsed.assessorId, new Date(), {
-      plansMade: 1,
-    });
 
     // Check if this is first FLA (for "Starter" badge)
     const assessmentCount = await prisma.assessment.count({
@@ -271,12 +265,6 @@ export async function updateSample(formData: FormData) {
           parsed.id,
           multiplier
         );
-
-        // Record daily behavior
-        await recordDailyBehavior(assessor.id, new Date(), {
-          controlsTested: 1,
-          qualityScore,
-        });
 
         // Check for "First Test" badge
         const sampleCount = await prisma.sample.count({
