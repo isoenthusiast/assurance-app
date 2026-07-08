@@ -23,6 +23,9 @@ export default async function NavBar() {
               <Link href="/fla" className="hover:text-slate-900">
                 Dashboard
               </Link>
+              <Link href="/setup/assessments" className="hover:text-slate-900">
+                Assessments
+              </Link>
               <Link href="/setup/process-areas" className="hover:text-slate-900">
                 Process Area
               </Link>
