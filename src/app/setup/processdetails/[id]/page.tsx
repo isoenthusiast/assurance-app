@@ -76,7 +76,7 @@ export default async function ProcessDetailsPage({
       assessor: true,
       samples: true,
       findings: {
-        include: { _count: { select: { actions: true } } },
+        include: { actions: { orderBy: { createdDate: "asc" } } },
       },
     },
   });
