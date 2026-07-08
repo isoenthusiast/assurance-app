@@ -166,7 +166,7 @@ export default function BadgesTable({
                 <td className="px-3 py-2 text-slate-600">{b.achievementType}</td>
                 <td className="px-3 py-2">
                   {b.badgeImage ? (
-                    <img src={b.badgeImage} alt={b.badgeName} className="h-8 w-8 rounded object-cover" />
+                    <img src={b.badgeImage} alt={b.badgeName} className="h-10 w-10 object-contain" />
                   ) : (
                     <span className="text-slate-300">—</span>
                   )}
