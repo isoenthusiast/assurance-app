@@ -115,6 +115,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    if ((session.user as { role?: string }).role !== "Admin") {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File;
     const table = formData.get("table") as string;

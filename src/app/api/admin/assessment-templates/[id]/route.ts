@@ -13,10 +13,6 @@ export async function GET(
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    if (session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
-
     const { id } = await params;
 
     const template = await prisma.assessmentTemplate.findUnique({
@@ -55,10 +51,6 @@ export async function PUT(
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    if (session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
     const { id } = await params;
@@ -143,10 +135,6 @@ export async function DELETE(
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    if (session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
     const { id } = await params;
