@@ -31,9 +31,11 @@ export default function CreateAssessmentForm({ activityTypes, users, loaOptions,
   const [subProcesses, setSubProcesses] = useState<any[]>([]);
 
   useState(() => {
-    fetch("/api/admin/table/Control/data").then(r => r.json()).then(d => setControls(d.rows || [])).catch(() => {});
-    fetch("/api/admin/table/ProcessArea/data").then(r => r.json()).then(d => setProcessAreas(d.rows || [])).catch(() => {});
-    fetch("/api/admin/table/SubProcess/data").then(r => r.json()).then(d => setSubProcesses(d.rows || [])).catch(() => {});
+    fetch("/api/controls").then(r => r.json()).then(d => {
+      setControls(d.controls || []);
+      setProcessAreas(d.processAreas || []);
+      setSubProcesses(d.subProcesses || []);
+    }).catch(() => {});
   });
 
   const filteredControls = controls.filter((c: any) => {

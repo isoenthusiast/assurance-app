@@ -45,23 +45,13 @@ export default function ControlsSelector({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [paRes, spRes, ctrlRes] = await Promise.all([
-          fetch('/api/admin/table/ProcessArea/data'),
-          fetch('/api/admin/table/SubProcess/data'),
-          fetch('/api/admin/table/Control/data'),
-        ]);
+        const res = await fetch('/api/controls');
 
-        if (paRes.ok) {
-          const rows = (await paRes.json()).rows || [];
-          setProcessAreas([...rows].sort((a, b) => a.name.localeCompare(b.name)));
-        }
-        if (spRes.ok) {
-          const rows = (await spRes.json()).rows || [];
-          setSubProcesses([...rows].sort((a, b) => a.name.localeCompare(b.name)));
-        }
-        if (ctrlRes.ok) {
-          const rows = (await ctrlRes.json()).rows || [];
-          setAllControls([...rows].sort((a, b) => a.name.localeCompare(b.name)));
+        if (res.ok) {
+          const data = await res.json();
+          setProcessAreas([...(data.processAreas || [])].sort((a, b) => a.name.localeCompare(b.name)));
+          setSubProcesses([...(data.subProcesses || [])].sort((a, b) => a.name.localeCompare(b.name)));
+          setAllControls(data.controls || []);
         }
       } catch (err) {
         console.error('Failed to load filter data:', err);
