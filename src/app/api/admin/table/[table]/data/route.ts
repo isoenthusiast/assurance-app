@@ -23,28 +23,24 @@ export async function GET(
     // Get schema dynamically, or use fallback
     let columns: Array<{ name: string; type: string }> = [];
 
+    // Try DMMF for columns, then fallback JSON
     const tableSchema = getTableSchema(table);
     if (tableSchema) {
       columns = tableSchema.columns
         .filter((col) => col.kind !== 'object')
         .map((col) => ({ name: col.name, type: col.type }));
     } else {
-      // Use fallback schema (now async)
       const fallbackSchema = await getFallbackSchema(table);
-      if (!fallbackSchema) {
-        return NextResponse.json({ error: 'Table not found' }, { status: 404 });
+      if (fallbackSchema) {
+        columns = Object.entries(fallbackSchema).map(([name, config]) => ({
+          name,
+          type: config.type,
+        }));
       }
-      columns = Object.entries(fallbackSchema).map(([name, config]) => ({
-        name,
-        type: config.type,
-      }));
+      // If both fail, columns stays empty — we'll derive from row data below
     }
 
-    // ControlAssignment gets a computed "ControlID" display column resolved
-    // from the linked Control (its controlRef/name), inserted right after
-    // the raw controlId column. It is not a real DB column — the create/
-    // update routes ignore it — it exists purely so the table view shows a
-    // human-readable control identifier instead of the raw internal id.
+    // ControlAssignment gets a computed "ControlID" display column
     if (table === 'ControlAssignment' && !columns.some((c) => c.name === 'ControlID')) {
       const controlIdIndex = columns.findIndex((c) => c.name === 'controlId');
       const insertAt = controlIdIndex >= 0 ? controlIdIndex + 1 : columns.length;
@@ -58,9 +54,7 @@ export async function GET(
     let rows: any[] = [];
     let totalRows = 0;
 
-    // Generic fetch — works for any Prisma model.
-    // Convert table name to camelCase (PascalCase → camelCase):
-    // "PointTransaction" → "pointTransaction", "GameAttribute" → "gameAttribute"
+    // Generic fetch — works for any Prisma model
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
 
     try {
@@ -90,7 +84,18 @@ export async function GET(
       }
     } catch (err: any) {
       console.error(`Error fetching ${table}:`, err.message);
-      // Return empty — table exists in schema but query may fail (e.g., missing DB table)
+    }
+
+    // Dynamic column discovery: if DMMF+fallback both failed, derive from first row
+    if (columns.length === 0 && rows.length > 0) {
+      const sample = rows[0];
+      columns = Object.keys(sample).map((key) => ({
+        name: key,
+        type: typeof sample[key] === 'number' ? 'Int'
+            : sample[key] instanceof Date ? 'DateTime'
+            : typeof sample[key] === 'boolean' ? 'Boolean'
+            : 'String',
+      }));
     }
 
     return NextResponse.json({
