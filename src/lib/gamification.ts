@@ -281,7 +281,7 @@ export async function calculatePointsFromRules(
 
     return {
       gameAttributeId: rule.gameAttributeId,
-      gameAttributeName: rule.gameAttribute.name,
+      gameAttributeName: rule.gameAttribute.attributeName,
       points: pts,
       ruleId: rule.id,
     };
