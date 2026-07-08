@@ -473,15 +473,15 @@ export default function ProcessDetailsClient({
                 <h3 className="text-sm font-medium text-slate-600 mb-3">Sample Testing</h3>
                 <div className="space-y-3">
                   <HealthBar
-                    label="Tested"
-                    value={overviewStats.testedSamples}
-                    total={overviewStats.totalSamples || 1}
+                    label={`Effective (${overviewStats.effectiveSamples}/${overviewStats.testedSamples || 0})`}
+                    value={overviewStats.effectiveSamples}
+                    total={overviewStats.testedSamples || 1}
                     color="green"
                   />
                   <HealthBar
-                    label="Failed"
-                    value={overviewStats.failedSamples}
-                    total={overviewStats.totalSamples || 1}
+                    label="Not Effective"
+                    value={(overviewStats.testedSamples || 0) - overviewStats.effectiveSamples}
+                    total={overviewStats.testedSamples || 1}
                     color="red"
                   />
                 </div>

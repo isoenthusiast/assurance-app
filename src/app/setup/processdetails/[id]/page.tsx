@@ -104,6 +104,11 @@ export default async function ProcessDetailsPage({
   const totalActions = actions.length;
   const completedActions = actions.filter((a) => a.actionClosureEffective).length;
 
+  // Sample stats
+  const totalSamples = assessments.reduce((sum, a) => sum + a.samples.length, 0);
+  const testedSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.status === "Tested").length, 0);
+  const effectiveSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.conclusion === "Effective").length, 0);
+
   // Effectiveness stats — "never tested" controls are not effective
   const effectiveCount = controlAssignments.filter((ca) => ca.effective === "Effective").length;
   const notEffectiveCount = controlAssignments.filter((ca) => ca.effective === "NotEffective").length;
@@ -120,6 +125,9 @@ export default async function ProcessDetailsPage({
     effectiveCount,
     notEffectiveCount,
     neverTestedCount,
+    totalSamples,
+    testedSamples,
+    effectiveSamples,
   };
 
   return (
