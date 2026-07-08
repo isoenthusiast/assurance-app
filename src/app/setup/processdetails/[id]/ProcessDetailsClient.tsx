@@ -479,7 +479,7 @@ export default function ProcessDetailsClient({
                     color="green"
                   />
                   <HealthBar
-                    label="Not Effective"
+                    label={`Not Effective (${(overviewStats.testedSamples || 0) - overviewStats.effectiveSamples}/${overviewStats.testedSamples || 0})`}
                     value={(overviewStats.testedSamples || 0) - overviewStats.effectiveSamples}
                     total={overviewStats.testedSamples || 1}
                     color="red"
