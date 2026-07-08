@@ -777,7 +777,7 @@ export default function ProcessDetailsClient({
                         <td className="px-4 py-2 text-slate-600">{new Date(a.startDate).toLocaleDateString()}</td>
                         <td className="px-4 py-2 text-slate-600">{a.findings.length}</td>
                         <td className="px-4 py-2 text-slate-600">
-                          {a.findings.reduce((s, f) => s + f._count.actions, 0)}
+                          {a.findings.reduce((s, f) => s + (f.actions?.length || 0), 0)}
                         </td>
                         <td className="px-4 py-2">
                           <div className="flex items-center gap-2">
