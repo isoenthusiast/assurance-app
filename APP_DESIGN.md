@@ -1,10 +1,10 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 7, 2026 (v2.0.0)  
+**Last Updated:** July 8, 2026 (v2.1.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.0.0 — PostgreSQL Migration:** Migrated from SQLite to PostgreSQL. Deployed on Railway with Railway PostgreSQL plugin. Pre-deploy schema sync via direct SQL. Activity logging system added with ActivityLogType catalog (31 event types). 24 Prisma models, 10 enums, 60+ API routes.
+> **v2.1.0 — Attachment System:** Added Attachment & AttachmentMapping models with reusable AttachmentList component. Actions now support `actionTaken` field and file attachments. Attachments can be linked to any table (Action, Finding, Sample) via the mapping table.
 
 ## 1. Executive Summary
 
@@ -28,7 +28,7 @@ The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control test
 | Testing | Playwright | 1.61.1 |
 | Deployment | Railway | Docker + PG Plugin |
 
-## 3. Database Schema (24 Models, 10 Enums)
+## 3. Database Schema (26 Models, 10 Enums)
 
 ### Enums
 Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 types), AssessmentStatus (Planned/InProgress/Completed/Cancelled), SampleStatus/Conclusion, Effectiveness, FindingSeverity, EmotionalDrive (8 drives), BadgeRarity
@@ -53,7 +53,11 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 
 ### Findings & Actions
 - **Finding** — FID-XXXXXX IDs, severity, risks, controls
-- **Action** — remediation per finding (ownership, dates, extensions, closure)
+- **Action** — remediation per finding (ownership, dates, extensions, closure, actionTaken)
+
+### Attachment System
+- **Attachment** — file metadata (fileName, filePath, fileSize, description, uploadedBy, uploadDate)
+- **AttachmentMapping** — polymorphic M2M: Attachment → any table (destTable, recId)
 
 ### Template Models
 - **AssessmentTemplate** — reusable templates
@@ -73,6 +77,7 @@ User ──< Assessment (assessor)
 Assessment ──< ControlAssignment >── Control
 Assessment ──< Sample, Finding ──< Action
 Control ──< ControlSubProcess >── SubProcess
+Attachment ──< AttachmentMapping >── (Action | Finding | Sample)
 ```
 
 ## 4. Architecture
@@ -114,6 +119,9 @@ PUT/DELETE `/api/admin/control-assignments/[id]`
 ### Samples, Findings, Actions
 Full CRUD at `/api/admin/samples`, `/findings`, `/actions` with `/[id]`
 
+### Attachments
+GET `/api/attachments?destTable=X&recId=Y`, POST (FormData upload), DELETE `/[id]`
+
 ### Templates
 GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
 
@@ -122,6 +130,10 @@ POST `/api/gamification/award`, GET `/stats/[userId]`, GET `/leaderboard`
 
 ### Admin Utilities
 CSV validate/import, table CRUD, column management, SQL executor, database management, export, diagnostics
+
+### Public Endpoints (No Admin Required)
+GET `/api/controls` — process areas, sub-processes, controls, sample types, record sources
+POST `/api/controls/reference` — quick-add sample types and record source types
 
 ## 7. Frontend Pages (17 primary routes)
 
@@ -175,5 +187,5 @@ startCommand = "npm run start"
 |---------|------|---------|
 | v2.0.0 | 2026-07-07 | PostgreSQL migration, Railway deployment, ActivityLogType, force-dynamic, trustHost |
 | v1.11.0 | 2026-07-04 | ControlSubProcess M2M junction |
-| v1.9.0 | 2026-07-04 | Control Effectiveness, Findings & Actions |
+| v2.1.0 | 2026-07-08 | Attachment system, actionTaken field, AttachmentList component |
 | v1.8.0 | 2026-06-30 | Initial documented version |
