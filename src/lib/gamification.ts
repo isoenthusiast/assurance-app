@@ -303,7 +303,7 @@ export async function awardPoints(
   sampleId?: string,
   multiplier: number = 1.0,
   gameAttributeId?: string,
-  activityLogId?: string
+  activityLogId?: string | null
 ) {
   const actualPoints = Math.round(points * multiplier);
 
