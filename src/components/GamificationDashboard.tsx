@@ -43,14 +43,16 @@ export function GamificationDashboard({ userId }: { userId: string }) {
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<number | null>(null);
+  const [allBadges, setAllBadges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [statsRes, leaderboardRes] = await Promise.all([
+        const [statsRes, leaderboardRes, badgesRes] = await Promise.all([
           fetch(`/api/gamification/stats/${userId}`),
           fetch(`/api/gamification/leaderboard?userId=${userId}`),
+          fetch(`/api/admin/badges`),
         ]);
 
         if (!statsRes.ok || !leaderboardRes.ok) {
@@ -59,6 +61,12 @@ export function GamificationDashboard({ userId }: { userId: string }) {
 
         const statsData = await statsRes.json();
         const leaderboardData = await leaderboardRes.json();
+
+        // Fetch all available badges for the gallery
+        if (badgesRes.ok) {
+          const badgesData = await badgesRes.json();
+          setAllBadges(Array.isArray(badgesData) ? badgesData : []);
+        }
 
         // Ensure stats has the right structure
         if (statsData && typeof statsData === 'object') {
@@ -147,7 +155,7 @@ export function GamificationDashboard({ userId }: { userId: string }) {
       <BehaviorTrends behaviors={stats.behaviors} />
 
       {/* Badge Gallery */}
-      <BadgeGallery achievements={stats.achievements} />
+      <BadgeGallery achievements={stats.achievements} allBadges={allBadges} />
     </div>
   );
 }
@@ -346,45 +354,51 @@ function BehaviorTrends({ behaviors }: { behaviors: GamificationStats['behaviors
   );
 }
 
-function BadgeGallery({ achievements }: { achievements: any[] }) {
+function BadgeGallery({ achievements, allBadges }: { achievements: any[]; allBadges?: any[] }) {
   if (!achievements) {
     achievements = [];
   }
 
+  // Show earned badges, or all available badges if none earned
+  const displayBadges = achievements.length > 0
+    ? achievements.map(a => ({ ...a.badge, earnedAt: a.earnedAt }))
+    : (allBadges || []).map(b => ({ ...b, earnedAt: null }));
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-900 mb-4">Badge Gallery</h2>
-      {achievements && achievements.length > 0 ? (
-        <div className="grid grid-cols-2 gap-3">
-          {achievements.map((a) => (
+      {displayBadges.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2 max-h-96 overflow-y-auto">
+          {displayBadges.map((b) => (
             <div
-              key={a.id}
-              className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 text-center hover:shadow-md transition-shadow"
+              key={b.id}
+              className={`p-2 rounded-lg border text-center hover:shadow-md transition-shadow ${b.earnedAt ? 'bg-gradient-to-br from-slate-50 to-slate-100 border-slate-200' : 'bg-slate-50 border-slate-100 opacity-60'}`}
+              title={b.description || b.badgeName}
             >
-              {a.badge.badgeImage ? (
+              {b.badgeImage ? (
                 <img
-                  src={a.badge.badgeImage}
-                  alt={a.badge.badgeName}
-                  className="w-full h-auto max-h-24 object-contain mx-auto mb-1"
+                  src={b.badgeImage}
+                  alt={b.badgeName}
+                  className="w-full h-auto max-h-16 object-contain mx-auto mb-1"
                 />
               ) : (
-                <div className="text-3xl mb-1">
-                  {a.badge.icon || "🏆"}
-                </div>
+                <div className="text-2xl mb-1">{b.icon || "🏆"}</div>
               )}
-              <p className="text-xs font-medium text-slate-900 leading-tight">{a.badge.badgeName}</p>
-              {a.badge.level && (
-                <p className="text-xs text-slate-500 mt-0.5">{a.badge.level}</p>
+              <p className="text-xs font-medium text-slate-900 leading-tight truncate">{b.badgeName}</p>
+              {b.level && (
+                <p className="text-xs text-slate-500">{b.level}</p>
               )}
-              <p className="text-xs text-slate-400 mt-1">
-                {new Date(a.earnedAt).toLocaleDateString()}
-              </p>
+              {b.earnedAt && (
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {new Date(b.earnedAt).toLocaleDateString()}
+                </p>
+              )}
             </div>
           ))}
         </div>
       ) : (
         <p className="text-sm text-slate-500">
-          Complete activities to earn badges! Start by planning an FLA.
+          No badges available yet. Generate process badges from Setup Badges.
         </p>
       )}
     </div>
