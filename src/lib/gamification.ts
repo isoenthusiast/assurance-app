@@ -388,7 +388,7 @@ export async function trackMilestone(
  */
 export async function awardBadge(userId: string, badgeName: string) {
   const badge = await prisma.achievementBadge.findUnique({
-    where: { name: badgeName },
+    where: { badgeName: badgeName },
   });
 
   if (!badge) {
