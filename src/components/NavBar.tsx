@@ -21,17 +21,17 @@ export default async function NavBar() {
           {session && (
             <nav className="flex gap-4 text-sm text-slate-600">
               <Link href="/fla" className="hover:text-slate-900">
-                FLA
+                Dashboard
               </Link>
               <Link href="/setup/process-areas" className="hover:text-slate-900">
-                Setup Process Area
+                Process Area
               </Link>
               <Link href="/setup/controls" className="hover:text-slate-900">
-                Setup Controls
+                Controls
               </Link>
               {role === "Admin" && (
                 <Link href="/setup/badges" className="hover:text-slate-900">
-                  Setup Badges
+                  Badges
                 </Link>
               )}
               {role === "Admin" && (
