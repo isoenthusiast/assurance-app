@@ -36,7 +36,7 @@
   </g>
 
   <!-- Central hexagon decoration -->
-  <polygon points="200,168.75 240,183.75 240,236.25 200,251.25 160,236.25 160,183.75"
+  <polygon points="200,157.5 240,172.5 240,247.5 200,262.5 160,247.5 160,172.5"
     fill="none" stroke="#00CED1" stroke-width="1" opacity="0.25"/>
 
   <!-- SMDS label -->
@@ -49,7 +49,8 @@
 
   <!-- Badge Name -->
   <g fill="#5CFFFF" font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
-    <text x="200" y="198.75" font-size="18" font-weight="700" letter-spacing="2">SMDS GHG & Energy Management</text>
+    <text x="200" y="187.5" font-size="18" font-weight="700" letter-spacing="2">SMDS GHG &amp; Energy</text>
+    <text x="200" y="210" font-size="18" font-weight="700" letter-spacing="2">Management</text>
   </g>
 
   <!-- Level badge pill -->

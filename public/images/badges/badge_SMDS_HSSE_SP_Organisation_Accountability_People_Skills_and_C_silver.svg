@@ -49,9 +49,9 @@
 
   <!-- Badge Name -->
   <g fill="#D0D8E0" font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
-    <text x="200" y="176.25" font-size="18" font-weight="700" letter-spacing="2">SMDS HSSE & SP Organisation,</text>
-    <text x="200" y="198.75" font-size="18" font-weight="700" letter-spacing="2">Accountability, People, Skills</text>
-    <text x="200" y="221.25" font-size="18" font-weight="700" letter-spacing="2">and Competence</text>
+    <text x="200" y="176.25" font-size="18" font-weight="700" letter-spacing="2">SMDS HSSE &amp; SP</text>
+    <text x="200" y="198.75" font-size="18" font-weight="700" letter-spacing="2">Organisation, Accountability,</text>
+    <text x="200" y="221.25" font-size="18" font-weight="700" letter-spacing="2">People, Skills and Competence</text>
   </g>
 
   <!-- Level badge pill -->

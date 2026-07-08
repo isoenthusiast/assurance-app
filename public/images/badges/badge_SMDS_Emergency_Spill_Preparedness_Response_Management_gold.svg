@@ -50,7 +50,7 @@
   <!-- Badge Name -->
   <g fill="#FFE44D" font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
     <text x="200" y="176.25" font-size="18" font-weight="700" letter-spacing="2">SMDS Emergency, Spill</text>
-    <text x="200" y="198.75" font-size="18" font-weight="700" letter-spacing="2">Preparedness & Response</text>
+    <text x="200" y="198.75" font-size="18" font-weight="700" letter-spacing="2">Preparedness &amp; Response</text>
     <text x="200" y="221.25" font-size="18" font-weight="700" letter-spacing="2">Management</text>
   </g>
 
