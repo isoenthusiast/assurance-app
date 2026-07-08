@@ -419,10 +419,10 @@ export default function ProcessDetailsClient({
         <div className="mt-6 space-y-6">
           {/* Summary Stats */}
           <div className="grid grid-cols-4 gap-4">
-            <StatCard label="Total Controls" value={overviewStats.totalControls} color="blue" />
-            <StatCard label="Total Assessments" value={overviewStats.totalAssessments} color="indigo" />
+            <StatCard label="Effective Controls" value={`${overviewStats.effectiveControls}/${overviewStats.totalControls}`} color="blue" />
+            <StatCard label="Assessments Completed" value={`${overviewStats.completedAssessments}/${overviewStats.totalAssessments}`} color="indigo" />
             <StatCard label="Total Findings" value={overviewStats.totalFindings} color="orange" />
-            <StatCard label="Total Actions" value={overviewStats.totalActions} color="red" />
+            <StatCard label="Open Actions" value={`${overviewStats.completedActions}/${overviewStats.totalActions}`} color="red" />
           </div>
 
           {/* Process Health */}
@@ -440,14 +440,14 @@ export default function ProcessDetailsClient({
                   />
                   <HealthBar
                     label="Not Effective"
-                    value={overviewStats.notEffectiveCount}
-                    total={overviewStats.effectiveCount + overviewStats.notEffectiveCount + overviewStats.notAssessedCount}
+                    value={overviewStats.notEffectiveCount + overviewStats.neverTestedCount}
+                    total={overviewStats.totalControls}
                     color="red"
                   />
                   <HealthBar
-                    label="Not Yet Assessed"
-                    value={overviewStats.notAssessedCount}
-                    total={overviewStats.effectiveCount + overviewStats.notEffectiveCount + overviewStats.notAssessedCount}
+                    label="Never Assessed"
+                    value={overviewStats.neverTestedCount}
+                    total={overviewStats.totalControls}
                     color="slate"
                   />
                 </div>
@@ -456,16 +456,16 @@ export default function ProcessDetailsClient({
                 <h3 className="text-sm font-medium text-slate-600 mb-3">Assessment Activity</h3>
                 <div className="space-y-3">
                   <HealthBar
-                    label="Planned"
-                    value={overviewStats.plannedAssessments}
-                    total={overviewStats.totalAssessments || 1}
-                    color="slate"
-                  />
-                  <HealthBar
-                    label="In Progress / Completed"
+                    label="Completed"
                     value={overviewStats.completedAssessments}
                     total={overviewStats.totalAssessments || 1}
                     color="green"
+                  />
+                  <HealthBar
+                    label="Not Completed"
+                    value={overviewStats.totalAssessments - overviewStats.completedAssessments}
+                    total={overviewStats.totalAssessments || 1}
+                    color="slate"
                   />
                 </div>
               </div>
@@ -1197,7 +1197,7 @@ function StatCard({
   color,
 }: {
   label: string;
-  value: number;
+  value: string | number;
   color: "blue" | "indigo" | "orange" | "red" | "green" | "slate";
 }) {
   const colorStyles: Record<string, string> = {

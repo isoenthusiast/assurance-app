@@ -92,35 +92,34 @@ export default async function ProcessDetailsPage({
   // --- Stats for overview ---
   const totalControls = controlIds.length;
   const totalAssessments = assessments.length;
-  const plannedAssessments = assessments.filter((a) => a.status === "Planned").length;
-  const completedAssessments = assessments.filter((a) => a.status === "Completed" || a.status === "InProgress").length;
-  const totalSamples = assessments.reduce((sum, a) => sum + a.samples.length, 0);
-  const testedSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.status === "Tested").length, 0);
-  const failedSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.conclusion === "Fail").length, 0);
+  const completedAssessments = assessments.filter((a) => a.status === "Completed").length;
   const totalFindings = assessments.reduce((sum, a) => sum + a.findings.length, 0);
-  const totalActions = assessments.reduce(
-    (sum, a) => sum + a.findings.reduce((s, f) => s + f._count.actions, 0),
-    0
-  );
 
-  // Effectiveness stats
+  // Action stats — fetch all actions linked to this process area's controls
+  const findingIds = assessments.flatMap((a) => a.findings.map((f) => f.id));
+  const actions = await prisma.action.findMany({
+    where: { findingId: { in: findingIds } },
+    select: { actionClosureEffective: true },
+  });
+  const totalActions = actions.length;
+  const completedActions = actions.filter((a) => a.actionClosureEffective).length;
+
+  // Effectiveness stats — "never tested" controls are not effective
   const effectiveCount = controlAssignments.filter((ca) => ca.effective === "Effective").length;
   const notEffectiveCount = controlAssignments.filter((ca) => ca.effective === "NotEffective").length;
-  const notAssessedCount = controlAssignments.filter((ca) => ca.effective === null).length;
+  const neverTestedCount = totalControls - (effectiveCount + notEffectiveCount); // controls never assigned
 
   const overviewStats = {
     totalControls,
+    effectiveControls: effectiveCount,
     totalAssessments,
-    plannedAssessments,
     completedAssessments,
-    totalSamples,
-    testedSamples,
-    failedSamples,
     totalFindings,
     totalActions,
+    completedActions,
     effectiveCount,
     notEffectiveCount,
-    notAssessedCount,
+    neverTestedCount,
   };
 
   return (
