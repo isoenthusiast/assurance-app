@@ -61,14 +61,15 @@ model AssuranceActivityType {
 }
 
 model ProcessArea {
-  id           String       @id @default(cuid())
-  name         String       @unique
+  id           String             @id @default(cuid())
+  name         String             @unique
   description  String?
-  createdAt    DateTime     @default(now())
+  createdAt    DateTime           @default(now())
   pId          String?
   standard     String?
   controls     Control[]
   subProcesses SubProcess[]
+  badges       AchievementBadge[]
 }
 
 model SubProcess {
@@ -308,6 +309,9 @@ model AchievementBadge {
   badgeImage       String?
   emotionalDrive   EmotionalDrive
   rarity           BadgeRarity       @default(Uncommon)
+  level            String?
+  processAreaId    String?
+  processArea      ProcessArea?      @relation(fields: [processAreaId], references: [id])
   pointsRequired   Int?
   controlsChecked  Int?
   streakDays       Int?
@@ -316,6 +320,8 @@ model AchievementBadge {
   userAchievements UserAchievement[]
 
   @@index([emotionalDrive])
+  @@index([processAreaId])
+  @@index([level])
 }
 
 model UserAchievement {

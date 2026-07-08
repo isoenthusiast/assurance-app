@@ -10,11 +10,13 @@ export default async function BadgesPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
-  const [badges, editing] = await Promise.all([
+  const [badges, editing, processAreas] = await Promise.all([
     prisma.achievementBadge.findMany({
       orderBy: { badgeName: "asc" },
+      include: { processArea: { select: { name: true, standard: true } } },
     }),
     edit ? prisma.achievementBadge.findUnique({ where: { id: edit } }) : Promise.resolve(null),
+    prisma.processArea.findMany({ orderBy: { name: "asc" } }),
   ]);
 
   return (
@@ -29,6 +31,7 @@ export default async function BadgesPage({
         badges={badges}
         editing={editing}
         deleteAction={deleteBadge}
+        processAreas={processAreas}
       />
     </div>
   );

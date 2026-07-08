@@ -48,6 +48,8 @@ export async function PUT(
     const controlsChecked = formData.get("controlsChecked") ? parseInt(formData.get("controlsChecked")!.toString()) : null;
     const streakDays = formData.get("streakDays") ? parseInt(formData.get("streakDays")!.toString()) : null;
     const achievementType = formData.get("achievementType")?.toString() ?? "";
+    const level = formData.get("level")?.toString() || null;
+    const processAreaId = formData.get("processAreaId")?.toString() || null;
 
     // Handle image upload
     let badgeImage: string | null | undefined = undefined;
@@ -85,6 +87,8 @@ export async function PUT(
       icon,
       emotionalDrive,
       rarity,
+      level,
+      processAreaId,
       pointsRequired,
       controlsChecked,
       streakDays,

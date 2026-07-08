@@ -88,11 +88,21 @@ type Badge = {
   badgeImage: string | null;
   emotionalDrive: string;
   rarity: string;
+  level: string | null;
+  processAreaId: string | null;
   pointsRequired: number | null;
   controlsChecked: number | null;
   streakDays: number | null;
   achievementType: string;
 };
+
+const LEVELS = [
+  { value: "Bronze", label: "Bronze", color: "bg-amber-100 text-amber-700", tip: "Starting level — process activation initiated" },
+  { value: "Silver", label: "Silver", color: "bg-slate-200 text-slate-700", tip: "Missions performed with XP in the process attribute" },
+  { value: "Gold", label: "Gold", color: "bg-yellow-100 text-yellow-700", tip: "Demonstrated mastery and consistent delivery" },
+  { value: "Platinum", label: "Platinum", color: "bg-cyan-100 text-cyan-700", tip: "Elite performance with measurable impact" },
+  { value: "Black", label: "Black", color: "bg-slate-800 text-white", tip: "The highest tier — legendary process excellence" },
+];
 
 const EMOTIONAL_DRIVES = [
   { value: "Diversity", label: "Diversity", emoji: "🎨", tip: "Drive for new experiences and variety" },
@@ -113,14 +123,22 @@ const RARITIES = [
   { value: "Legendary", label: "Legendary", color: "bg-amber-100", tip: "Exceptional — the highest tier of achievement" },
 ];
 
+type ProcessArea = {
+  id: string;
+  name: string;
+  standard: string | null;
+};
+
 export default function BadgeForm({
   editing,
   isOpen,
   onClose,
+  processAreas,
 }: {
   editing: Badge | null;
   isOpen: boolean;
   onClose: () => void;
+  processAreas: ProcessArea[];
 }) {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -341,6 +359,34 @@ export default function BadgeForm({
               className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
               {RARITIES.map((r) => (
                 <option key={r.value} value={r.value} title={r.tip}>{r.label}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Process Area + Level row */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-700" title="Link this badge to a specific Process Area (optional)">
+              Process Area <span className="text-slate-400 font-normal">— Optional</span>
+            </label>
+            <select name="processAreaId" defaultValue={editing?.processAreaId ?? ""}
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+              <option value="">— None —</option>
+              {processAreas.map((pa) => (
+                <option key={pa.id} value={pa.id}>{pa.standard ? `${pa.standard} — ` : ""}{pa.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm font-medium text-slate-700" title="Progression level within the process (Bronze → Black)">
+              Level <span className="text-slate-400 font-normal">— Progression tier</span>
+            </label>
+            <select name="level" defaultValue={editing?.level ?? ""}
+              className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
+              <option value="">— None —</option>
+              {LEVELS.map((l) => (
+                <option key={l.value} value={l.value} title={l.tip}>{l.label}</option>
               ))}
             </select>
           </div>
