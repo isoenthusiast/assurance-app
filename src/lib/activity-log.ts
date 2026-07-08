@@ -6,11 +6,24 @@ export interface ActivityLogEntry {
   username: string;
   refTable?: string | null;
   refRecord?: string | null;
+  beforeData?: Record<string, unknown> | null;
+  afterData?: Record<string, unknown> | null;
 }
 
 /**
- * Log a user activity. Safe to call without awaiting — fire and forget.
+ * Log a user activity with optional before/after snapshots.
  * Returns the created ActivityLog id for linking to PointTransaction.
+ *
+ * @example
+ *   await logActivity({
+ *     activityType: "Update Control",
+ *     description: "Updated control ACME-001",
+ *     username: "admin",
+ *     refTable: "Control",
+ *     refRecord: "ctrl_123",
+ *     beforeData: { name: "Old Name", riskWeight: 1 },
+ *     afterData:  { name: "New Name", riskWeight: 3 },
+ *   });
  */
 export async function logActivity(entry: ActivityLogEntry): Promise<string | null> {
   try {
@@ -21,6 +34,8 @@ export async function logActivity(entry: ActivityLogEntry): Promise<string | nul
         username: entry.username,
         refTable: entry.refTable ?? null,
         refRecord: entry.refRecord ?? null,
+        beforeData: entry.beforeData ?? undefined,
+        afterData: entry.afterData ?? undefined,
       },
     });
     return log.id;

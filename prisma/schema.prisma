@@ -33,6 +33,8 @@ model ActivityLog {
   username         String
   refTable         String?
   refRecord        String?
+  beforeData       Json?
+  afterData        Json?
   createdAt        DateTime           @default(now())
   pointTransactions PointTransaction[]
 
