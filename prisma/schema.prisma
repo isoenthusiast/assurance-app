@@ -280,6 +280,7 @@ model Action {
   findingId               String
   actionDescription       String
   actionDetails           String?
+  actionTaken             String?
   actionParty             String?
   auditee                 String?
   createdDate             DateTime  @default(now())
@@ -292,6 +293,28 @@ model Action {
   finding                 Finding   @relation(fields: [findingId], references: [id], onDelete: Cascade)
 
   @@index([findingId])
+}
+
+model Attachment {
+  id          String   @id @default(cuid())
+  description String?
+  fileName    String
+  filePath    String
+  fileSize    Int?
+  uploadedBy  String
+  uploadDate  DateTime @default(now())
+  mappings    AttachmentMapping[]
+}
+
+model AttachmentMapping {
+  id           String     @id @default(cuid())
+  attachmentId String
+  destTable    String
+  recId        String
+  attachment   Attachment @relation(fields: [attachmentId], references: [id], onDelete: Cascade)
+
+  @@index([destTable, recId])
+  @@index([attachmentId])
 }
 
 enum FindingSeverity {

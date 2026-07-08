@@ -16,6 +16,7 @@ export async function PUT(
     const {
       actionDescription,
       actionDetails,
+      actionTaken,
       actionParty,
       auditee,
       targetDate,
@@ -60,6 +61,7 @@ export async function PUT(
       data: {
         actionDescription: actionDescription.trim(),
         actionDetails: actionDetails || null,
+        actionTaken: actionTaken || null,
         actionParty: actionParty || null,
         auditee: auditee || null,
         targetDate: newTargetDate,

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "CONAN PROJECT",
-  description: "Gamified assurance management for SEAM Conduct Assurance",
+  description: "Gamified assurance management",
 };
 
 export default function RootLayout({

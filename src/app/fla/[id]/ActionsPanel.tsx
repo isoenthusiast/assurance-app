@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import AttachmentList from '@/components/AttachmentList';
 
 export interface ActionItem {
   id: string;
   actionDescription: string;
   actionDetails: string | null;
+  actionTaken: string | null;
   actionParty: string | null;
   auditee: string | null;
   createdDate: string | Date;
@@ -20,6 +22,7 @@ export interface ActionItem {
 const emptyForm = {
   actionDescription: '',
   actionDetails: '',
+  actionTaken: '',
   actionParty: '',
   auditee: '',
   targetDate: '',
@@ -92,6 +95,7 @@ export default function ActionsPanel({
     setEditForm({
       actionDescription: action.actionDescription,
       actionDetails: action.actionDetails || '',
+      actionTaken: action.actionTaken || '',
       actionParty: action.actionParty || '',
       auditee: action.auditee || '',
       targetDate: toDateInput(action.targetDate),
@@ -216,6 +220,21 @@ export default function ActionsPanel({
                         />
                       </div>
 
+                      <div className="md:col-span-3">
+                        <label className="block text-xs font-medium text-slate-700 mb-1">
+                          Action Taken
+                        </label>
+                        <textarea
+                          value={editForm.actionTaken}
+                          onChange={(e) =>
+                            setEditForm({ ...editForm, actionTaken: e.target.value })
+                          }
+                          rows={3}
+                          placeholder="Describe what was done to resolve this action..."
+                          className="w-full rounded border border-slate-300 px-2 py-1 text-xs"
+                        />
+                      </div>
+
                       <div>
                         <label className="block text-xs font-medium text-slate-700 mb-1">
                           Action Party
@@ -307,19 +326,23 @@ export default function ActionsPanel({
                         Cancel
                       </button>
                     </div>
+                    <AttachmentList destTable="Action" recId={editingId!} />
                   </td>
                 ) : (
                   <>
                     <td className="px-3 py-2">
                       <div className="font-medium text-slate-900">{action.actionDescription}</div>
                       {action.actionDetails && (
-                        <div
-                          className="text-slate-500 text-xs mt-0.5 max-w-xs truncate"
-                          title={action.actionDetails}
-                        >
+                        <div className="text-slate-500 text-xs mt-0.5 max-w-xs truncate" title={action.actionDetails}>
                           {action.actionDetails}
                         </div>
                       )}
+                      {action.actionTaken && (
+                        <div className="text-green-700 text-xs mt-0.5 max-w-xs truncate" title={action.actionTaken}>
+                          ✓ {action.actionTaken}
+                        </div>
+                      )}
+                      <AttachmentList destTable="Action" recId={action.id} />
                     </td>
                     <td className="px-3 py-2 text-slate-600">{action.actionParty || '—'}</td>
                     <td className="px-3 py-2 text-slate-600">{action.auditee || '—'}</td>
