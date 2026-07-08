@@ -98,10 +98,20 @@ export async function GET(
       }));
     }
 
+    // Pagination support
+    const url = new URL(request.url);
+    const page = parseInt(url.searchParams.get("page") || "1");
+    const perPage = parseInt(url.searchParams.get("perPage") || "50");
+    const start = (page - 1) * perPage;
+    const pagedRows = rows.slice(start, start + perPage);
+
     return NextResponse.json({
       columns,
-      rows,
-      totalRows,
+      rows: pagedRows,
+      totalRows: rows.length,
+      page,
+      perPage,
+      totalPages: Math.ceil(rows.length / perPage),
     });
   } catch (error) {
     console.error('Error fetching table data:', error);
