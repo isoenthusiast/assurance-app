@@ -119,6 +119,10 @@ const FindingsTable = forwardRef<
       setError('Finding description is required');
       return;
     }
+    if (form.controlIds.length === 0) {
+      setError('At least one control must be selected. Findings must be linked to a control.');
+      return;
+    }
 
     try {
       setSaving(true);
