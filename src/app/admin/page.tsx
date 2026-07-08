@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import Link from "next/link";
 
 interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
@@ -18,6 +17,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
+  const [view, setView] = useState<"tables" | "badges" | "templates">("tables");
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -37,7 +37,7 @@ export default function AdminDashboard() {
     finally { setLoading(false); }
   }, []);
 
-  const selectTable = (name: string) => { setSelectedTable(name); setPage(1); loadData(name, 1, perPage); };
+  const selectTable = (name: string) => { setView("tables"); setSelectedTable(name); setPage(1); loadData(name, 1, perPage); };
   const goPage = (pg: number) => { if (!selectedTable || pg < 1 || pg > totalPages) return; loadData(selectedTable, pg, perPage); };
 
   const dropTable = async (name: string) => {
@@ -54,9 +54,9 @@ export default function AdminDashboard() {
         <div className="px-3 py-2.5 border-b border-slate-200">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Admin Menu</div>
           <div className="space-y-1">
-            <Link href="/setup/badges" className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700">🏆 Badge Management</Link>
-            <Link href="/admin/templates" className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700">📋 Assessment Templates</Link>
-            <div className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 cursor-pointer" onClick={() => selectTable("User")}>👤 User Management</div>
+            <button onClick={() => setView("badges")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "badges" ? "bg-blue-50 font-medium" : ""}`}>🏆 Badge Management</button>
+            <button onClick={() => setView("templates")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "templates" ? "bg-blue-50 font-medium" : ""}`}>📋 Assessment Templates</button>
+            <button onClick={() => { setView("tables"); selectTable("User"); }} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "tables" && selectedTable === "User" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
           </div>
         </div>
 
@@ -78,7 +78,11 @@ export default function AdminDashboard() {
 
       {/* RIGHT: Detail */}
       <div className="flex-1 rounded-lg border border-slate-200 bg-white flex flex-col min-w-0">
-        {!selectedTable ? (
+        {view === "badges" ? (
+          <iframe src="/setup/badges" className="w-full h-full border-0" title="Badge Management" />
+        ) : view === "templates" ? (
+          <iframe src="/admin/templates" className="w-full h-full border-0" title="Assessment Templates" />
+        ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
           <>
