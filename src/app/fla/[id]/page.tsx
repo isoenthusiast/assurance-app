@@ -96,6 +96,18 @@ export default async function AssessmentDetailPage({
 
       <AssessmentInfoForm assessment={assessment} users={users} activityTypes={activityTypes} loaOptions={loaOptions} statusOptions={statusOptions} />
 
+      {/* Control Selection + Assigned Controls */}
+      <div className="mt-6 space-y-4">
+        <ControlsSelectorWrapper
+          assessmentId={assessment.id}
+          initialSelectedIds={Array.from(assignedControlIds)}
+        />
+        <AssignedControlsTable
+          key={assignmentsKey}
+          initialAssignments={assessment.controlAssignments}
+        />
+      </div>
+
       <EvidenceSection
         assessmentId={assessment.id}
         samples={assessment.samples}
