@@ -8,8 +8,9 @@ import {
   awardPoints,
   awardBadge,
   trackMilestone,
-  POINT_RULES,
+  calculatePointsFromRules,
 } from "@/lib/gamification";
+import { logActivity } from "@/lib/activity-log";
 
 const assessmentSchema = z.object({
   activityTypeId: z.string().min(1),
@@ -46,13 +47,22 @@ export async function createAssessment(formData: FormData) {
 
   // 🎮 Award gamification points for FLA planned
   try {
-    await awardPoints(
-      parsed.assessorId,
-      POINT_RULES.FLA_PLANNED,
-      "fla_planned",
-      "Achievement",
-      assessment.id
-    );
+    const activityLogId = await logActivity({
+      activityType: "FLA Planned",
+      description: `Planned FLA: ${parsed.name}`,
+      username: "system",
+      refTable: "Assessment",
+      refRecord: assessment.id,
+    });
+
+    const rewards = await calculatePointsFromRules("FLA Planned");
+    for (const r of rewards) {
+      await awardPoints(
+        parsed.assessorId, r.points, "FLA Planned",
+        undefined, assessment.id, undefined, 1.0,
+        r.gameAttributeId, activityLogId,
+      );
+    }
 
     // Check if this is first FLA (for "Starter" badge)
     const assessmentCount = await prisma.assessment.count({
@@ -123,20 +133,43 @@ export async function updateAssessment(formData: FormData) {
   // 🎮 Award points if assessment was just completed
   if (previousAssessment?.status !== "Completed" && parsed.status === "Completed") {
     try {
-      // Check pass rate
+      const activityLogId = await logActivity({
+        activityType: "Complete Assessment",
+        description: `Completed assessment: ${parsed.name}`,
+        username: "system",
+        refTable: "Assessment",
+        refRecord: parsed.id,
+      });
+
+      // Count controls assigned to this assessment
+      const controlAssignments = await prisma.controlAssignment.findMany({
+        where: { assessmentId: parsed.id },
+        include: { control: { select: { isHsseCritical: true } } },
+      });
+      const controlCount = controlAssignments.length;
+      const hasHsseCritical = controlAssignments.some(ca => ca.control.isHsseCritical);
+
+      // Check sample pass rate for quality score
       const samples = await prisma.sample.findMany({
         where: { assessmentId: parsed.id },
       });
-
+      const passCount = samples.filter(s => s.conclusion === "Pass").length;
+      const qualityScore = samples.length > 0 ? Math.round((passCount / samples.length) * 100) : 0;
       const allPass = samples.length > 0 && samples.every((s) => s.conclusion === "Pass");
 
-      await awardPoints(
-        parsed.assessorId,
-        POINT_RULES.ASSESSMENT_COMPLETED,
-        "assessment_completed",
-        "Achievement",
-        parsed.id
-      );
+      // Award points from rules
+      const rewards = await calculatePointsFromRules("Complete Assessment", {
+        controlCount,
+        isHsseCritical: hasHsseCritical,
+        qualityScore,
+      });
+      for (const r of rewards) {
+        await awardPoints(
+          parsed.assessorId, r.points, "Complete Assessment",
+          undefined, parsed.id, undefined, 1.0,
+          r.gameAttributeId, activityLogId,
+        );
+      }
 
       // Check for Perfect Assessor badge
       if (allPass && samples.length >= 5) {
@@ -231,24 +264,13 @@ export async function updateSample(formData: FormData) {
     try {
       const assessment = previousSample.assessment;
 
-      // Calculate quality score (based on comment length as proxy)
-      const qualityScore = parsed.comment ? Math.min(100, parsed.comment.length / 2) : 50;
-
-      // Base points
-      let points = POINT_RULES.CONTROL_TESTED;
-      let emotionalDrive: "Achievement" | "Security" = "Achievement";
-
-      // Bonus if any control assigned to this assessment is HSSE-critical
+      // Check for HSSE-critical controls in this assessment
       const hasHsseCriticalControl = assessment.controlAssignments.some(
         (ca) => ca.control.isHsseCritical
       );
-      if (hasHsseCriticalControl) {
-        points += POINT_RULES.CONTROL_TESTED_HSSE;
-        emotionalDrive = "Security";
-      }
 
-      // Multiplier for quality
-      const multiplier = qualityScore > 80 ? 1.5 : 1.0;
+      // Calculate quality score (based on comment length as proxy)
+      const qualityScore = parsed.comment ? Math.min(100, parsed.comment.length / 2) : 50;
 
       // Get assessor ID from assessment
       const assessor = await prisma.user.findUnique({
@@ -256,15 +278,26 @@ export async function updateSample(formData: FormData) {
       });
 
       if (assessor) {
-        await awardPoints(
-          assessor.id,
-          points,
-          "control_tested",
-          emotionalDrive,
-          parsed.assessmentId,
-          parsed.id,
-          multiplier
-        );
+        const activityLogId = await logActivity({
+          activityType: "Control Tested",
+          description: `Tested sample ${parsed.id}`,
+          username: assessor.name || "system",
+          refTable: "Sample",
+          refRecord: parsed.id,
+        });
+
+        const rewards = await calculatePointsFromRules("Control Tested", {
+          controlCount: 1,
+          isHsseCritical: hasHsseCriticalControl,
+          qualityScore,
+        });
+        for (const r of rewards) {
+          await awardPoints(
+            assessor.id, r.points, "Control Tested",
+            undefined, parsed.assessmentId, parsed.id, 1.0,
+            r.gameAttributeId, activityLogId,
+          );
+        }
 
         // Check for "First Test" badge
         const sampleCount = await prisma.sample.count({
