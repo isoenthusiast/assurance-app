@@ -53,9 +53,10 @@ type FindingWithActions = {
     id: string;
     actionDescription: string;
     actionParty: string | null;
-    targetDate: string | null;
+    targetDate: Date | string | null;
     actionClosureEffective: boolean;
   }>;
+  _count?: { actions: number };
 };
 
 type Assessment = {
