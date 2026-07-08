@@ -12,8 +12,8 @@ export async function GET() {
     }
 
     const [processAreas, subProcesses, controls] = await Promise.all([
-      prisma.processArea.findMany({ orderBy: { name: "asc" } }),
-      prisma.subProcess.findMany({ orderBy: { name: "asc" } }),
+      prisma.processArea.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
+      prisma.subProcess.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
       prisma.control.findMany({
         include: { processArea: { select: { name: true } }, subProcess: { select: { name: true } } },
         orderBy: { name: "asc" },

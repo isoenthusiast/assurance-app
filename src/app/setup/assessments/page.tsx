@@ -68,7 +68,13 @@ export default function AssessmentsPage() {
         if (controlsRes.ok) {
           const controlsData = await controlsRes.json();
           setProcessAreas(controlsData.processAreas || []);
-          setSubProcesses(controlsData.subProcesses || []);
+          // Deduplicate sub-processes by ID (CSV imports can create duplicates)
+          const seen = new Set<string>();
+          setSubProcesses((controlsData.subProcesses || []).filter((sp: SubProcess) => {
+            if (seen.has(sp.id)) return false;
+            seen.add(sp.id);
+            return true;
+          }));
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load data');
