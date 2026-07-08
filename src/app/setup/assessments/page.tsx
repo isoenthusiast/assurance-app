@@ -91,6 +91,21 @@ export default function AssessmentsPage() {
     return subProcesses.filter((sp) => sp.processAreaId === selectedProcessAreaId);
   }, [selectedProcessAreaId, subProcesses]);
 
+  // Count assessments per process area
+  const paAssessmentCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const a of assessments) {
+      const seen = new Set<string>();
+      for (const ca of a.controlAssignments) {
+        if (ca.control.processAreaId && !seen.has(ca.control.processAreaId)) {
+          seen.add(ca.control.processAreaId);
+          counts[ca.control.processAreaId] = (counts[ca.control.processAreaId] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [assessments]);
+
   const filteredAssessments = useMemo(() => {
     return assessments.filter((assessment) => {
       if (selectedProcessAreaId !== 'all') {
@@ -155,14 +170,14 @@ export default function AssessmentsPage() {
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Process Area</label>
             <select value={selectedProcessAreaId} onChange={e => { setSelectedProcessAreaId(e.target.value); setSelectedSubProcessId('all'); setCurrentPage(1); }} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-              <option value="all">All Process Areas</option>
-              {processAreas.map(pa => <option key={pa.id} value={pa.id}>{pa.name}</option>)}
+              <option value="all">All Process Areas ({assessments.length})</option>
+              {processAreas.map(pa => <option key={pa.id} value={pa.id}>{pa.name} ({paAssessmentCounts[pa.id] || 0})</option>)}
             </select>
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Sub-Process</label>
             <select value={selectedSubProcessId} onChange={e => { setSelectedSubProcessId(e.target.value); setCurrentPage(1); }} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
-              <option value="all">All Sub-Processes</option>
+              <option value="all">All Sub-Processes ({availableSubProcesses.length})</option>
               {availableSubProcesses.map(sp => <option key={sp.id} value={sp.id}>{sp.name}</option>)}
             </select>
           </div>
