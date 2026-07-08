@@ -10,10 +10,11 @@ export interface ActivityLogEntry {
 
 /**
  * Log a user activity. Safe to call without awaiting — fire and forget.
+ * Returns the created ActivityLog id for linking to PointTransaction.
  */
-export async function logActivity(entry: ActivityLogEntry) {
+export async function logActivity(entry: ActivityLogEntry): Promise<string | null> {
   try {
-    await prisma.activityLog.create({
+    const log = await prisma.activityLog.create({
       data: {
         activityType: entry.activityType,
         description: entry.description,
@@ -22,8 +23,10 @@ export async function logActivity(entry: ActivityLogEntry) {
         refRecord: entry.refRecord ?? null,
       },
     });
+    return log.id;
   } catch (err) {
     console.error("Failed to log activity:", err);
+    return null;
   }
 }
 

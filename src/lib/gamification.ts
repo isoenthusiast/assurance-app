@@ -226,7 +226,73 @@ export const DRIVE_SCORING = {
 };
 
 /**
- * Award points for an action
+ * Look up active rules for an activity type and calculate points.
+ *
+ * @example
+ *   // Closing an FLA — awards 5 pts "Conduct Assurance" + 1 pt per control
+ *   const result = await calculatePointsFromRules("Complete Assessment", {
+ *     controlCount: 5,
+ *     isHsseCritical: false,
+ *     qualityScore: 85,
+ *   });
+ *   // result = [{ gameAttributeId: "...", points: 10, ruleId: "..." }]
+ *
+ * @param activityType - Matches GameAttributeRule.activityType (e.g. "Complete Assessment")
+ * @param context - Runtime values the rules can use (controlCount, isHsseCritical, qualityScore)
+ * @returns Array of { gameAttributeId, points, ruleId } — one per matching active rule
+ */
+export async function calculatePointsFromRules(
+  activityType: string,
+  context: {
+    controlCount?: number;
+    isHsseCritical?: boolean;
+    qualityScore?: number;
+  } = {}
+) {
+  const rules = await prisma.gameAttributeRule.findMany({
+    where: { activityType, isActive: true },
+    include: { gameAttribute: true },
+  });
+
+  return rules.map((rule) => {
+    let pts = rule.basePoints;
+
+    // Per-control bonus (e.g. 1pt per associated control)
+    if (rule.perControlPoints && context.controlCount) {
+      pts += rule.perControlPoints * context.controlCount;
+    }
+
+    // HSSE-critical bonus
+    if (rule.hsseBonusPoints && context.isHsseCritical) {
+      pts += rule.hsseBonusPoints;
+    }
+
+    // Quality threshold bonus
+    if (
+      rule.qualityThreshold != null &&
+      context.qualityScore != null &&
+      context.qualityScore >= rule.qualityThreshold
+    ) {
+      pts += rule.qualityBonus;
+    }
+
+    // Apply multiplier
+    pts = Math.round(pts * rule.multiplier);
+
+    return {
+      gameAttributeId: rule.gameAttributeId,
+      gameAttributeName: rule.gameAttribute.name,
+      points: pts,
+      ruleId: rule.id,
+    };
+  });
+}
+
+/**
+ * Award points for an action.
+ *
+ * @param gameAttributeId - Links to GameAttribute that categorizes this XP
+ * @param activityLogId    - Links to ActivityLog entry that triggered this award
  */
 export async function awardPoints(
   userId: string,
@@ -235,7 +301,9 @@ export async function awardPoints(
   emotionalDrive?: EmotionalDrive,
   assessmentId?: string,
   sampleId?: string,
-  multiplier: number = 1.0
+  multiplier: number = 1.0,
+  gameAttributeId?: string,
+  activityLogId?: string
 ) {
   const actualPoints = Math.round(points * multiplier);
 
@@ -248,6 +316,8 @@ export async function awardPoints(
       assessmentId,
       sampleId,
       multiplier,
+      gameAttributeId,
+      activityLogId,
     },
   });
 

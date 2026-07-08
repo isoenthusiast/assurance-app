@@ -26,14 +26,15 @@ model User {
 }
 
 model ActivityLog {
-  id           String   @id @default(cuid())
-  timestamp    DateTime @default(now())
-  description  String
-  activityType String
-  username     String
-  refTable     String?
-  refRecord    String?
-  createdAt    DateTime @default(now())
+  id               String             @id @default(cuid())
+  timestamp        DateTime           @default(now())
+  description      String
+  activityType     String
+  username         String
+  refTable         String?
+  refRecord        String?
+  createdAt        DateTime           @default(now())
+  pointTransactions PointTransaction[]
 
   @@index([timestamp])
   @@index([username])
@@ -369,22 +370,46 @@ model PointTransaction {
   emotionalDrive   EmotionalDrive?
   multiplier       Float           @default(1.0)
   gameAttributeId  String?
+  activityLogId    String?
   createdAt        DateTime        @default(now())
   user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameAttribute    GameAttribute?  @relation(fields: [gameAttributeId], references: [id])
+  activityLog      ActivityLog?    @relation(fields: [activityLogId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([createdAt])
   @@index([gameAttributeId])
+  @@index([activityLogId])
 }
 
 model GameAttribute {
-  id              String             @id @default(cuid())
-  attributeName   String             @unique
+  id                   String               @id @default(cuid())
+  attributeName        String               @unique
   attributeDescription String?
-  attributeStatus String             @default("Active")
-  createdAt       DateTime           @default(now())
-  points          PointTransaction[]
+  attributeStatus      String               @default("Active")
+  createdAt            DateTime             @default(now())
+  points               PointTransaction[]
+  rules                GameAttributeRule[]
+}
+
+model GameAttributeRule {
+  id               String        @id @default(cuid())
+  gameAttributeId  String
+  activityType     String
+  basePoints       Int           @default(0)
+  perControlPoints Int           @default(0)
+  hsseBonusPoints  Int           @default(0)
+  qualityThreshold Float?
+  qualityBonus     Int           @default(0)
+  multiplier       Float         @default(1.0)
+  description      String?
+  isActive         Boolean       @default(true)
+  createdAt        DateTime      @default(now())
+  gameAttribute    GameAttribute @relation(fields: [gameAttributeId], references: [id], onDelete: Cascade)
+
+  @@unique([gameAttributeId, activityType])
+  @@index([gameAttributeId])
+  @@index([activityType])
 }
 
 model EmotionalDriveMetric {

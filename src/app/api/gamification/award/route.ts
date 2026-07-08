@@ -2,23 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   awardPoints,
   awardBadge,
-  POINT_RULES,
+  calculatePointsFromRules,
 } from '@/lib/gamification';
 
 /**
- * Award points and update metrics for a control test
+ * Award points and update metrics for a control test.
+ *
+ * Uses GameAttributeRule lookup to determine points based on activity type.
+ * Links each PointTransaction to an ActivityLog entry for full audit trail.
+ *
+ * Body:
+ *   userId, action (activityType string, e.g. "Complete Assessment"),
+ *   controlCount?, isHSSECritical?, qualityScore?,
+ *   assessmentId?, sampleId?, activityLogId?
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const {
       userId,
-      action,
-      controlId,
-      assessmentId,
+      action,           // activityType string — must match GameAttributeRule.activityType
+      controlCount,
       isHSSECritical,
       qualityScore,
+      assessmentId,
       sampleId,
+      activityLogId,    // optional — links PointTransaction ← ActivityLog
     } = body;
 
     if (!userId || !action) {
@@ -28,61 +37,37 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    let points = 0;
-    let emotionalDrive = null;
-    let multiplier = 1.0;
+    // ── Look up rules for this activity type ──
+    const ruleResults = await calculatePointsFromRules(action, {
+      controlCount: controlCount || 0,
+      isHsseCritical: !!isHSSECritical,
+      qualityScore,
+    });
 
-    // Determine points based on action
-    switch (action) {
-      case 'control_tested':
-        points = POINT_RULES.CONTROL_TESTED;
-        emotionalDrive = 'Achievement';
-        if (isHSSECritical) {
-          points += POINT_RULES.CONTROL_TESTED_HSSE;
-          emotionalDrive = 'Security';
-        }
-        if (qualityScore && qualityScore > 80) {
-          multiplier = 1.5;
-        }
-
-        break;
-
-      case 'fla_planned':
-        points = POINT_RULES.FLA_PLANNED;
-        emotionalDrive = 'Achievement';
-        break;
-
-      case 'evidence_documented':
-        points = POINT_RULES.EVIDENCE_DOCUMENTED;
-        emotionalDrive = 'Contribution';
-        if (qualityScore && qualityScore > 80) {
-          points = POINT_RULES.EVIDENCE_DOCUMENTED_QUALITY;
-          emotionalDrive = 'Excellence';
-        }
-        break;
-
-      case 'assessment_completed':
-        points = POINT_RULES.ASSESSMENT_COMPLETED;
-        emotionalDrive = 'Achievement';
-        break;
-
-      default:
-        return NextResponse.json(
-          { error: `Unknown action: ${action}` },
-          { status: 400 }
-        );
+    if (ruleResults.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: `No active rules found for activity type "${action}"`,
+        pointsAwarded: 0,
+      });
     }
 
-    // Award points
-    await awardPoints(
-      userId,
-      points,
-      action,
-      emotionalDrive as any,
-      assessmentId,
-      sampleId,
-      multiplier
-    );
+    // ── Award points for each matching rule ──
+    let totalAwarded = 0;
+    for (const rule of ruleResults) {
+      await awardPoints(
+        userId,
+        rule.points,
+        action,
+        undefined,        // emotionalDrive (mapped by rule system now)
+        assessmentId,
+        sampleId,
+        1.0,              // multiplier already applied in calculatePointsFromRules
+        rule.gameAttributeId,
+        activityLogId,
+      );
+      totalAwarded += rule.points;
+    }
 
     // Check for badge achievements
     const badges = await checkBadgeAchievements(userId, action);
@@ -92,7 +77,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      pointsAwarded: Math.round(points * multiplier),
+      pointsAwarded: totalAwarded,
+      breakdown: ruleResults.map(r => ({
+        attribute: r.gameAttributeName,
+        points: r.points,
+        ruleId: r.ruleId,
+      })),
       badgesEarned: badges,
     });
   } catch (error) {
