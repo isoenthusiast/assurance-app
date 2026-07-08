@@ -443,7 +443,7 @@ export default function ProcessDetailsClient({
                   <HealthBar
                     label="Effective"
                     value={overviewStats.effectiveCount}
-                    total={overviewStats.effectiveCount + overviewStats.notEffectiveCount + overviewStats.notAssessedCount}
+                    total={overviewStats.effectiveCount + overviewStats.notEffectiveCount + overviewStats.neverTestedCount}
                     color="green"
                   />
                   <HealthBar
