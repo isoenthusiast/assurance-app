@@ -136,7 +136,7 @@ export default function AssessmentsPage() {
           <h1 className="text-3xl font-bold text-slate-900">📊 Assessments</h1>
           <p className="mt-1 text-slate-600">View and manage assessment plans</p>
         </div>
-        <Link href="/fla/new" className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors">
+        <Link href="/setup/assessments/new" className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors">
           ➕ Plan Assessment
         </Link>
       </div>

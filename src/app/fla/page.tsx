@@ -106,7 +106,7 @@ export default async function FlaDashboardPage() {
           </p>
         </div>
         <Link
-          href="/admin/assessments/new"
+          href="/setup/assessments/new"
           className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
         >
           + Plan Assessment
