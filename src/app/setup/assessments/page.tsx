@@ -188,8 +188,8 @@ export default function AssessmentsPage() {
                   <th className="px-3 py-2 font-medium text-slate-700">Status</th>
                   <th className="px-3 py-2 font-medium text-slate-700">Controls</th>
                   <th className="px-3 py-2 font-medium text-slate-700">Assessor</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Dates</th>
-                  <th className="px-3 py-2"></th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Period</th>
+                  <th className="px-3 py-2 font-medium text-slate-700">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -202,7 +202,10 @@ export default function AssessmentsPage() {
                     <td className="px-3 py-2 text-slate-600">{a.controlAssignments?.length || 0}</td>
                     <td className="px-3 py-2 text-slate-600">{a.assessor?.name}</td>
                     <td className="px-3 py-2 text-slate-500 text-xs">{a.startDate ? new Date(a.startDate).toLocaleDateString() : '—'} – {a.endDate ? new Date(a.endDate).toLocaleDateString() : '—'}</td>
-                    <td className="px-3 py-2 text-right"><Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline">View</Link></td>
+                    <td className="px-3 py-2 text-right">
+                      <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline mr-2">View</Link>
+                      <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline">Edit</Link>
+                    </td>
                   </tr>
                 ))}
                 {paginatedAssessments.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-400">No assessments found</td></tr>}
