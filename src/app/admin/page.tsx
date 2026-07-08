@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 
 interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
@@ -47,8 +48,19 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-[calc(100vh-140px)] gap-3">
-      {/* LEFT: Table List */}
+      {/* LEFT: Nav + Table List */}
       <div className="w-56 flex-shrink-0 rounded-lg border border-slate-200 bg-white flex flex-col">
+        {/* Navigation Menu */}
+        <div className="px-3 py-2.5 border-b border-slate-200">
+          <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Admin Menu</div>
+          <div className="space-y-1">
+            <Link href="/setup/badges" className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700">🏆 Badge Management</Link>
+            <Link href="/admin/templates" className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700">📋 Assessment Templates</Link>
+            <div className="block px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 cursor-pointer" onClick={() => selectTable("User")}>👤 User Management</div>
+          </div>
+        </div>
+
+        {/* Table List */}
         <div className="px-3 py-2.5 border-b border-slate-200 font-semibold text-xs text-slate-600 flex justify-between items-center">
           Tables ({tables.length})
           <button onClick={loadTables} className="text-blue-600 hover:underline text-xs">↻</button>
