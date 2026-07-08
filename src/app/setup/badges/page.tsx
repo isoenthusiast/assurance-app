@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-import { deleteBadge } from "./actions";
 import BadgesClient from "./BadgesClient";
 
 export default async function BadgesPage({
@@ -30,7 +29,6 @@ export default async function BadgesPage({
         key={editing?.id ?? "new"}
         badges={badges}
         editing={editing}
-        deleteAction={deleteBadge}
         processAreas={processAreas}
       />
     </div>

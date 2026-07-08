@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import DeleteButton from "@/components/DeleteButton";
 
 type Badge = {
   id: string;
@@ -42,11 +41,9 @@ const ITEMS_PER_PAGE_OPTIONS = [5, 10, 30, 100];
 
 export default function BadgesTable({
   badges,
-  deleteAction,
   onAddClick,
 }: {
   badges: Badge[];
-  deleteAction: (id: string) => Promise<void>;
   onAddClick: () => void;
 }) {
   const [sortKey, setSortKey] = useState<keyof Badge>("badgeName");
@@ -172,15 +169,12 @@ export default function BadgesTable({
                   )}
                 </td>
                 <td className="px-3 py-2 text-right">
-                  <div className="flex items-center justify-end gap-2">
-                    <Link
-                      href={`/setup/badges?edit=${b.id}`}
-                      className="text-xs text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </Link>
-                    <DeleteButton action={deleteAction.bind(null, b.id)} />
-                  </div>
+                  <Link
+                    href={`/setup/badges?edit=${b.id}`}
+                    className="text-xs text-blue-600 hover:underline"
+                  >
+                    Edit
+                  </Link>
                 </td>
               </tr>
             ))}

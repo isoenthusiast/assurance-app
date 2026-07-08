@@ -31,12 +31,10 @@ type ProcessArea = {
 export default function BadgesClient({
   badges,
   editing,
-  deleteAction,
   processAreas,
 }: {
   badges: Badge[];
   editing: Badge | null;
-  deleteAction: (id: string) => Promise<void>;
   processAreas: ProcessArea[];
 }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -45,7 +43,6 @@ export default function BadgesClient({
     <>
       <BadgesTable
         badges={badges}
-        deleteAction={deleteAction}
         onAddClick={() => setIsAddOpen(true)}
       />
 
