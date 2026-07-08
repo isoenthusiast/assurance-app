@@ -360,19 +360,31 @@ model UserAchievement {
 }
 
 model PointTransaction {
-  id             String          @id @default(cuid())
-  userId         String
-  points         Int
-  reason         String
-  assessmentId   String?
-  sampleId       String?
-  emotionalDrive EmotionalDrive?
-  multiplier     Float           @default(1.0)
-  createdAt      DateTime        @default(now())
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String          @id @default(cuid())
+  userId           String
+  points           Int
+  reason           String
+  assessmentId     String?
+  sampleId         String?
+  emotionalDrive   EmotionalDrive?
+  multiplier       Float           @default(1.0)
+  gameAttributeId  String?
+  createdAt        DateTime        @default(now())
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameAttribute    GameAttribute?  @relation(fields: [gameAttributeId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
+  @@index([gameAttributeId])
+}
+
+model GameAttribute {
+  id              String             @id @default(cuid())
+  attributeName   String             @unique
+  attributeDescription String?
+  attributeStatus String             @default("Active")
+  createdAt       DateTime           @default(now())
+  points          PointTransaction[]
 }
 
 model EmotionalDriveMetric {
