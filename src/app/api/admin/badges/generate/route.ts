@@ -34,13 +34,16 @@ function generateBadgeSVG(badgeName: string, level: string): string {
   const c = LEVEL_COLORS[level] || LEVEL_COLORS.Bronze;
   const W = 400, H = 400;
 
+  // XML-escape the badge name for SVG text elements
+  const safeName = badgeName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
   // Scale font size based on name length
   const maxChars = 30;
   const fontSize = Math.max(18, 44 - Math.max(0, badgeName.length - 8) * 1.6);
   const lineHeight = fontSize * 1.25;
 
   // Split long names into multiple lines
-  const words = badgeName.split(" ");
+  const words = safeName.split(" ");
   const lines: string[] = [];
   let current = "";
   for (const w of words) {

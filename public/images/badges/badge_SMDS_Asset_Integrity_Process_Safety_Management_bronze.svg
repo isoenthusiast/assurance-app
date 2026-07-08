@@ -49,8 +49,8 @@
 
   <!-- Badge Name -->
   <g fill="#E8C27A" font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
-    <text x="200" y="187.5" font-size="18" font-weight="700" letter-spacing="2">SMDS Asset Integrity & Process</text>
-    <text x="200" y="210" font-size="18" font-weight="700" letter-spacing="2">Safety Management</text>
+    <text x="200" y="187.5" font-size="18" font-weight="700" letter-spacing="2">SMDS Asset Integrity &amp;</text>
+    <text x="200" y="210" font-size="18" font-weight="700" letter-spacing="2">Process Safety Management</text>
   </g>
 
   <!-- Level badge pill -->
