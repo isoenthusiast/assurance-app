@@ -11,16 +11,18 @@ export async function GET() {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    const [processAreas, subProcesses, controls] = await Promise.all([
+    const [processAreas, subProcesses, controls, sampleTypes, recordSourceTypes] = await Promise.all([
       prisma.processArea.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
       prisma.subProcess.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
       prisma.control.findMany({
         include: { processArea: { select: { name: true } }, subProcess: { select: { name: true } } },
         orderBy: { name: "asc" },
       }),
+      prisma.sampleType.findMany({ orderBy: { name: "asc" } }),
+      prisma.recordSourceType.findMany({ orderBy: { name: "asc" } }),
     ]);
 
-    return NextResponse.json({ processAreas, subProcesses, controls });
+    return NextResponse.json({ processAreas, subProcesses, controls, sampleTypes, recordSourceTypes });
   } catch (error) {
     console.error("Error fetching controls data:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

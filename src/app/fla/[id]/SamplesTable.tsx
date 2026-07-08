@@ -74,23 +74,12 @@ export default function SamplesTable({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [typesRes, sourcesRes, controlsRes] = await Promise.all([
-          fetch('/api/admin/table/SampleType/data'),
-          fetch('/api/admin/table/RecordSourceType/data'),
-          !controls.length ? fetch('/api/admin/table/Control/data') : Promise.resolve(new Response('[]')),
-        ]);
-
-        if (typesRes.ok) {
-          const data = await typesRes.json();
-          setSampleTypes(data.rows || []);
-        }
-        if (sourcesRes.ok) {
-          const data = await sourcesRes.json();
-          setRecordSources(data.rows || []);
-        }
-        if (!controls.length && controlsRes.ok) {
-          const data = await controlsRes.json();
-          setControls(data.rows || []);
+        const res = await fetch('/api/controls');
+        if (res.ok) {
+          const data = await res.json();
+          setSampleTypes(data.sampleTypes || []);
+          setRecordSources(data.recordSourceTypes || []);
+          if (!controls.length) setControls(data.controls || []);
         }
       } catch (err) {
         console.error('Failed to load types:', err);
@@ -122,10 +111,10 @@ export default function SamplesTable({
     if (!newSampleTypeName.trim()) return;
 
     try {
-      const res = await fetch('/api/admin/table/SampleType/data', {
+      const res = await fetch('/api/controls/reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newSampleTypeName }),
+        body: JSON.stringify({ type: 'sampleType', name: newSampleTypeName }),
       });
 
       if (!res.ok) throw new Error('Failed to add sample type');
@@ -143,10 +132,10 @@ export default function SamplesTable({
     if (!newRecordSourceName.trim()) return;
 
     try {
-      const res = await fetch('/api/admin/table/RecordSourceType/data', {
+      const res = await fetch('/api/controls/reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newRecordSourceName }),
+        body: JSON.stringify({ type: 'recordSource', name: newRecordSourceName }),
       });
 
       if (!res.ok) throw new Error('Failed to add record source');
@@ -207,10 +196,10 @@ export default function SamplesTable({
     if (!tempSampleTypeName.trim()) return;
 
     try {
-      const res = await fetch('/api/admin/table/SampleType/data', {
+      const res = await fetch('/api/controls/reference', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: tempSampleTypeName }),
+        body: JSON.stringify({ type: 'sampleType', name: tempSampleTypeName }),
       });
 
       if (!res.ok) throw new Error('Failed to add sample type');
