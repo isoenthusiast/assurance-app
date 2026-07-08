@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
@@ -53,6 +53,21 @@ export default function PlanAssessmentPage() {
     ? templates
     : templates.filter(t => t.controlLinkages.some(l => l.control.processAreaId === selectedProcessAreaId));
 
+  // Count templates per process area
+  const paTemplateCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const t of templates) {
+      const seen = new Set<string>();
+      for (const l of t.controlLinkages) {
+        if (l.control.processAreaId && !seen.has(l.control.processAreaId)) {
+          seen.add(l.control.processAreaId);
+          counts[l.control.processAreaId] = (counts[l.control.processAreaId] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [templates]);
+
   const handlePlanFromTemplate = async (templateId: string) => {
     try {
       const res = await fetch('/api/admin/assessment-templates/' + templateId);
@@ -104,8 +119,10 @@ export default function PlanAssessmentPage() {
         <div className="mb-6 rounded border border-slate-200 bg-white p-4">
           <label className="block text-sm font-medium text-slate-700 mb-2">Filter by Process Area:</label>
           <select value={selectedProcessAreaId} onChange={e => setSelectedProcessAreaId(e.target.value)} className="w-full max-w-xs rounded border border-slate-300 px-3 py-2 text-sm">
-            <option value="all">All Process Areas</option>
-            {processAreas.map(pa => <option key={pa.id} value={pa.id}>{pa.name}</option>)}
+            <option value="all">All Process Areas ({templates.length})</option>
+            {processAreas.map(pa => (
+              <option key={pa.id} value={pa.id}>{pa.name} ({paTemplateCounts[pa.id] || 0})</option>
+            ))}
           </select>
         </div>
       )}
