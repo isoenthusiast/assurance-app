@@ -120,8 +120,8 @@ export default function PlanAssessmentPage() {
           <label className="block text-sm font-medium text-slate-700 mb-2">Filter by Process Area:</label>
           <select value={selectedProcessAreaId} onChange={e => setSelectedProcessAreaId(e.target.value)} className="w-full max-w-xs rounded border border-slate-300 px-3 py-2 text-sm">
             <option value="all">All Process Areas ({templates.length})</option>
-            {processAreas.map(pa => (
-              <option key={pa.id} value={pa.id}>{pa.name} ({paTemplateCounts[pa.id] || 0})</option>
+            {processAreas.filter(pa => paTemplateCounts[pa.id]).map(pa => (
+              <option key={pa.id} value={pa.id}>{pa.name} ({paTemplateCounts[pa.id]})</option>
             ))}
           </select>
         </div>

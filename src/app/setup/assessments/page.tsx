@@ -171,7 +171,7 @@ export default function AssessmentsPage() {
             <label className="block text-sm font-medium text-slate-700 mb-1">Process Area</label>
             <select value={selectedProcessAreaId} onChange={e => { setSelectedProcessAreaId(e.target.value); setSelectedSubProcessId('all'); setCurrentPage(1); }} className="w-full rounded border border-slate-300 px-3 py-2 text-sm">
               <option value="all">All Process Areas ({assessments.length})</option>
-              {processAreas.map(pa => <option key={pa.id} value={pa.id}>{pa.name} ({paAssessmentCounts[pa.id] || 0})</option>)}
+              {processAreas.filter(pa => paAssessmentCounts[pa.id]).map(pa => <option key={pa.id} value={pa.id}>{pa.name} ({paAssessmentCounts[pa.id]})</option>)}
             </select>
           </div>
           <div>
