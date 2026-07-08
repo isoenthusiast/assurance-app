@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import type { InputJsonValue } from "@/generated/prisma/client";
 
 export interface ActivityLogEntry {
   activityType: string;
@@ -35,8 +34,8 @@ export async function logActivity(entry: ActivityLogEntry): Promise<string | nul
         username: entry.username,
         refTable: entry.refTable ?? null,
         refRecord: entry.refRecord ?? null,
-        beforeData: (entry.beforeData as InputJsonValue) ?? undefined,
-        afterData: (entry.afterData as InputJsonValue) ?? undefined,
+        beforeData: (entry.beforeData as any) ?? undefined,
+        afterData: (entry.afterData as any) ?? undefined,
       },
     });
     return log.id;
