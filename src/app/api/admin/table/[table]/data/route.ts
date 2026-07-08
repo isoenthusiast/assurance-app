@@ -86,8 +86,8 @@ export async function GET(
       console.error(`Error fetching ${table}:`, err.message);
     }
 
-    // Dynamic column discovery: if DMMF+fallback both failed, derive from first row
-    if (columns.length === 0 && rows.length > 0) {
+    // Prefer row-derived columns over stale DMMF — always accurate
+    if (rows.length > 0) {
       const sample = rows[0];
       columns = Object.keys(sample).map((key) => ({
         name: key,
@@ -96,6 +96,12 @@ export async function GET(
             : typeof sample[key] === 'boolean' ? 'Boolean'
             : 'String',
       }));
+    }
+
+    // ControlAssignment: ensure ControlID display column is after controlId
+    if (table === 'ControlAssignment' && !columns.some((c) => c.name === 'ControlID')) {
+      const idx = columns.findIndex((c) => c.name === 'controlId');
+      columns.splice(idx >= 0 ? idx + 1 : columns.length, 0, { name: 'ControlID', type: 'String' });
     }
 
     // Pagination support
