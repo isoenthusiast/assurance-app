@@ -359,19 +359,24 @@ function BadgeGallery({ achievements }: { achievements: any[] }) {
           {achievements.map((a) => (
             <div
               key={a.id}
-              className="p-3 bg-gradient-to-br from-yellow-50 to-amber-50 rounded border border-amber-200 text-center"
+              className="p-3 bg-gradient-to-br from-slate-50 to-slate-100 rounded-lg border border-slate-200 text-center hover:shadow-md transition-shadow"
             >
-              <div className="text-3xl mb-1">
-                {a.badge.emotionalDrive === 'Recognition'
-                  ? '⭐'
-                  : a.badge.emotionalDrive === 'Growth'
-                  ? '📈'
-                  : a.badge.emotionalDrive === 'Excellence'
-                  ? '💎'
-                  : '🏆'}
-              </div>
-              <p className="text-xs font-medium text-slate-900">{a.badge.badgeName}</p>
-              <p className="text-xs text-slate-600 mt-1">
+              {a.badge.badgeImage ? (
+                <img
+                  src={a.badge.badgeImage}
+                  alt={a.badge.badgeName}
+                  className="w-full h-auto max-h-24 object-contain mx-auto mb-1"
+                />
+              ) : (
+                <div className="text-3xl mb-1">
+                  {a.badge.icon || "🏆"}
+                </div>
+              )}
+              <p className="text-xs font-medium text-slate-900 leading-tight">{a.badge.badgeName}</p>
+              {a.badge.level && (
+                <p className="text-xs text-slate-500 mt-0.5">{a.badge.level}</p>
+              )}
+              <p className="text-xs text-slate-400 mt-1">
                 {new Date(a.earnedAt).toLocaleDateString()}
               </p>
             </div>

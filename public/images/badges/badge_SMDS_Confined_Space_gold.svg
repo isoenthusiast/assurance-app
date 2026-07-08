@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="60%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#1a1608" stop-opacity="1"/>
+    </radialGradient>
+    <linearGradient id="borderGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD700" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#FFD700" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FFD700" stop-opacity="0.8"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="400" height="400" rx="20" fill="#1a1608"/>
+  <rect width="400" height="400" rx="20" fill="url(#bgGrad)"/>
+
+  <!-- Hexagonal pattern -->
+  <g opacity="0.08" stroke="#FFD700" stroke-width="0.5" fill="none">
+    <polygon points="200,60 260,95 260,165 200,200 140,165 140,95"/>
+    <polygon points="200,120 230,138 230,172 200,190 170,172 170,138"/>
+    <line x1="80" y1="30" x2="320" y2="30"/>
+    <line x1="50" y1="370" x2="350" y2="370"/>
+  </g>
+
+  <!-- Corner accents -->
+  <g stroke="#FFD700" stroke-width="1.5" opacity="0.5" fill="none">
+    <path d="M16,50 L16,16 L50,16"/>
+    <path d="M350,16 L384,16 L384,50"/>
+    <path d="M384,350 L384,384 L350,384"/>
+    <path d="M50,384 L16,384 L16,350"/>
+  </g>
+
+  <!-- Central hexagon decoration -->
+  <polygon points="200,163.5 240,178.5 240,241.5 200,256.5 160,241.5 160,178.5"
+    fill="none" stroke="#FFD700" stroke-width="1" opacity="0.25"/>
+
+  <!-- SMDS label -->
+  <text x="200" y="38" text-anchor="middle" fill="#FFD700" font-family="monospace" font-size="12" font-weight="600" letter-spacing="8" opacity="0.7">SMDS</text>
+
+  <!-- Level dot indicators at top -->
+  <g fill="#FFD700" opacity="0.6">
+    <circle cx="180" cy="58" r="4"/><circle cx="200" cy="58" r="4"/><circle cx="220" cy="58" r="4"/>
+  </g>
+
+  <!-- Badge Name -->
+  <g fill="#FFE44D" font-family="'Segoe UI',Arial,sans-serif" text-anchor="middle">
+    <text x="200" y="193.5" font-size="26.4" font-weight="700" letter-spacing="2">SMDS Confined Space</text>
+  </g>
+
+  <!-- Level badge pill -->
+  <rect x="150" y="345" width="100" height="26" rx="13"
+    fill="#FFD700" fill-opacity="0.15" stroke="#FFD700" stroke-width="1" stroke-opacity="0.5"/>
+  <text x="200" y="362" text-anchor="middle" fill="#FFD700" font-family="monospace" font-size="13" font-weight="700" letter-spacing="3">GOLD</text>
+
+  <!-- Bottom decorative line -->
+  <line x1="120" y1="382" x2="280" y2="382" stroke="#FFD700" stroke-width="0.5" opacity="0.3"/>
+</svg>
