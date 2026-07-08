@@ -103,8 +103,8 @@ function generateBadgeSVG(badgeName: string, level: string): string {
 
   <!-- Level dot indicators at top -->
   <g fill="${c.accent}" opacity="0.6">
-    ${Array.from({length: LEVELS.indexOf(level)+1}, (_,i) =>
-      `<circle cx="${W/2 - (LEVELS.indexOf(level))*10 + i*20}" cy="58" r="4"/>`
+    ${Array.from({length: LEVELS.indexOf(level as typeof LEVELS[number])+1}, (_,i) =>
+      `<circle cx="${W/2 - (LEVELS.indexOf(level as typeof LEVELS[number]))*10 + i*20}" cy="58" r="4"/>`
     ).join('')}
   </g>
 
