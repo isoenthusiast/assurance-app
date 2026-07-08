@@ -137,44 +137,16 @@ export async function DELETE(
 
     let result: any = null;
 
-    // Handle deletion by table name
-    switch (table) {
-      case "User":
-        result = await prisma.user.delete({ where: { id } });
-        break;
-      case "ProcessArea":
-        result = await prisma.processArea.delete({ where: { id } });
-        break;
-      case "SubProcess":
-        result = await prisma.subProcess.delete({ where: { id } });
-        break;
-      case "Control":
-        result = await prisma.control.delete({ where: { id } });
-        break;
-      case "Assessment":
-        result = await prisma.assessment.delete({ where: { id } });
-        break;
-      case "ControlAssignment":
-        result = await prisma.controlAssignment.delete({ where: { id } });
-        break;
-      case "Sample":
-        result = await prisma.sample.delete({ where: { id } });
-        break;
-      case "AssuranceActivityType":
-        result = await prisma.assuranceActivityType.delete({ where: { id } });
-        break;
-      case "SampleType":
-        result = await prisma.sampleType.delete({ where: { id } });
-        break;
-      case "RecordSourceType":
-        result = await prisma.recordSourceType.delete({ where: { id } });
-        break;
-      default:
-        return NextResponse.json(
-          { error: `Table '${table}' not supported` },
-          { status: 400 }
-        );
+    // Generic delete — works for any Prisma model
+    const camelName = table.charAt(0).toLowerCase() + table.slice(1);
+    const model = (prisma as any)[camelName];
+    if (!model) {
+      return NextResponse.json(
+        { error: `Table '${table}' not supported` },
+        { status: 400 }
+      );
     }
+    result = await model.delete({ where: { id } });
 
     return NextResponse.json({ success: true, deleted: result });
   } catch (error: any) {
@@ -225,60 +197,33 @@ export async function PUT(
 
     let result: any = null;
 
-    // Handle update by table name
-    switch (table) {
-      case "User":
-        result = await prisma.user.update({ where: { id }, data: body });
-        break;
-      case "ProcessArea":
-        result = await prisma.processArea.update({ where: { id }, data: body });
-        break;
-      case "SubProcess":
-        result = await prisma.subProcess.update({ where: { id }, data: body });
-        break;
-      case "Control":
-        result = await prisma.control.update({ where: { id }, data: body });
-        break;
-      case "Assessment":
-        result = await prisma.assessment.update({ where: { id }, data: body });
-        break;
-      case "ControlAssignment": {
-        // Explicit allowlist: the table viewer's row objects also carry a
-        // computed "ControlID" display field (and other non-editable
-        // columns) that don't exist on the model — passing the raw body
-        // straight through would throw an Unknown argument error.
-        const effectiveValue =
+    // Generic update — works for any Prisma model.
+    // Strip computed display fields (ControlID) before passing to Prisma.
+    if (table === 'ControlAssignment') {
+      delete body.ControlID;
+      const effectiveValue =
           body.effective === "Effective" || body.effective === "NotEffective"
             ? body.effective
             : null;
-        result = await prisma.controlAssignment.update({
-          where: { id },
-          data: {
-            ...(body.assessmentId !== undefined ? { assessmentId: body.assessmentId } : {}),
-            ...(body.controlId !== undefined ? { controlId: body.controlId } : {}),
-            effective: effectiveValue,
-            effectiveUpdatedAt: effectiveValue ? new Date() : null,
-          },
-        });
-        break;
-      }
-      case "Sample":
-        result = await prisma.sample.update({ where: { id }, data: body });
-        break;
-      case "AssuranceActivityType":
-        result = await prisma.assuranceActivityType.update({ where: { id }, data: body });
-        break;
-      case "SampleType":
-        result = await prisma.sampleType.update({ where: { id }, data: body });
-        break;
-      case "RecordSourceType":
-        result = await prisma.recordSourceType.update({ where: { id }, data: body });
-        break;
-      default:
+      result = await prisma.controlAssignment.update({
+        where: { id },
+        data: {
+          ...(body.assessmentId !== undefined ? { assessmentId: body.assessmentId } : {}),
+          ...(body.controlId !== undefined ? { controlId: body.controlId } : {}),
+          effective: effectiveValue,
+          effectiveUpdatedAt: effectiveValue ? new Date() : null,
+        },
+      });
+    } else {
+      const camelName = table.charAt(0).toLowerCase() + table.slice(1);
+      const model = (prisma as any)[camelName];
+      if (!model) {
         return NextResponse.json(
           { error: `Table '${table}' not supported` },
           { status: 400 }
         );
+      }
+      result = await model.update({ where: { id }, data: body });
     }
 
     return NextResponse.json({ success: true, updated: result });

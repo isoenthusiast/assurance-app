@@ -58,33 +58,26 @@ export async function GET(
     let rows: any[] = [];
     let totalRows = 0;
 
-    // Fetch data from database (no limit - get all records)
-    switch (table) {
-      case 'User':
-        rows = await prisma.user.findMany();
-        totalRows = await prisma.user.count();
-        break;
-      case 'ProcessArea':
-        rows = await prisma.processArea.findMany();
-        totalRows = await prisma.processArea.count();
-        break;
-      case 'SubProcess':
-        rows = await prisma.subProcess.findMany();
-        totalRows = await prisma.subProcess.count();
-        break;
-      case 'Control':
-        rows = await prisma.control.findMany();
-        totalRows = await prisma.control.count();
-        break;
-      case 'Assessment':
-        rows = await prisma.assessment.findMany();
-        totalRows = await prisma.assessment.count();
-        break;
-      case 'ControlAssignment': {
+    // Generic fetch — works for any Prisma model.
+    // Convert table name to camelCase (PascalCase → camelCase):
+    // "PointTransaction" → "pointTransaction", "GameAttribute" → "gameAttribute"
+    const camelName = table.charAt(0).toLowerCase() + table.slice(1);
+
+    try {
+      const model = (prisma as any)[camelName];
+      if (!model) {
+        return NextResponse.json({ error: `Unknown table: ${table}` }, { status: 404 });
+      }
+
+      rows = await model.findMany();
+      totalRows = rows.length;
+
+      // ControlAssignment: resolve controlRef/name into a human-readable ControlID
+      if (table === 'ControlAssignment') {
         const assignments = await prisma.controlAssignment.findMany({
           include: { control: { select: { controlRef: true, name: true } } },
         });
-        rows = assignments.map((a) => ({
+        rows = assignments.map((a: any) => ({
           id: a.id,
           assessmentId: a.assessmentId,
           controlId: a.controlId,
@@ -94,24 +87,10 @@ export async function GET(
           createdAt: a.createdAt,
         }));
         totalRows = assignments.length;
-        break;
       }
-      case 'Sample':
-        rows = await prisma.sample.findMany();
-        totalRows = await prisma.sample.count();
-        break;
-      case 'AssuranceActivityType':
-        rows = await prisma.assuranceActivityType.findMany();
-        totalRows = await prisma.assuranceActivityType.count();
-        break;
-      case 'SampleType':
-        rows = await prisma.sampleType.findMany({ orderBy: { name: 'asc' } });
-        totalRows = await prisma.sampleType.count();
-        break;
-      case 'RecordSourceType':
-        rows = await prisma.recordSourceType.findMany({ orderBy: { name: 'asc' } });
-        totalRows = await prisma.recordSourceType.count();
-        break;
+    } catch (err: any) {
+      console.error(`Error fetching ${table}:`, err.message);
+      // Return empty — table exists in schema but query may fail (e.g., missing DB table)
     }
 
     return NextResponse.json({

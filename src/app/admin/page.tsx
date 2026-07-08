@@ -18,11 +18,20 @@ const tables: Table[] = [
   { name: 'Assessment', displayName: 'Assessments', description: 'Manage assessment records', icon: '📋' },
   { name: 'ControlAssignment', displayName: 'Control Assignments', description: 'Controls assigned to assessments', icon: '🔗' },
   { name: 'Sample', displayName: 'Samples', description: 'Manage test samples', icon: '🧪' },
+  { name: 'Finding', displayName: 'Findings', description: 'Manage findings', icon: '🔍' },
+  { name: 'Action', displayName: 'Actions', description: 'Manage corrective actions', icon: '🔧' },
   { name: 'AssuranceActivityType', displayName: 'Activity Types', description: 'Manage assurance activity types', icon: '🎯' },
   { name: 'AchievementBadge', displayName: 'Achievement Badges', description: 'Manage badges and achievements', icon: '🏆' },
-  { name: 'BehaviorMeasurement', displayName: 'Behavior Measurements', description: 'Manage behavior metrics', icon: '📊' },
   { name: 'PointTransaction', displayName: 'Point Transactions', description: 'Manage point history', icon: '💰' },
+  { name: 'GameAttribute', displayName: 'Game Attributes', description: 'XP categories for gamification', icon: '🎮' },
+  { name: 'GameAttributeRule', displayName: 'Game Attribute Rules', description: 'Point-awarding rule engine', icon: '📐' },
   { name: 'ActivityLog', displayName: 'Activity Log', description: 'View user activity log', icon: '📝' },
+  { name: 'ActivityLogType', displayName: 'Activity Log Types', description: 'Activity type catalog', icon: '🏷️' },
+  { name: 'Attachment', displayName: 'Attachments', description: 'File attachments', icon: '📎' },
+  { name: 'AttachmentMapping', displayName: 'Attachment Mappings', description: 'Attachment-to-record links', icon: '🔗' },
+  { name: 'EmotionalDriveMetric', displayName: 'Emotional Drives', description: 'Emotional drive metrics', icon: '🎭' },
+  { name: 'Milestone', displayName: 'Milestones', description: 'User milestones', icon: '🎯' },
+  { name: 'UserAchievement', displayName: 'User Achievements', description: 'Badges earned by users', icon: '⭐' },
 ];
 
 export default function AdminDashboard() {
