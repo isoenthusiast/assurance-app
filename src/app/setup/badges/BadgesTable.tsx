@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import DeleteButton from "@/components/DeleteButton";
 
 type Badge = {
@@ -54,37 +53,6 @@ export default function BadgesTable({
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(0);
   const [perPage, setPerPage] = useState(10);
-  const [generating, setGenerating] = useState(false);
-  const [genResult, setGenResult] = useState<string | null>(null);
-  const [clearing, setClearing] = useState(false);
-  const router = useRouter();
-
-  const handleClearAll = async () => {
-    if (!confirm(`Delete ALL ${badges.length} badges? This cannot be undone.`)) return;
-    setClearing(true);
-    try {
-      await fetch("/api/admin/badges/clear", { method: "POST" });
-      router.refresh();
-    } finally {
-      setClearing(false);
-    }
-  };
-
-  const handleGenerate = async () => {
-    if (!confirm("Generate 5 badges (Bronze→Black) for every Process Area? Existing badges will be skipped.")) return;
-    setGenerating(true);
-    setGenResult(null);
-    try {
-      const res = await fetch("/api/admin/badges/generate", { method: "POST" });
-      const data = await res.json();
-      setGenResult(`Created ${data.created}, skipped ${data.skipped} existing of ${data.total} total`);
-      router.refresh();
-    } catch {
-      setGenResult("Failed to generate badges");
-    } finally {
-      setGenerating(false);
-    }
-  };
 
   const sorted = [...badges].sort((a, b) => {
     const av = a[sortKey] ?? "";
@@ -115,31 +83,12 @@ export default function BadgesTable({
   return (
     <div className="mt-4">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={onAddClick}
-            className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
-          >
-            + Add Badge
-          </button>
-          <button
-            onClick={handleGenerate}
-            disabled={generating}
-            className="rounded border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {generating ? "⏳ Generating…" : "🔍 Generate Process Badges"}
-          </button>
-          {badges.length > 0 && (
-            <button
-              onClick={handleClearAll}
-              disabled={clearing}
-              className="rounded border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-            >
-              {clearing ? "Clearing…" : "Clear All"}
-            </button>
-          )}
-          {genResult && <span className="text-xs text-slate-500">{genResult}</span>}
-        </div>
+        <button
+          onClick={onAddClick}
+          className="rounded bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+        >
+          + Add Badge
+        </button>
         <div className="flex items-center gap-2 text-xs text-slate-500">
           <span>Show</span>
           <select
