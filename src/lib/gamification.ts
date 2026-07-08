@@ -483,7 +483,7 @@ export async function getUserGamificationStats(userId: string) {
     user,
     achievements,
     points: {
-      total: user?.totalPoints || 0,
+      total: points.reduce((sum, p) => sum + p.points, 0),
       transactions: points,
       thisWeek: points
         .filter((p) => {
@@ -516,43 +516,66 @@ export async function getUserGamificationStats(userId: string) {
 }
 
 /**
- * Get leaderboard (both global and personal progress comparison)
+ * Get leaderboard — points are SUM(PointTransaction.points) per user,
+ * not the User.totalPoints column (which can drift).
  */
 export async function getLeaderboard(
   limit: number = 10,
   comparisonUserId?: string
 ) {
-  const users = await prisma.user.findMany({
-    orderBy: { totalPoints: "desc" },
-    take: limit,
-    select: {
-      id: true,
-      name: true,
-      totalPoints: true,
-      dailyPointStreak: true,
-      _count: {
-        select: {
-          achievements: true,
-        },
-      },
-    },
-  });
+  // Use raw query for accurate SUM from PointTransaction
+  const leaderboard = await prisma.$queryRawUnsafe<
+    Array<{ id: string; name: string; totalPoints: number; dailyPointStreak: number; badgeCount: number }>
+  >(`
+    SELECT
+      u."id",
+      u."name",
+      COALESCE(SUM(pt."points"), 0)::int AS "totalPoints",
+      u."dailyPointStreak",
+      COALESCE(COUNT(DISTINCT ua."id"), 0)::int AS "badgeCount"
+    FROM "User" u
+    LEFT JOIN "PointTransaction" pt ON pt."userId" = u."id"
+    LEFT JOIN "UserAchievement" ua ON ua."userId" = u."id"
+    GROUP BY u."id", u."name", u."dailyPointStreak"
+    ORDER BY "totalPoints" DESC
+    LIMIT $1
+  `, limit);
+
+  // Map to expected shape
+  const users = leaderboard.map((u) => ({
+    id: u.id,
+    name: u.name,
+    totalPoints: Number(u.totalPoints),
+    dailyPointStreak: Number(u.dailyPointStreak),
+    _count: { achievements: Number(u.badgeCount) },
+  }));
 
   let userRank = null;
   if (comparisonUserId) {
-    const userPosition = await prisma.user.findUnique({
-      where: { id: comparisonUserId },
-      select: { totalPoints: true },
-    });
+    // Get user's SUM of points
+    const userRow = await prisma.$queryRawUnsafe<
+      Array<{ totalPoints: number }>
+    >(`
+      SELECT COALESCE(SUM("points"), 0)::int AS "totalPoints"
+      FROM "PointTransaction"
+      WHERE "userId" = $1
+    `, comparisonUserId);
 
-    if (userPosition) {
-      const betterCount = await prisma.user.count({
-        where: {
-          totalPoints: { gt: userPosition.totalPoints },
-        },
-      });
-      userRank = betterCount + 1;
-    }
+    const userPoints = userRow[0]?.totalPoints ?? 0;
+
+    const betterCount = await prisma.$queryRawUnsafe<
+      Array<{ count: number }>
+    >(`
+      SELECT COUNT(*)::int AS "count"
+      FROM (
+        SELECT "userId", SUM("points") AS pts
+        FROM "PointTransaction"
+        GROUP BY "userId"
+      ) sub
+      WHERE sub.pts > $1
+    `, userPoints);
+
+    userRank = Number(betterCount[0]?.count ?? 0) + 1;
   }
 
   return {
