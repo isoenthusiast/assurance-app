@@ -57,7 +57,7 @@ export default function AddSamplesForm({
             <span>
               <span className="font-medium text-slate-900">{c.name}</span>{" "}
               <span className="text-slate-500">
-                ({c.processArea.name} / {c.subProcess.name})
+                ({c.processArea.name} / {c.subProcess?.name || "—"})
               </span>
               <div className="text-xs text-slate-500">{c.statement}</div>
             </span>
