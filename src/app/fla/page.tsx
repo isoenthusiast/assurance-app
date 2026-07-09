@@ -54,13 +54,7 @@ export default async function FlaDashboardPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Dashboard</h1>
-          <p className="mt-1 text-sm text-slate-500">
-            Plan and track Front Line Assurances and other assurance activities.
-          </p>
-        </div>
+      <div className="mb-6 flex items-center justify-end">
         <Link
           href="/setup/assessments/new"
           className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
