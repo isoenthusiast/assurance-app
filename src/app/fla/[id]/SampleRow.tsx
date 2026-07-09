@@ -13,7 +13,7 @@ type Sample = {
     name: string;
     statement: string;
     processArea: { name: string };
-    subProcess: { name: string };
+    subProcess?: { name: string } | null;
   };
 };
 

@@ -18,7 +18,7 @@ interface Control {
   id: string;
   name: string;
   processArea: { name: string };
-  subProcess: { name: string };
+  subProcess?: { name: string } | null;
 }
 
 interface Sample {
