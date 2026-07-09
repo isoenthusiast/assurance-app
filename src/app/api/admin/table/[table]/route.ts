@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 
 function generateId(): string {
   return `id_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -64,6 +65,21 @@ export async function POST(
           },
         });
       } else {
+        // User: hash password + set defaults
+        if (table === "User") {
+          if (body.password) {
+            body.passwordHash = await bcrypt.hash(body.password, 10);
+            delete body.password;
+          } else {
+            body.passwordHash = body.passwordHash || "";
+          }
+          body.name = body.name || "New User";
+          body.username = body.username || `user_${Date.now()}`;
+          body.role = body.role || "Assessor";
+          body.totalPoints = body.totalPoints || 0;
+          body.dailyPointStreak = body.dailyPointStreak || 0;
+          body.confidenceInfluencer = body.confidenceInfluencer || false;
+        }
         // Generic create — works for ANY Prisma model
         result = await model.create({ data: body });
       }
