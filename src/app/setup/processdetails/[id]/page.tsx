@@ -52,9 +52,9 @@ export default async function ProcessDetailsPage({
       .filter((c) => !primaryIds.has(c.id));
     return {
       ...sp,
-      controls: [...sp.controls, ...junctionControls].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      ),
+      controls: [...sp.controls, ...junctionControls]
+        .map((c) => ({ ...c, subProcessId: c.subProcessId ?? "" }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
     };
   });
 
