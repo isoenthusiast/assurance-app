@@ -61,7 +61,7 @@ export default async function ControlsPage({
             key={editing?.id ?? "new"}
             processAreas={processAreas}
             subProcesses={subProcesses}
-            editing={editing}
+            editing={editing ? { ...editing, subProcessId: editing.subProcessId ?? "" } : null}
           />
         </>
       )}
