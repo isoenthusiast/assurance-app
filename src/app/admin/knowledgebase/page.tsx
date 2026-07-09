@@ -12,6 +12,10 @@ interface KBRecord {
 }
 
 export default function KnowledgebasePage() {
+  return <KnowledgebaseManager />;
+}
+
+export function KnowledgebaseManager() {
   const [records, setRecords] = useState<KBRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);

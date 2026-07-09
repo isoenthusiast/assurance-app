@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { KnowledgebaseManager } from "./knowledgebase/page";
 
 interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
@@ -86,7 +87,7 @@ export default function AdminDashboard() {
         ) : view === "users" ? (
           <UserManager />
         ) : view === "knowledgebase" ? (
-          <iframe src="/admin/knowledgebase" className="w-full h-full border-0" title="Knowledgebase" />
+          <KnowledgebaseManager />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
