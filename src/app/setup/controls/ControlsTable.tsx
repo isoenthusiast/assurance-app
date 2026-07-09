@@ -111,8 +111,6 @@ export default function ControlsTable({
   const [selectedStandard, setSelectedStandard] = useState<string>('all');
   const [selectedProcessAreaId, setSelectedProcessAreaId] = useState<string>('all');
   const [selectedSubProcessId, setSelectedSubProcessId] = useState<string>('all');
-  const [hoveredStandard, setHoveredStandard] = useState<string | null>(null);
-  const [hoveredPAId, setHoveredPAId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -150,12 +148,19 @@ export default function ControlsTable({
   };
 
   // Click a Process Area (Tier 2) — filters to that process area exactly.
-  const handleSelectProcessArea = (pa: ProcessArea) => {
-    setSelectedStandard(standardKey(pa.standard));
-    setSelectedProcessAreaId(pa.id);
+  const handleSelectProcessArea = (paId: string) => {
+    const pa = processAreas.find(p => p.id === paId);
+    if (pa) {
+      setSelectedStandard(standardKey(pa.standard));
+    }
+    setSelectedProcessAreaId(paId);
     setSelectedSubProcessId('all');
     resetSelectionState();
   };
+
+  const filteredProcessAreas = selectedStandard === 'all'
+    ? processAreas
+    : processAreas.filter(pa => standardKey(pa.standard) === selectedStandard);
 
   // Click a Sub-Process (Tier 3) — the most specific filter.
   const handleSelectSubProcess = (pa: ProcessArea, subProcessId: string) => {
@@ -212,72 +217,56 @@ export default function ControlsTable({
     <div className="mt-6 space-y-4">
       {/* Filters */}
       <div className="rounded border border-slate-200 bg-white p-4">
-        <nav className="flex items-stretch gap-1 border-b border-slate-200">
-          <button
-            onClick={() => handleSelectStandard('all')}
-            className={`min-w-0 flex-1 rounded-t px-2 py-2 text-center text-sm leading-snug ${
-              selectedStandard === 'all'
-                ? 'bg-slate-900 text-white'
-                : 'text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            All Standards
-          </button>
+        <div className="flex flex-wrap gap-3">
+          {/* Standard combo */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-500">Standard</label>
+            <select
+              value={selectedStandard}
+              onChange={e => handleSelectStandard(e.target.value)}
+              className="rounded border border-slate-300 px-2 py-1.5 text-sm"
+            >
+              <option value="all">All Standards</option>
+              {standards.map(std => (
+                <option key={std} value={std}>
+                  {std === UNSPECIFIED_STANDARD ? "Unspecified" : std}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          {standards.map((std) => {
-            const stdLabel = std === UNSPECIFIED_STANDARD ? 'Unspecified' : std;
-            const stdProcessAreas = processAreas
-              .filter((pa) => standardKey(pa.standard) === std)
-              .sort((a, b) => a.name.localeCompare(b.name));
-            const isStdActive = selectedStandard === std;
-            const isStdOpen = hoveredStandard === std;
+          {/* Process Area combo */}
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-slate-500">Process Area</label>
+            <select
+              value={selectedProcessAreaId}
+              onChange={e => handleSelectProcessArea(e.target.value)}
+              className="rounded border border-slate-300 px-2 py-1.5 text-sm max-w-xs"
+            >
+              <option value="all">All Process Areas</option>
+              {filteredProcessAreas.map(pa => (
+                <option key={pa.id} value={pa.id}>{pa.name}</option>
+              ))}
+            </select>
+          </div>
+        </div>
 
-            return (
-              <div
-                key={std}
-                className="relative min-w-0 flex-1"
-                onMouseEnter={() => setHoveredStandard(std)}
-                onMouseLeave={() =>
-                  setHoveredStandard((cur) => (cur === std ? null : cur))
-                }
-              >
-                <button
-                  onClick={() => handleSelectStandard(std)}
-                  className={`w-full rounded-t px-2 py-2 text-center text-sm leading-snug ${
-                    isStdActive ? 'bg-slate-900 text-white' : 'text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  {stdLabel}
-                </button>
-
-                {/* Tier 2: Process Areas under this Standard */}
-                {isStdOpen && stdProcessAreas.length > 0 && (
-                  <div className="absolute left-0 top-full z-20 min-w-[260px] rounded-b border border-slate-200 bg-white py-1 shadow-lg">
-                    <button
-                      onClick={() => handleSelectStandard(std)}
-                      className={`block w-full whitespace-nowrap px-3 py-2 text-left text-sm ${
-                        isStdActive && selectedProcessAreaId === 'all'
-                          ? 'bg-slate-100 font-medium text-slate-900'
-                          : 'text-slate-700 hover:bg-slate-50'
-                      }`}
-                    >
-                      All Process Areas
-                    </button>
-
-                    {stdProcessAreas.map((pa) => {
-                      const paSubProcesses = subProcesses
-                        .filter((sp) => sp.processAreaId === pa.id)
-                        .sort((a, b) => a.name.localeCompare(b.name));
-                      const isPaActive = selectedProcessAreaId === pa.id;
-                      const isPaOpen = hoveredPAId === pa.id;
-
-                      return (
-                        <div
-                          key={pa.id}
-                          className="relative"
-                          onMouseEnter={() => setHoveredPAId(pa.id)}
-                          onMouseLeave={() =>
-                            setHoveredPAId((cur) => (cur === pa.id ? null : cur))
+        <div className="mt-2 text-xs text-slate-500">
+          Showing:{' '}
+          <span className="font-medium text-slate-700">
+            {selectedStandard === 'all'
+              ? 'All Standards'
+              : selectedStandard === UNSPECIFIED_STANDARD
+              ? 'Unspecified'
+              : selectedStandard}
+          </span>
+          {selectedProcessAreaId !== 'all' && (
+            <>
+              {' '}
+              /{' '}
+              <span className="font-medium text-slate-700">
+                {processAreas.find((pa) => pa.id === selectedProcessAreaId)?.name}
+              </span>
                           }
                         >
                           <button
@@ -323,14 +312,7 @@ export default function ControlsTable({
                             </div>
                           )}
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
+        </div>
 
         <div className="mt-2 text-xs text-slate-500">
           Showing:{' '}
