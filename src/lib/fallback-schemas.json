@@ -928,5 +928,42 @@
       "required": true,
       "isId": false
     }
+  },
+  "MapArt2Know": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "mapA2KID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "artName": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "artID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "kID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "whyToMap": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
   }
 }

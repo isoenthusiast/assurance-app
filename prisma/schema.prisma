@@ -560,6 +560,19 @@ model Knowledgebase {
   @@index([addedBy])
 }
 
+model MapArt2Know {
+  id        String   @id @default(cuid())
+  mapA2KID  String   @unique
+  artName   String
+  artID     String
+  kID       String
+  whyToMap  String?
+  createdAt DateTime @default(now())
+
+  @@index([kID])
+  @@index([artID])
+}
+
 enum LOA {
   FirstLine
   SecondLine
