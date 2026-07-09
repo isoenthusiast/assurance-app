@@ -490,6 +490,14 @@ model Company {
   createdAt    DateTime @default(now())
 }
 
+model AssessmentActType {
+  id              String   @id @default(cuid())
+  assacttypeid    String   @unique
+  assacttypeName  String   @unique
+  description     String?
+  createddate     DateTime @default(now())
+}
+
 enum LOA {
   FirstLine
   SecondLine
