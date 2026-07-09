@@ -152,13 +152,17 @@ export async function POST(
 
     const { table } = await params;
     const body = await request.json();
-    const { name } = body;
 
-    if (!name || typeof name !== 'string' || name.trim() === '') {
-      return NextResponse.json(
-        { error: 'Name is required and must be a non-empty string' },
-        { status: 400 }
-      );
+    // Only validate name for tables that have a name field
+    const tablesNeedingName = ["SampleType", "RecordSourceType", "ProcessArea", "SubProcess", "AssuranceActivityType"];
+    if (tablesNeedingName.includes(table)) {
+      const { name } = body;
+      if (!name || typeof name !== "string" || name.trim() === "") {
+        return NextResponse.json(
+          { error: "Name is required and must be a non-empty string" },
+          { status: 400 }
+        );
+      }
     }
 
     let result: any;
