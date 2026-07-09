@@ -16,6 +16,7 @@ export default async function ControlsPage({
       include: {
         processArea: true,
         subProcess: true,
+        controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } } },
         _count: { select: { controlAssignments: true } },
         // Used to derive "Last Tested" / "Effective" from this control's most
         // recently completed assessment, and to link that verdict back to

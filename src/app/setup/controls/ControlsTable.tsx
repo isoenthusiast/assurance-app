@@ -14,6 +14,7 @@ type Control = {
   ramRating: string | null;
   processArea: { id: string; name: string; standard: string | null };
   subProcess: { id: string; name: string };
+  controlSubProcesses?: { subProcess: { id: string; name: string } }[];
   _count: { controlAssignments: number };
   controlAssignments: {
     assessmentId: string;
@@ -383,6 +384,11 @@ export default function ControlsTable({
               <tr key={c.id} className="border-t border-slate-100 align-top">
                 <td className="px-4 py-2 text-slate-600">
                   {c.processArea.name} / {c.subProcess.name}
+                  {c.controlSubProcesses && c.controlSubProcesses.length > 0 && (
+                    <div className="text-xs text-slate-400">
+                      +{c.controlSubProcesses.map(csp => csp.subProcess.name).join(", ")}
+                    </div>
+                  )}
                 </td>
                 <td className="px-4 py-2">
                   <div className="font-medium text-slate-900">{c.name}</div>
