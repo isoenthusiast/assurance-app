@@ -57,6 +57,9 @@ export default function ControlForm({
   // Otherwise starts closed behind a "+ Add Control" trigger button.
   const [isOpen, setIsOpen] = useState(Boolean(editing));
 
+  const existingLinkedIds = editing?.controlSubProcesses?.map(csp => csp.subProcessId) ?? [];
+  const [linkedSubProcessIds, setLinkedSubProcessIds] = useState<Set<string>>(new Set(existingLinkedIds));
+
   const filteredSubProcesses = subProcesses.filter((sp) => sp.processAreaId === processAreaId);
 
   const router = useRouter();
@@ -152,11 +155,6 @@ export default function ControlForm({
           )}
         </div>
         {editing && <input type="hidden" name="id" value={editing.id} />}
-        {editing?.controlSubProcesses && (
-          <input type="hidden" name="linkedSubProcessIds"
-            value={editing.controlSubProcesses.map(csp => csp.subProcessId).join(",")}
-          />
-        )}
 
       {/* BASIC INFORMATION */}
       <fieldset className="space-y-3 border-b border-slate-200 pb-6">
@@ -226,6 +224,29 @@ export default function ControlForm({
             </select>
           </div>
         </div>
+
+        {editing && (
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-slate-700">Linked Sub-Processes</label>
+            <input type="hidden" name="linkedSubProcessIds" value={Array.from(linkedSubProcessIds).join(",")} />
+            <div className="max-h-40 overflow-y-auto rounded border border-slate-200 p-2">
+              {subProcesses.filter(sp => sp.id !== editing.subProcessId).map(sp => (
+                <label key={sp.id} className="flex items-center gap-2 py-0.5 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={linkedSubProcessIds.has(sp.id)}
+                    onChange={e => {
+                      const next = new Set(linkedSubProcessIds);
+                      e.target.checked ? next.add(sp.id) : next.delete(sp.id);
+                      setLinkedSubProcessIds(next);
+                    }}
+                  />
+                  {sp.name}
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
