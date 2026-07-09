@@ -48,7 +48,7 @@ export default async function ControlsPage({
       ) : (
         <>
           <ControlsTable
-            controls={controls}
+            controls={controls.map(c => ({ ...c, subProcess: c.subProcess ?? { id: "", name: "—" } }))}
             processAreas={processAreas}
             subProcesses={subProcesses}
           />
