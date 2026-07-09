@@ -35,6 +35,7 @@ type Editing = {
   rawHealthScore?: number | null;
   lastTestedDate?: string | Date | null;
   lastTestResult?: string | null;
+  controlSubProcesses?: { subProcessId: string }[];
 } | null;
 
 const controlTypes = ["Administrative", "Procedural", "Analytical", "Behavioral", "Informational", "Engineering"];
@@ -151,6 +152,11 @@ export default function ControlForm({
           )}
         </div>
         {editing && <input type="hidden" name="id" value={editing.id} />}
+        {editing?.controlSubProcesses && (
+          <input type="hidden" name="linkedSubProcessIds"
+            value={editing.controlSubProcesses.map(csp => csp.subProcessId).join(",")}
+          />
+        )}
 
       {/* BASIC INFORMATION */}
       <fieldset className="space-y-3 border-b border-slate-200 pb-6">

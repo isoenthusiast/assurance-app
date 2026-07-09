@@ -31,7 +31,7 @@ export default async function ControlsPage({
     }),
     prisma.processArea.findMany({ orderBy: { name: "asc" } }),
     prisma.subProcess.findMany({ orderBy: { name: "asc" } }),
-    edit ? prisma.control.findUnique({ where: { id: edit } }) : Promise.resolve(null),
+    edit ? prisma.control.findUnique({ where: { id: edit }, include: { controlSubProcesses: { select: { subProcessId: true } } } }) : Promise.resolve(null),
   ]);
 
   return (
