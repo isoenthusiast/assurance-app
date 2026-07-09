@@ -168,97 +168,129 @@ export default function AdminDashboard() {
 function UserManager() {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [mode, setMode] = useState<"select" | "add">("select");
+  const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0 });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/admin/table/User/data?perPage=500")
-      .then(r => r.json())
-      .then(d => setUsers(d.rows || []));
+      .then(r => r.json()).then(d => setUsers(d.rows || []));
   }, []);
 
   useEffect(() => {
+    if (mode === "add") { setForm({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0 }); return; }
     if (!selectedUserId) { setForm({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0 }); return; }
     const u = users.find((u: any) => u.id === selectedUserId);
     if (u) setForm({ name: u.name || "", username: u.username || "", role: u.role || "Assessor", password: "", totalPoints: u.totalPoints || 0 });
-  }, [selectedUserId, users]);
+  }, [selectedUserId, users, mode]);
 
   const handleSave = async () => {
-    if (!selectedUserId) return;
     setSaving(true); setMsg(null);
     try {
       const body: any = { name: form.name, username: form.username, role: form.role, totalPoints: Number(form.totalPoints) };
-      if (form.password) body.password = form.password; // will be hashed by API
-      const res = await fetch(`/api/admin/table/User/${selectedUserId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
-      });
-      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
-      setMsg({ type: "ok", text: "User updated." });
+      if (form.password) body.password = form.password;
+
+      if (mode === "add") {
+        body.id = `user_${Date.now()}`;
+        const res = await fetch("/api/admin/table/User", {
+          method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Failed");
+        setMsg({ type: "ok", text: "User created." });
+        setMode("select");
+      } else {if (!selectedUserId) return;
+        const res = await fetch(`/api/admin/table/User/${selectedUserId}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+        setMsg({ type: "ok", text: "User updated." });
+      }
       setForm(f => ({ ...f, password: "" }));
-      // Refresh user list
       const r = await fetch("/api/admin/table/User/data?perPage=500");
       setUsers((await r.json()).rows || []);
-    } catch (e: any) {
-      setMsg({ type: "err", text: e.message });
-    } finally { setSaving(false); }
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+    finally { setSaving(false); }
   };
 
+  const filtered = users.filter((u: any) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (u.name || "").toLowerCase().includes(q) || (u.username || "").toLowerCase().includes(q);
+  });
+
   return (
-    <div className="flex h-full">
-      {/* User selector */}
-      <div className="w-48 border-r border-slate-200 p-3 overflow-y-auto">
-        <div className="text-xs font-semibold text-slate-500 uppercase mb-2">Select User</div>
-        {users.map((u: any) => (
-          <button key={u.id} onClick={() => setSelectedUserId(u.id)}
-            className={`w-full text-left px-2 py-1.5 text-xs rounded mb-0.5 hover:bg-slate-100 ${selectedUserId === u.id ? "bg-blue-50 font-medium" : "text-slate-700"}`}>
-            {u.name || u.username}
-            <span className="text-slate-400 ml-1 text-2xs">{u.role}</span>
-          </button>
-        ))}
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="px-4 py-2.5 border-b border-slate-200">
+        <span className="font-semibold text-slate-900 text-sm">👤 User Management</span>
       </div>
-      {/* Edit form */}
-      <div className="flex-1 p-6 overflow-y-auto">
-        {!selectedUserId ? (
-          <div className="text-slate-400 text-sm">← Select a user to edit</div>
-        ) : (
-          <div className="max-w-md">
-            <h3 className="text-sm font-semibold text-slate-900 mb-4">Edit User</h3>
-            {msg && (
-              <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{msg.text}</div>
-            )}
-            <div className="space-y-3">
-              <label className="block">
-                <span className="text-xs text-slate-500">Name</span>
-                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-500">Username</span>
-                <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-500">Password</span>
-                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Leave blank to keep current" className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
-                <span className="text-2xs text-slate-400">Entered password will be hashed before storage</span>
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-500">Role</span>
-                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm bg-white">
-                  <option value="Assessor">Assessor</option>
-                  <option value="Admin">Admin</option>
-                </select>
-              </label>
-              <label className="block">
-                <span className="text-xs text-slate-500">Total Points</span>
-                <input type="number" value={form.totalPoints} onChange={e => setForm(f => ({ ...f, totalPoints: Number(e.target.value) }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
-              </label>
-              <button onClick={handleSave} disabled={saving}
-                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
-                {saving ? "Saving..." : "Save Changes"}
-              </button>
-            </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* Left: User Menu + List */}
+        <div className="w-52 border-r border-slate-200 flex flex-col">
+          <div className="p-2 border-b border-slate-100 space-y-1">
+            <button onClick={() => { setMode("add"); setSelectedUserId(""); }}
+              className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "add" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>＋ Add User</button>
+            <button onClick={() => setMode("select")}
+              className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "select" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>🔍 Select User</button>
           </div>
-        )}
+          {mode === "select" && (
+            <>
+              <div className="px-2 py-1.5">
+                <input placeholder="Search name…" value={search} onChange={e => setSearch(e.target.value)}
+                  className="w-full rounded border border-slate-200 px-2 py-1 text-xs" />
+              </div>
+              <div className="flex-1 overflow-y-auto">
+                {filtered.map((u: any) => (
+                  <button key={u.id} onClick={() => { setSelectedUserId(u.id); setMode("select"); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-50 ${selectedUserId === u.id && mode === "select" ? "bg-blue-50 font-medium" : "text-slate-700"}`}>
+                    <div>{u.name || u.username}</div>
+                    <div className="text-2xs text-slate-400">{u.role}</div>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Right: Form */}
+        <div className="flex-1 p-6 overflow-y-auto">
+          {mode === "select" && !selectedUserId ? (
+            <div className="text-slate-400 text-sm">← Search and select a user, or click Add User</div>
+          ) : (
+            <div className="max-w-md">
+              <h3 className="text-sm font-semibold text-slate-900 mb-4">{mode === "add" ? "Add New User" : "Edit User"}</h3>
+              {msg && (
+                <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{msg.text}</div>
+              )}
+              <div className="space-y-3">
+                <label className="block"><span className="text-xs text-slate-500">Name</span>
+                  <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+                </label>
+                <label className="block"><span className="text-xs text-slate-500">Username</span>
+                  <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+                </label>
+                <label className="block"><span className="text-xs text-slate-500">Password {mode === "select" && "(leave blank to keep current)"}</span>
+                  <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+                  <span className="text-2xs text-slate-400">Hashed with bcrypt before storage</span>
+                </label>
+                <label className="block"><span className="text-xs text-slate-500">Role</span>
+                  <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm bg-white">
+                    <option value="Assessor">Assessor</option><option value="Admin">Admin</option>
+                  </select>
+                </label>
+                <label className="block"><span className="text-xs text-slate-500">Total Points</span>
+                  <input type="number" value={form.totalPoints} onChange={e => setForm(f => ({ ...f, totalPoints: Number(e.target.value) }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+                </label>
+                <button onClick={handleSave} disabled={saving}
+                  className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                  {saving ? "Saving..." : mode === "add" ? "Create User" : "Save Changes"}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -456,6 +456,15 @@ enum Role {
   Assessor
 }
 
+model UserRole {
+  id              String   @id @default(cuid())
+  roleName        String   @unique
+  roleDescription String?
+  roleFunction    String?
+  createdBy       String?
+  createdAt       DateTime @default(now())
+}
+
 enum LOA {
   FirstLine
   SecondLine
