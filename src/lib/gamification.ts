@@ -536,6 +536,7 @@ export async function getLeaderboard(
     FROM "User" u
     LEFT JOIN "PointTransaction" pt ON pt."userId" = u."id"
     LEFT JOIN "UserAchievement" ua ON ua."userId" = u."id"
+    WHERE u."role" != 'Admin'
     GROUP BY u."id", u."name", u."dailyPointStreak"
     ORDER BY "totalPoints" DESC
     LIMIT $1
@@ -552,6 +553,19 @@ export async function getLeaderboard(
 
   let userRank = null;
   if (comparisonUserId) {
+    // Skip rank calculation if the user is an Admin
+    const isAdmin = await prisma.user.findFirst({
+      where: { id: comparisonUserId, role: 'Admin' },
+      select: { id: true },
+    });
+    if (isAdmin) {
+      return {
+        leaderboard: users,
+        userRank: null,
+        totalUsers: await prisma.user.count({ where: { role: { not: 'Admin' } } }),
+      };
+    }
+
     // Get user's SUM of points
     const userRow = await prisma.$queryRawUnsafe<
       Array<{ totalPoints: number }>
@@ -568,9 +582,11 @@ export async function getLeaderboard(
     >(`
       SELECT COUNT(*)::int AS "count"
       FROM (
-        SELECT "userId", SUM("points") AS pts
-        FROM "PointTransaction"
-        GROUP BY "userId"
+        SELECT pt."userId", SUM(pt."points") AS pts
+        FROM "PointTransaction" pt
+        JOIN "User" u ON u."id" = pt."userId"
+        WHERE u."role" != 'Admin'
+        GROUP BY pt."userId"
       ) sub
       WHERE sub.pts > $1
     `, userPoints);
@@ -581,6 +597,6 @@ export async function getLeaderboard(
   return {
     leaderboard: users,
     userRank,
-    totalUsers: await prisma.user.count(),
+    totalUsers: await prisma.user.count({ where: { role: { not: 'Admin' } } }),
   };
 }
