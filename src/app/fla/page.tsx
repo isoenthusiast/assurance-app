@@ -13,11 +13,7 @@ export default async function FlaDashboardPage() {
 
       <div className="grid grid-cols-3 gap-6">
         {/* Main content */}
-        <div className="col-span-2">
-          <div className="rounded border border-slate-200 bg-white p-8 text-center text-slate-400 text-sm">
-            Select an assessment or use the sidebar to view details.
-          </div>
-        </div>
+        <div className="col-span-2" />
 
         {/* Gamification Sidebar */}
         <aside>
