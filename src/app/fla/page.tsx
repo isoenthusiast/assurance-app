@@ -6,28 +6,6 @@ export const dynamic = "force-dynamic";
 import { GamificationDashboard } from "@/components/GamificationDashboard";
 import FlaDashboardClient from "./FlaDashboardClient";
 
-// Preferred display order for standards.
-const STANDARD_ORDER = [
-  "Carbon, Environment, Social Performance, Product Stewardship & Quality",
-  "HSSE & SP and Asset Management Foundations",
-  "Process Safety & Asset Management",
-  "Transport Safety",
-  "Workplace Health, Safety & Security",
-  "International Standards (ISO)",
-];
-
-function sortStandards(standards: string[]): string[] {
-  const orderMap = new Map(STANDARD_ORDER.map((s, i) => [s, i]));
-  return [...standards].sort((a, b) => {
-    const ai = orderMap.get(a);
-    const bi = orderMap.get(b);
-    if (ai !== undefined && bi !== undefined) return ai - bi;
-    if (ai !== undefined) return -1;
-    if (bi !== undefined) return 1;
-    return a.localeCompare(b);
-  });
-}
-
 export default async function FlaDashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
@@ -74,28 +52,6 @@ export default async function FlaDashboardPage() {
     };
   });
 
-  // Fetch filter options
-  const [allStandards, allProcessAreas, allSubProcesses] = await Promise.all([
-    prisma.processArea.findMany({
-      select: { standard: true },
-      where: { standard: { not: null } },
-      distinct: ["standard"],
-      orderBy: { standard: "asc" },
-    }),
-    prisma.processArea.findMany({
-      select: { id: true, name: true, standard: true },
-      orderBy: { name: "asc" },
-    }),
-    prisma.subProcess.findMany({
-      select: { id: true, name: true, processAreaId: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
-
-  const standards = sortStandards(
-    allStandards.map((s) => s.standard!).filter(Boolean)
-  );
-
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-6 flex items-center justify-between">
@@ -118,9 +74,6 @@ export default async function FlaDashboardPage() {
         <div className="col-span-2">
           <FlaDashboardClient
             assessments={assessments}
-            standards={standards}
-            processAreas={allProcessAreas}
-            subProcesses={allSubProcesses}
             userId={userId}
           />
         </div>

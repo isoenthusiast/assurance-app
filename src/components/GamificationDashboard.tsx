@@ -145,9 +145,6 @@ export function GamificationDashboard({ userId }: { userId: string }) {
         <AchievementsCard stats={stats} />
       </div>
 
-      {/* Active Milestones */}
-      <MilestoneTracker milestones={stats.milestones} />
-
       {/* Leaderboard */}
       <LeaderboardCard leaderboard={leaderboard} userRank={userRank} stats={stats} />
 
@@ -316,10 +313,8 @@ function BadgeGallery({ achievements, allBadges }: { achievements: any[]; allBad
     achievements = [];
   }
 
-  // Show earned badges, or all available badges if none earned
-  const displayBadges = achievements.length > 0
-    ? achievements.map(a => ({ ...a.badge, earnedAt: a.earnedAt }))
-    : (allBadges || []).map(b => ({ ...b, earnedAt: null }));
+  // Show only earned badges
+  const displayBadges = achievements.map(a => ({ ...a.badge, earnedAt: a.earnedAt }));
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
@@ -355,7 +350,7 @@ function BadgeGallery({ achievements, allBadges }: { achievements: any[]; allBad
         </div>
       ) : (
         <p className="text-sm text-slate-500">
-          No badges available yet. Generate process badges from Setup Badges.
+          No badges earned yet. Complete assessments to earn badges.
         </p>
       )}
     </div>

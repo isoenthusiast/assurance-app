@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useMemo } from "react";
 import Link from "next/link";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -51,169 +50,17 @@ function formatDate(value: string | null) {
 
 export default function FlaDashboardClient({
   assessments,
-  standards,
-  processAreas,
-  subProcesses,
   userId,
 }: {
   assessments: Assessment[];
-  standards: Standard[];
-  processAreas: ProcessArea[];
-  subProcesses: SubProcess[];
   userId: string | undefined;
 }) {
-  const [selectedStandard, setSelectedStandard] = useState<string>("");
-  const [selectedProcessArea, setSelectedProcessArea] = useState<string>("");
-  const [selectedSubProcess, setSelectedSubProcess] = useState<string>("");
-  const [mineOnly, setMineOnly] = useState(false);
-
-  // Derived: process areas for the selected standard
-  const filteredProcessAreas = useMemo(() => {
-    if (!selectedStandard) return processAreas;
-    return processAreas.filter((pa) => pa.standard === selectedStandard);
-  }, [selectedStandard, processAreas]);
-
-  // Derived: sub-processes for the selected process area
-  const filteredSubProcesses = useMemo(() => {
-    if (!selectedProcessArea) return subProcesses;
-    return subProcesses.filter((sp) => sp.processAreaId === selectedProcessArea);
-  }, [selectedProcessArea, subProcesses]);
-
-  // Filter assessments
-  const filteredAssessments = useMemo(() => {
-    return assessments.filter((a) => {
-      if (selectedStandard && a.standard !== selectedStandard) return false;
-      if (selectedProcessArea && a.processAreaId !== selectedProcessArea) return false;
-      if (selectedSubProcess && a.subProcessId !== selectedSubProcess) return false;
-      if (mineOnly && userId && a.assessor.id !== userId) return false;
-      return true;
-    });
-  }, [assessments, selectedStandard, selectedProcessArea, selectedSubProcess, mineOnly, userId]);
-
-  // When changing standard, reset the downstream selections
-  const handleStandardChange = (std: string) => {
-    setSelectedStandard(std);
-    setSelectedProcessArea("");
-    setSelectedSubProcess("");
-  };
-
-  const handleProcessAreaChange = (paId: string) => {
-    setSelectedProcessArea(paId);
-    setSelectedSubProcess("");
-  };
 
   return (
     <>
-      {/* ── Filter Bar ──────────────────────────────────────────────── */}
-      <div className="mb-4 space-y-3">
-        {/* Standards tabs */}
-        <div className="rounded border border-slate-200 bg-white p-1">
-          <nav className="flex items-stretch gap-1">
-            <button
-              onClick={() => handleStandardChange("")}
-              className={`min-w-0 flex-1 rounded px-2 py-1.5 text-center text-sm ${
-                selectedStandard === ""
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100"
-              }`}
-            >
-              All Standards
-            </button>
-            {standards.map((std) => (
-              <button
-                key={std}
-                onClick={() => handleStandardChange(std)}
-                className={`min-w-0 flex-1 rounded px-2 py-1.5 text-center text-sm leading-snug ${
-                  selectedStandard === std
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                {std}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Process Area tabs (only when a standard is selected) */}
-        {selectedStandard && filteredProcessAreas.length > 0 && (
-          <div className="rounded border border-slate-200 bg-white p-1">
-            <nav className="flex flex-wrap items-stretch gap-1">
-              <button
-                onClick={() => handleProcessAreaChange("")}
-                className={`min-w-0 rounded px-2 py-1.5 text-center text-sm ${
-                  selectedProcessArea === ""
-                    ? "bg-slate-700 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                All Process Areas
-              </button>
-              {filteredProcessAreas.map((pa) => (
-                <button
-                  key={pa.id}
-                  onClick={() => handleProcessAreaChange(pa.id)}
-                  className={`min-w-0 rounded px-2 py-1.5 text-center text-sm ${
-                    selectedProcessArea === pa.id
-                      ? "bg-slate-700 text-white"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  {pa.name}
-                </button>
-              ))}
-            </nav>
-          </div>
-        )}
-
-        {/* Sub-Process tabs (only when a process area is selected) */}
-        {selectedProcessArea && filteredSubProcesses.length > 0 && (
-          <div className="rounded border border-slate-200 bg-white p-1">
-            <nav className="flex flex-wrap items-stretch gap-1">
-              <button
-                onClick={() => setSelectedSubProcess("")}
-                className={`min-w-0 rounded px-2 py-1.5 text-center text-sm ${
-                  selectedSubProcess === ""
-                    ? "bg-slate-600 text-white"
-                    : "text-slate-600 hover:bg-slate-100"
-                }`}
-              >
-                All Sub-Processes
-              </button>
-              {filteredSubProcesses.map((sp) => (
-                <button
-                  key={sp.id}
-                  onClick={() => setSelectedSubProcess(sp.id)}
-                  className={`min-w-0 rounded px-2 py-1.5 text-center text-sm ${
-                    selectedSubProcess === sp.id
-                      ? "bg-slate-600 text-white"
-                      : "text-slate-600 hover:bg-slate-100"
-                  }`}
-                >
-                  {sp.name}
-                </button>
-              ))}
-            </nav>
-          </div>
-        )}
-
-        {/* Mine Only checkbox */}
-        {userId && (
-          <label className="inline-flex items-center gap-2 text-sm text-slate-600 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={mineOnly}
-              onChange={(e) => setMineOnly(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
-            />
-            Mine Only
-          </label>
-        )}
-      </div>
-
       {/* ── Assessment List ─────────────────────────────────────────── */}
       <div className="space-y-3">
-        {filteredAssessments.map((a) => {
+        {assessments.map((a) => {
           const total = a.samples.length;
           const tested = a.samples.filter((s) => s.status === "Tested").length;
           const failed = a.samples.filter((s) => s.conclusion === "Fail").length;
@@ -256,9 +103,9 @@ export default function FlaDashboardClient({
           );
         })}
 
-        {filteredAssessments.length === 0 && (
+        {assessments.length === 0 && (
           <p className="rounded border border-slate-200 bg-white px-4 py-6 text-center text-slate-400">
-            No assurance activities match the selected filters.
+            No assurance activities yet. Plan one to get started!
           </p>
         )}
       </div>
