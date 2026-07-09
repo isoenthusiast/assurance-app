@@ -268,28 +268,26 @@ function LeaderboardCard({
     );
   }
 
+  const top3 = leaderboard.slice(0, 3);
+  const userId = stats?.user?.id;
+  const userInTop3 = top3.some(u => u.id === userId);
+  const userEntry = userId ? leaderboard.find(u => u.id === userId) : null;
+  const userIdx = userEntry ? leaderboard.indexOf(userEntry) : -1;
+
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-900 mb-4">Assurance Leaderboard</h2>
 
-      {userRank && (
-        <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
-          You are ranked <span className="font-bold text-blue-900">#{userRank}</span> out of{' '}
-          {leaderboard.length + (userRank > leaderboard.length ? 1 : 0)} assessors
-        </div>
-      )}
-
       <div className="space-y-2">
-        {leaderboard.map((user, idx) => (
+        {/* Top 3 */}
+        {top3.map((user, idx) => (
           <div
             key={user.id}
-            className={`flex items-center justify-between p-2 rounded ${
-              idx < 3 ? 'bg-amber-50' : 'bg-slate-50'
-            }`}
+            className={`flex items-center justify-between p-2 rounded ${user.id === userId ? 'bg-blue-50 ring-1 ring-blue-200' : 'bg-amber-50'}`}
           >
             <div className="flex items-center gap-3">
               <span className="font-bold text-slate-600 w-6">#{idx + 1}</span>
-              {idx < 3 && <span className="text-lg">{['🥇', '🥈', '🥉'][idx]}</span>}
+              <span className="text-lg">{['🥇', '🥈', '🥉'][idx]}</span>
               <div>
                 <p className="text-sm font-medium text-slate-900">{user.name}</p>
                 <p className="text-xs text-slate-500">{user._count.achievements} badges</p>
@@ -303,6 +301,32 @@ function LeaderboardCard({
             </div>
           </div>
         ))}
+
+        {/* Gap + User (if user not in top 3 and user is found) */}
+        {!userInTop3 && userEntry && (
+          <>
+            <div className="text-center text-xs text-slate-300 py-1">···</div>
+            <div className="flex items-center justify-between p-2 rounded bg-blue-50 ring-1 ring-blue-200">
+              <div className="flex items-center gap-3">
+                <span className="font-bold text-slate-600 w-6">#{userIdx + 1}</span>
+                <div>
+                  <p className="text-sm font-medium text-slate-900">{userEntry.name}</p>
+                  <p className="text-xs text-slate-500">{userEntry._count.achievements} badges</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-sm font-bold text-slate-900">{userEntry.totalPoints} pts</p>
+                <p className="text-xs text-slate-500">
+                  {userEntry.dailyPointStreak > 0 && `${userEntry.dailyPointStreak}🔥`}
+                </p>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Gap + End of list */}
+        <div className="text-center text-xs text-slate-300 py-1">···</div>
+        <div className="text-center text-xs text-slate-400 py-1">End of list</div>
       </div>
     </div>
   );
