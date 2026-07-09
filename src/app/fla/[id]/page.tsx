@@ -5,10 +5,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { deleteAssessment } from "../actions";
 import DeleteButton from "@/components/DeleteButton";
-import AssessmentInfoForm from "./AssessmentInfoForm";
-import ControlsSelectorWrapper from "./ControlsSelectorWrapper";
-import EvidenceSection from "./EvidenceSection";
-import AssignedControlsTable from "./AssignedControlsTable";
+import AssessmentTabs from "./AssessmentTabs";
 
 const loaOptions = [
   { value: "FirstLine", label: "1st Line" },
@@ -16,10 +13,6 @@ const loaOptions = [
   { value: "ThirdLine", label: "3rd Line" },
 ];
 const statusOptions = ["Planned", "InProgress", "Completed", "Cancelled"];
-
-function toDateInput(d: Date | null) {
-  return d ? d.toISOString().slice(0, 10) : "";
-}
 
 export default async function AssessmentDetailPage({
   params,
@@ -67,9 +60,6 @@ export default async function AssessmentDetailPage({
   const assignedControls = assessment.controlAssignments
     .map((ac) => ({ id: ac.control.id, name: ac.control.name }))
     .sort((a, b) => a.name.localeCompare(b.name));
-  // Forces the control-assignment client components to remount (and pick up
-  // fresh server data) whenever the assigned set OR any assignment's
-  // effectiveness changes — e.g. via router.refresh() after an unassign.
   const assignmentsKey = assessment.controlAssignments
     .map((ac) => `${ac.id}:${ac.effective ?? "null"}:${ac.effectiveUpdatedAt ? new Date(ac.effectiveUpdatedAt).getTime() : "null"}`)
     .sort()
@@ -80,40 +70,32 @@ export default async function AssessmentDetailPage({
   const failed = assessment.samples.filter((s) => s.conclusion === "Fail").length;
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-8">
-      <Link href="/fla" className="text-sm text-slate-500 hover:underline">
-        ← All assessments
-      </Link>
-
-      <div className="mt-2 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-slate-900">{assessment.name}</h1>
+    <div className="mx-auto max-w-5xl px-6 py-4">
+      <div className="flex items-center justify-between mb-2">
+        <div>
+          <Link href="/fla" className="text-sm text-slate-500 hover:underline">
+            ← All assessments
+          </Link>
+          <h1 className="text-xl font-semibold text-slate-900 mt-0.5">{assessment.name}</h1>
+          <p className="text-xs text-slate-500">
+            {tested}/{total} samples tested{failed > 0 ? ` · ${failed} fail` : ""}
+          </p>
+        </div>
         <DeleteButton action={deleteAssessment.bind(null, assessment.id)} />
       </div>
 
-      <p className="mt-1 text-sm text-slate-500">
-        {tested}/{total} samples tested{failed > 0 ? ` · ${failed} fail` : ""}
-      </p>
-
-      <AssessmentInfoForm assessment={assessment} users={users} activityTypes={activityTypes} loaOptions={loaOptions} statusOptions={statusOptions} />
-
-      {/* Control Selection + Assigned Controls */}
-      <div className="mt-6 space-y-4">
-        <ControlsSelectorWrapper
-          assessmentId={assessment.id}
-          initialSelectedIds={Array.from(assignedControlIds)}
-        />
-        <AssignedControlsTable
-          key={assignmentsKey}
-          initialAssignments={assessment.controlAssignments}
-        />
-      </div>
-
-      <EvidenceSection
-        assessmentId={assessment.id}
-        samples={assessment.samples}
+      <AssessmentTabs
+        assessment={assessment}
+        users={users}
+        activityTypes={activityTypes}
+        loaOptions={loaOptions}
+        statusOptions={statusOptions}
+        assignedControlIds={assignedControlIds}
+        assignmentsKey={assignmentsKey}
         availableControls={availableControls}
-        initialFindings={assessment.findings}
         assignedControls={assignedControls}
+        samples={assessment.samples}
+        findings={assessment.findings}
       />
     </div>
   );
