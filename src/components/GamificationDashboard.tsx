@@ -43,6 +43,7 @@ export function GamificationDashboard({ userId }: { userId: string }) {
   const [stats, setStats] = useState<GamificationStats | null>(null);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<number | null>(null);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
   const [allBadges, setAllBadges] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -51,7 +52,7 @@ export function GamificationDashboard({ userId }: { userId: string }) {
       try {
         const [statsRes, leaderboardRes, badgesRes] = await Promise.all([
           fetch(`/api/gamification/stats/${userId}`),
-          fetch(`/api/gamification/leaderboard?userId=${userId}`),
+          fetch(`/api/gamification/leaderboard?userId=${userId}&limit=50`),
           fetch(`/api/admin/badges`),
         ]);
 
@@ -95,6 +96,7 @@ export function GamificationDashboard({ userId }: { userId: string }) {
 
         setLeaderboard(leaderboardData?.leaderboard ?? []);
         setUserRank(leaderboardData?.userRank ?? null);
+        setTotalUsers(leaderboardData?.totalUsers ?? 0);
       } catch (error) {
         console.error('Failed to fetch gamification data:', error);
         // Set default empty stats
@@ -146,7 +148,7 @@ export function GamificationDashboard({ userId }: { userId: string }) {
       </div>
 
       {/* Leaderboard */}
-      <LeaderboardCard leaderboard={leaderboard} userRank={userRank} stats={stats} />
+      <LeaderboardCard leaderboard={leaderboard} userRank={userRank} totalUsers={totalUsers} stats={stats} />
 
       {/* Badge Gallery */}
       <BadgeGallery achievements={stats.achievements} allBadges={allBadges} />
@@ -253,10 +255,12 @@ function MilestoneTracker({
 function LeaderboardCard({
   leaderboard,
   userRank,
+  totalUsers,
   stats,
 }: {
   leaderboard: LeaderboardEntry[];
   userRank: number | null;
+  totalUsers: number;
   stats: GamificationStats;
 }) {
   if (!leaderboard || leaderboard.length === 0) {
@@ -277,6 +281,13 @@ function LeaderboardCard({
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
       <h2 className="text-lg font-semibold text-slate-900 mb-4">Assurance Leaderboard</h2>
+
+      {userRank && (
+        <div className="mb-4 p-2 bg-blue-50 rounded text-xs text-slate-700">
+          You rank <span className="font-bold text-blue-900">#{userRank}</span> of{' '}
+          <span className="font-bold">{totalUsers}</span> members
+        </div>
+      )}
 
       <div className="space-y-2">
         {/* Top 3 */}
