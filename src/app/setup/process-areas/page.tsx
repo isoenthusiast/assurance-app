@@ -86,7 +86,7 @@ export default async function ProcessAreasPage({
   // controls in this sub-process".
   const assessmentIdsBySubProcess = new Map<string, Set<string>>();
   for (const ca of testedAssignments) {
-    const subProcessId = ca.control.subProcessId;
+    const subProcessId = ca.control.subProcessId ?? "";
     const set = assessmentIdsBySubProcess.get(subProcessId) ?? new Set<string>();
     set.add(ca.assessmentId);
     assessmentIdsBySubProcess.set(subProcessId, set);
