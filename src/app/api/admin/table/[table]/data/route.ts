@@ -143,7 +143,8 @@ export async function POST(
     }
 
     const { table } = await params;
-    const { name } = await request.json();
+    const body = await request.json();
+    const { name } = body;
 
     if (!name || typeof name !== 'string' || name.trim() === '') {
       return NextResponse.json(
@@ -185,8 +186,14 @@ export async function POST(
         });
         break;
       }
-      default:
-        return NextResponse.json({ error: 'Invalid table' }, { status: 400 });
+      default: {
+        // Generic create — works for any table
+        const camelName = table.charAt(0).toLowerCase() + table.slice(1);
+        const model = (prisma as any)[camelName];
+        if (!model) return NextResponse.json({ error: 'Invalid table' }, { status: 400 });
+        result = await model.create({ data: body });
+        break;
+      }
     }
 
     return NextResponse.json(result, { status: 201 });
