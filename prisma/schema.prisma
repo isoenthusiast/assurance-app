@@ -13,6 +13,8 @@ model User {
   username             String                 @unique
   passwordHash         String
   role                 Role                   @default(Assessor)
+  position             String?
+  companyId            String?
   createdAt            DateTime               @default(now())
   totalPoints          Int                    @default(0)
   dailyPointStreak     Int                    @default(0)
@@ -23,6 +25,7 @@ model User {
   milestones           Milestone[]
   points               PointTransaction[]
   achievements         UserAchievement[]
+  roleMappings         UserRoleMapping[]
 }
 
 model ActivityLog {
@@ -455,12 +458,27 @@ enum Role {
 }
 
 model UserRole {
-  id              String   @id @default(cuid())
-  roleName        String   @unique
-  roleDescription String?
-  roleFunction    String?
-  createdBy       String?
-  createdAt       DateTime @default(now())
+  id                 String   @id @default(cuid())
+  uRoleName          String   @unique
+  uRoleDescription   String?
+  uRolePositions     String?
+  uRoleReportingLine String?
+  createdAt          DateTime @default(now())
+  userMappings       UserRoleMapping[]
+}
+
+model UserRoleMapping {
+  id           String   @id @default(cuid())
+  userId       String
+  userRoleId   String
+  remarks      String?
+  createdDate  DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userRole     UserRole @relation(fields: [userRoleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, userRoleId])
+  @@index([userId])
+  @@index([userRoleId])
 }
 
 enum LOA {

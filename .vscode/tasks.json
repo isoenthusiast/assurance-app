@@ -6,6 +6,18 @@
 			"type": "shell",
 			"command": "node scripts/sync-schema.mjs",
 			"group": "none"
+		},
+		{
+			"label": "Push UserRole Schema",
+			"type": "shell",
+			"command": "python scripts/push_user_roles.py",
+			"group": "none"
+		},
+		{
+			"label": "Push UserRole Schema",
+			"type": "shell",
+			"command": "node node_modules/prisma/build/index.js db push --accept-data-loss",
+			"group": "none"
 		}
 	]
 }
