@@ -12,7 +12,7 @@ interface Assignment {
   control: {
     name: string;
     processArea?: { name: string } | null;
-    subProcess?: { name: string } | null;
+    controlSubProcesses?: { subProcess: { name: string } }[];
   };
 }
 
@@ -118,7 +118,7 @@ export default function AssignedControlsTable({
               <td className="px-3 py-2">
                 <div className="font-medium text-slate-900">{ac.control.name}</div>
                 <div className="text-slate-500 text-xs">
-                  {ac.control.processArea?.name} / {ac.control.subProcess?.name}
+                  {ac.control.processArea?.name} / {ac.control.controlSubProcesses?.[0]?.subProcess?.name || "—"}
                 </div>
               </td>
               <td className="px-3 py-2">

@@ -18,9 +18,9 @@ interface Control {
   name: string;
   statement: string;
   processAreaId: string;
-  subProcessId: string;
   processArea?: { name: string };
   subProcess?: { name: string };
+  controlSubProcesses?: { subProcess?: { id: string; name: string }; subProcessId?: string }[];
 }
 
 interface ControlsSelectorProps {
@@ -69,7 +69,10 @@ export default function ControlsSelector({
   // Filter controls based on PA, SP, and search
   const filteredControls = allControls.filter((control) => {
     if (selectedPA && control.processAreaId !== selectedPA) return false;
-    if (selectedSP && control.subProcessId !== selectedSP) return false;
+    if (selectedSP) {
+      const linkedIds = (control.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id || csp.subProcessId);
+      if (!linkedIds.includes(selectedSP)) return false;
+    }
     if (searchFilter) {
       const searchLower = searchFilter.toLowerCase();
       const nameMatch = control.name.toLowerCase().includes(searchLower);
@@ -205,7 +208,7 @@ export default function ControlsSelector({
               >
                 <div className="font-medium text-slate-900">{control.name}</div>
                 <div className="text-slate-600 text-xs">
-                  {control.processArea?.name || processAreas.find(pa => pa.id === control.processAreaId)?.name || 'Unknown'} / {control.subProcess?.name || subProcesses.find(sp => sp.id === control.subProcessId)?.name || 'Unknown'}
+                  {control.processArea?.name || processAreas.find(pa => pa.id === control.processAreaId)?.name || 'Unknown'} / {(control.controlSubProcesses && control.controlSubProcesses[0]?.subProcess?.name) || '—'}
                 </div>
                 <div className="text-slate-500 text-xs mt-1 line-clamp-2">
                   {control.statement}

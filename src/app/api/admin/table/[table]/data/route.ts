@@ -155,8 +155,8 @@ export async function POST(
 
     // Only validate name for tables that have a name field
     const tablesNeedingName = ["SampleType", "RecordSourceType", "ProcessArea", "SubProcess", "AssuranceActivityType"];
+    const name: string | undefined = body.name;
     if (tablesNeedingName.includes(table)) {
-      const { name } = body;
       if (!name || typeof name !== "string" || name.trim() === "") {
         return NextResponse.json(
           { error: "Name is required and must be a non-empty string" },
@@ -169,6 +169,7 @@ export async function POST(
 
     switch (table) {
       case 'SampleType': {
+        if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
         const existing = await prisma.sampleType.findUnique({
           where: { name: name.trim() },
         });
@@ -184,6 +185,7 @@ export async function POST(
         break;
       }
       case 'RecordSourceType': {
+        if (!name) return NextResponse.json({ error: "Name is required" }, { status: 400 });
         const existing = await prisma.recordSourceType.findUnique({
           where: { name: name.trim() },
         });

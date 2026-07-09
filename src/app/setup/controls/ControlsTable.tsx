@@ -13,7 +13,6 @@ type Control = {
   isHsseCritical: boolean;
   ramRating: string | null;
   processArea: { id: string; name: string; standard: string | null };
-  subProcess: { id: string; name: string };
   controlSubProcesses?: { subProcess: { id: string; name: string } }[];
   _count: { controlAssignments: number };
   controlAssignments: {
@@ -99,6 +98,20 @@ function getEffectiveDisplay(
   };
 }
 
+// Get the primary sub-process for a control from its junction links
+function getPrimarySubProcess(control: Control): { id: string; name: string } | null {
+  if (!control.controlSubProcesses || control.controlSubProcesses.length === 0) return null;
+  // If there's only one, it's primary; otherwise find the one that has isPrimary
+  // (isPrimary isn't included in the list query, so we just take the first)
+  return control.controlSubProcesses[0].subProcess;
+}
+
+// Get all sub-process IDs linked to a control via junction
+function getLinkedSubProcessIds(control: Control): Set<string> {
+  if (!control.controlSubProcesses) return new Set();
+  return new Set(control.controlSubProcesses.map(csp => csp.subProcess.id));
+}
+
 export default function ControlsTable({
   controls,
   processAreas,
@@ -135,8 +148,6 @@ export default function ControlsTable({
   const resetSelectionState = () => {
     setCurrentPage(1);
     setPageInput('1');
-    setHoveredStandard(null);
-    setHoveredPAId(null);
   };
 
   // Click a Standard (Tier 1) — filters to every control under it.
@@ -201,7 +212,7 @@ export default function ControlsTable({
         selectedProcessAreaId === 'all' || control.processArea.id === selectedProcessAreaId;
 
       const matchSubProcess =
-        selectedSubProcessId === 'all' || control.subProcess.id === selectedSubProcessId;
+        selectedSubProcessId === 'all' || getLinkedSubProcessIds(control).has(selectedSubProcessId);
 
       return matchStandard && matchProcessArea && matchSubProcess;
     });
@@ -267,69 +278,6 @@ export default function ControlsTable({
               <span className="font-medium text-slate-700">
                 {processAreas.find((pa) => pa.id === selectedProcessAreaId)?.name}
               </span>
-                          }
-                        >
-                          <button
-                            onClick={() => handleSelectProcessArea(pa)}
-                            className={`flex w-full items-center justify-between whitespace-nowrap px-3 py-2 text-left text-sm ${
-                              isPaActive
-                                ? 'bg-slate-100 font-medium text-slate-900'
-                                : 'text-slate-700 hover:bg-slate-50'
-                            }`}
-                          >
-                            <span>{pa.name}</span>
-                            {paSubProcesses.length > 0 && (
-                              <span className="ml-2 text-slate-400">›</span>
-                            )}
-                          </button>
-
-                          {/* Tier 3: Sub-Processes under this Process Area */}
-                          {isPaOpen && paSubProcesses.length > 0 && (
-                            <div className="absolute left-full top-0 z-30 min-w-[240px] rounded border border-slate-200 bg-white py-1 shadow-lg">
-                              <button
-                                onClick={() => handleSelectSubProcess(pa, 'all')}
-                                className={`block w-full whitespace-nowrap px-3 py-2 text-left text-sm ${
-                                  isPaActive && selectedSubProcessId === 'all'
-                                    ? 'bg-slate-100 font-medium text-slate-900'
-                                    : 'text-slate-700 hover:bg-slate-50'
-                                }`}
-                              >
-                                All Sub-Processes
-                              </button>
-                              {paSubProcesses.map((sp) => (
-                                <button
-                                  key={sp.id}
-                                  onClick={() => handleSelectSubProcess(pa, sp.id)}
-                                  className={`block w-full whitespace-nowrap px-3 py-2 text-left text-sm ${
-                                    isPaActive && selectedSubProcessId === sp.id
-                                      ? 'bg-slate-100 font-medium text-slate-900'
-                                      : 'text-slate-700 hover:bg-slate-50'
-                                  }`}
-                                >
-                                  {sp.name}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-        </div>
-
-        <div className="mt-2 text-xs text-slate-500">
-          Showing:{' '}
-          <span className="font-medium text-slate-700">
-            {selectedStandard === 'all'
-              ? 'All Standards'
-              : selectedStandard === UNSPECIFIED_STANDARD
-              ? 'Unspecified'
-              : selectedStandard}
-          </span>
-          {selectedProcessAreaId !== 'all' && (
-            <>
-              {' '}
-              /{' '}
-              <span className="font-medium text-slate-700">
-                {processAreas.find((pa) => pa.id === selectedProcessAreaId)?.name}
-              </span>
             </>
           )}
           {selectedSubProcessId !== 'all' && (
@@ -362,13 +310,15 @@ export default function ControlsTable({
           {paginatedControls.map((c) => {
             const latestTest = getLatestTest(c);
             const effectiveInfo = getEffectiveDisplay(c);
+            const primarySp = getPrimarySubProcess(c);
+            const otherSps = (c.controlSubProcesses || []).filter(csp => csp.subProcess.id !== (primarySp?.id ?? ""));
             return (
               <tr key={c.id} className="border-t border-slate-100 align-top">
                 <td className="px-4 py-2 text-slate-600">
-                  {c.processArea.name} / {c.subProcess.name}
-                  {c.controlSubProcesses && c.controlSubProcesses.length > 0 && (
+                  {c.processArea.name} / {primarySp?.name ?? "—"}
+                  {otherSps.length > 0 && (
                     <div className="text-xs text-slate-400">
-                      +{c.controlSubProcesses.map(csp => csp.subProcess.name).join(", ")}
+                      +{otherSps.map(csp => csp.subProcess.name).join(", ")}
                     </div>
                   )}
                 </td>

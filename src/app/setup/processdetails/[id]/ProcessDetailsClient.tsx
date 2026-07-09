@@ -27,7 +27,6 @@ type ControlSummary = {
   rawHealthScore: number;
   lastTestedDate: Date | null;
   lastTestResult: string | null;
-  subProcessId: string;
   _count: { controlAssignments: number };
 };
 
@@ -318,7 +317,6 @@ export default function ProcessDetailsClient({
           statement: addControlStatement.trim(),
           controlType: addControlType,
           processAreaId: processArea.id,
-          subProcessId: addControlSubProcessId,
         }),
       });
 
@@ -326,6 +324,14 @@ export default function ProcessDetailsClient({
         const data = await res.json();
         throw new Error(data.error || "Failed to create control");
       }
+
+      const created = await res.json();
+      // Create junction link to the selected sub-process
+      await fetch("/api/admin/table/ControlSubProcess/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ controlId: created.id, subProcessId: addControlSubProcessId, isPrimary: true }),
+      });
 
       setAddControlSubProcessId(null);
       setAddControlName("");

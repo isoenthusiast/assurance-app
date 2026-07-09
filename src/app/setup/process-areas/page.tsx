@@ -63,7 +63,7 @@ export default async function ProcessAreasPage({
         name: true,
         description: true,
         processAreaId: true,
-        _count: { select: { controls: true, controlSubProcesses: true } },
+        _count: { select: { controlSubProcesses: true } },
       },
     }),
     // Every control assignment belonging to a *completed* assessment (i.e.
@@ -71,7 +71,7 @@ export default async function ProcessAreasPage({
     // assessments per sub-process.
     prisma.controlAssignment.findMany({
       where: { assessment: { endDate: { not: null } } },
-      select: { assessmentId: true, control: { select: { subProcessId: true } } },
+      select: { assessmentId: true, control: { select: { controlSubProcesses: { select: { subProcessId: true } } } } },
     }),
   ]);
 
@@ -86,10 +86,12 @@ export default async function ProcessAreasPage({
   // controls in this sub-process".
   const assessmentIdsBySubProcess = new Map<string, Set<string>>();
   for (const ca of testedAssignments) {
-    const subProcessId = ca.control.subProcessId ?? "";
-    const set = assessmentIdsBySubProcess.get(subProcessId) ?? new Set<string>();
-    set.add(ca.assessmentId);
-    assessmentIdsBySubProcess.set(subProcessId, set);
+    for (const csp of (ca.control.controlSubProcesses || [])) {
+      const subProcessId = csp.subProcessId;
+      const set = assessmentIdsBySubProcess.get(subProcessId) ?? new Set<string>();
+      set.add(ca.assessmentId);
+      assessmentIdsBySubProcess.set(subProcessId, set);
+    }
   }
 
   // Pull the actual assessment records (title, end date, status, findings /
@@ -125,7 +127,7 @@ export default async function ProcessAreasPage({
   );
 
   const subProcessesWithAssessmentCounts = subProcesses.map((sp) => {
-    const totalControls = sp._count.controls + sp._count.controlSubProcesses;
+    const totalControls = sp._count.controlSubProcesses;
     const assessments = Array.from(assessmentIdsBySubProcess.get(sp.id) ?? [])
       .map((id) => assessmentDetailsById.get(id))
       .filter((a): a is NonNullable<typeof a> => Boolean(a))
@@ -135,7 +137,7 @@ export default async function ProcessAreasPage({
         return bTime - aTime;
       });
 
-    return { ...sp, _count: { ...sp._count, controls: totalControls }, assessmentCount: assessments.length, assessments };
+    return { ...sp, _count: { controlSubProcesses: totalControls }, assessmentCount: assessments.length, assessments };
   });
 
   return (

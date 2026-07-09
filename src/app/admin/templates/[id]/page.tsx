@@ -16,9 +16,8 @@ interface Control {
   id: string;
   name: string;
   processAreaId: string;
-  subProcessId: string;
   processArea: { name: string };
-  subProcess: { name: string };
+  controlSubProcesses?: { subProcess?: { id: string; name: string }; subProcessId?: string }[];
 }
 
 interface ActivityType {
@@ -167,8 +166,9 @@ export default function TemplateFormPage() {
     if (selectedProcessAreaId !== 'all' && control.processAreaId !== selectedProcessAreaId) {
       return false;
     }
-    if (selectedSubProcessId !== 'all' && control.subProcessId !== selectedSubProcessId) {
-      return false;
+    if (selectedSubProcessId !== 'all') {
+      const linkedIds = (control.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id || csp.subProcessId);
+      if (!linkedIds.includes(selectedSubProcessId)) return false;
     }
     return true;
   });
@@ -179,8 +179,13 @@ export default function TemplateFormPage() {
   };
 
   // Helper to get sub-process name
-  const getSubProcessName = (spId: string) => {
-    return subProcesses.find((sp) => sp.id === spId)?.name || 'Unknown';
+  const getSubProcessName = (control: Control) => {
+    const primary = control.controlSubProcesses?.[0];
+    if (primary?.subProcess?.name) return primary.subProcess.name;
+    if (primary?.subProcessId) {
+      return subProcesses.find((sp) => sp.id === primary.subProcessId)?.name || 'Unknown';
+    }
+    return '—';
   };
 
   // Filter activity types based on selected LOA
@@ -367,7 +372,7 @@ export default function TemplateFormPage() {
                       <div className="flex-1 text-sm">
                         <div className="text-slate-900 font-medium">{control.name}</div>
                         <div className="text-slate-500 text-xs">
-                          {getProcessAreaName(control.processAreaId)} / {getSubProcessName(control.subProcessId)}
+                          {getProcessAreaName(control.processAreaId)} / {getSubProcessName(control)}
                         </div>
                       </div>
                     </label>

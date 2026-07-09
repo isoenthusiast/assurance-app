@@ -27,19 +27,12 @@ async function checkForChildren(table: string, id: string): Promise<{ blocked: b
         children.push({ type: "Control", count: controls.length, records: controls });
       }
     } else if (table === "SubProcess") {
-      const controls = await prisma.control.findMany({
-        where: { subProcessId: id },
-        select: { id: true, name: true },
-      });
-      if (controls.length > 0) {
-        children.push({ type: "Control", count: controls.length, records: controls });
-      }
       const junctionLinks = await prisma.controlSubProcess.findMany({
         where: { subProcessId: id },
         select: { id: true, controlId: true },
       });
       if (junctionLinks.length > 0) {
-        children.push({ type: "ControlSubProcess (junction links)", count: junctionLinks.length, records: junctionLinks });
+        children.push({ type: "Control (via junction)", count: junctionLinks.length, records: junctionLinks });
       }
     } else if (table === "Control") {
       const controlAssignments = await prisma.controlAssignment.findMany({

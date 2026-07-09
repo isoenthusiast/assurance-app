@@ -15,12 +15,8 @@ export default async function ControlsPage({
       orderBy: [{ processArea: { name: "asc" } }, { name: "asc" }],
       include: {
         processArea: true,
-        subProcess: true,
-        controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } } },
+        controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } }, orderBy: { isPrimary: "desc" } },
         _count: { select: { controlAssignments: true } },
-        // Used to derive "Last Tested" / "Effective" from this control's most
-        // recently completed assessment, and to link that verdict back to
-        // the assessment it came from (see ControlsTable.tsx).
         controlAssignments: {
           select: {
             assessmentId: true,
@@ -32,7 +28,7 @@ export default async function ControlsPage({
     }),
     prisma.processArea.findMany({ orderBy: { name: "asc" } }),
     prisma.subProcess.findMany({ orderBy: { name: "asc" } }),
-    edit ? prisma.control.findUnique({ where: { id: edit }, include: { controlSubProcesses: { select: { subProcessId: true } } } }) : Promise.resolve(null),
+    edit ? prisma.control.findUnique({ where: { id: edit }, include: { controlSubProcesses: { select: { subProcessId: true, isPrimary: true } } } }) : Promise.resolve(null),
   ]);
 
   return (
@@ -49,7 +45,7 @@ export default async function ControlsPage({
       ) : (
         <>
           <ControlsTable
-            controls={controls.map(c => ({ ...c, subProcess: c.subProcess ?? { id: "", name: "—" } }))}
+            controls={controls.map(c => ({ ...c }))}
             processAreas={processAreas}
             subProcesses={subProcesses}
           />
@@ -62,7 +58,7 @@ export default async function ControlsPage({
             key={editing?.id ?? "new"}
             processAreas={processAreas}
             subProcesses={subProcesses}
-            editing={editing ? { ...editing, subProcessId: editing.subProcessId ?? "" } : null}
+            editing={editing as any}
           />
         </>
       )}

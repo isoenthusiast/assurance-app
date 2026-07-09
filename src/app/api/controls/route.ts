@@ -15,7 +15,7 @@ export async function GET() {
       prisma.processArea.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
       prisma.subProcess.findMany({ orderBy: { name: "asc" }, distinct: ["id"] }),
       prisma.control.findMany({
-        include: { processArea: { select: { name: true } }, subProcess: { select: { name: true } } },
+        include: { processArea: { select: { name: true } }, controlSubProcesses: { include: { subProcess: { select: { name: true } } } } },
         orderBy: { name: "asc" },
       }),
       prisma.sampleType.findMany({ orderBy: { name: "asc" } }),

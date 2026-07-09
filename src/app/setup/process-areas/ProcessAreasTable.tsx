@@ -27,7 +27,7 @@ type SubProcess = {
   name: string;
   description: string | null;
   processAreaId: string;
-  _count: { controls: number };
+  _count: { controlSubProcesses: number };
   assessmentCount: number;
   assessments: AssessmentSummary[];
 };
@@ -262,7 +262,7 @@ export default function ProcessAreasTable({
                           <div className="px-4 py-2 font-medium text-slate-900">{sp.name}</div>
                           <div className="px-4 py-2 text-slate-600">{sp.description}</div>
                           <div></div>
-                          <div className="px-4 py-2 text-slate-600">{sp._count.controls}</div>
+                          <div className="px-4 py-2 text-slate-600">{sp._count.controlSubProcesses}</div>
                           <div className="px-4 py-2 text-slate-600">{sp.assessmentCount}</div>
                           <div className="px-4 py-2">
                             <div className="flex items-center gap-3">

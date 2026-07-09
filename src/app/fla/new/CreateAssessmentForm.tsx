@@ -40,7 +40,10 @@ export default function CreateAssessmentForm({ activityTypes, users, loaOptions,
 
   const filteredControls = controls.filter((c: any) => {
     if (selectedPA !== "all" && c.processAreaId !== selectedPA) return false;
-    if (selectedSP !== "all" && c.subProcessId !== selectedSP) return false;
+    if (selectedSP !== "all") {
+      const linkedIds = (c.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id || csp.subProcessId);
+      if (!linkedIds.includes(selectedSP)) return false;
+    }
     return true;
   });
 

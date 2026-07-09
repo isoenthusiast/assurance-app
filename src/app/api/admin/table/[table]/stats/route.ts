@@ -6,7 +6,7 @@ const TABLE_SCHEMAS: Record<string, string[]> = {
   User: ['id', 'name', 'username', 'role', 'totalPoints', 'dailyPointStreak', 'confidenceInfluencer', 'createdAt'],
   ProcessArea: ['id', 'name', 'description', 'createdAt'],
   SubProcess: ['id', 'name', 'description', 'processAreaId', 'createdAt'],
-  Control: ['id', 'name', 'statement', 'controlType', 'processAreaId', 'subProcessId', 'isHsseCritical', 'ramRating', 'riskWeight', 'rawHealthScore', 'createdAt'],
+  Control: ['id', 'name', 'statement', 'controlType', 'processAreaId', 'isHsseCritical', 'ramRating', 'riskWeight', 'rawHealthScore', 'createdAt'],
   Assessment: ['id', 'activityTypeId', 'name', 'assessorId', 'startDate', 'endDate', 'loa', 'status', 'createdAt'],
   Sample: ['id', 'assessmentId', 'controlId', 'comment', 'status', 'conclusion', 'evidenceUrl', 'createdAt'],
   AssuranceActivityType: ['id', 'name', 'description', 'defaultLOA', 'createdAt'],

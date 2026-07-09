@@ -25,12 +25,6 @@ export default async function ProcessDetailsPage({
     where: { processAreaId: id },
     orderBy: { name: "asc" },
     include: {
-      controls: {
-        orderBy: { name: "asc" },
-        include: {
-          _count: { select: { controlAssignments: true } },
-        },
-      },
       controlSubProcesses: {
         include: {
           control: {
@@ -43,17 +37,12 @@ export default async function ProcessDetailsPage({
     },
   });
 
-  // Merge junction-linked controls into each sub-process's control list,
-  // deduplicating by control ID (primary link wins on duplicate).
+  // All controls come through the junction table now
   const mergedSubProcesses = subProcesses.map((sp) => {
-    const primaryIds = new Set(sp.controls.map((c) => c.id));
-    const junctionControls = sp.controlSubProcesses
-      .map((csp) => csp.control)
-      .filter((c) => !primaryIds.has(c.id));
     return {
       ...sp,
-      controls: [...sp.controls, ...junctionControls]
-        .map((c) => ({ ...c, subProcessId: c.subProcessId ?? "" }))
+      controls: sp.controlSubProcesses
+        .map((csp) => csp.control)
         .sort((a, b) => a.name.localeCompare(b.name)),
     };
   });

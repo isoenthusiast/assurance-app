@@ -38,7 +38,7 @@ export default async function AssessmentDetailPage({
         orderBy: { createdAt: "asc" },
       },
       controlAssignments: {
-        include: { control: { include: { processArea: true, subProcess: true } } },
+        include: { control: { include: { processArea: true, controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } } } } } },
         orderBy: { createdAt: "asc" },
       },
       findings: {
@@ -57,7 +57,7 @@ export default async function AssessmentDetailPage({
     prisma.assuranceActivityType.findMany({ orderBy: { name: "asc" } }),
     prisma.user.findMany({ orderBy: { name: "asc" } }),
     prisma.control.findMany({
-      include: { processArea: true, subProcess: true },
+      include: { processArea: true, controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } } } },
       orderBy: { name: "asc" },
     }),
   ]);

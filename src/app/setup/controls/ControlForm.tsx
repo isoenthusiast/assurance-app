@@ -13,7 +13,6 @@ type Editing = {
   statement: string;
   controlType: string;
   processAreaId: string;
-  subProcessId: string;
   isHsseCritical: boolean;
   ramRating: string | null;
   riskWeight: number;
@@ -35,7 +34,7 @@ type Editing = {
   rawHealthScore?: number | null;
   lastTestedDate?: string | Date | null;
   lastTestResult?: string | null;
-  controlSubProcesses?: { subProcessId: string }[];
+  controlSubProcesses?: { subProcessId: string; isPrimary: boolean }[];
 } | null;
 
 const controlTypes = ["Administrative", "Procedural", "Analytical", "Behavioral", "Informational", "Engineering"];
@@ -60,7 +59,7 @@ export default function ControlForm({
   const existingLinkedIds = editing?.controlSubProcesses?.map(csp => csp.subProcessId) ?? [];
   const [linkedSubProcessIds, setLinkedSubProcessIds] = useState<Set<string>>(new Set(existingLinkedIds));
   const [primarySubProcessId, setPrimarySubProcessId] = useState<string>(
-    editing?.subProcessId ?? ""
+    editing?.controlSubProcesses?.find(csp => csp.isPrimary)?.subProcessId ?? (existingLinkedIds[0] ?? "")
   );
   const [showLinkedList, setShowLinkedList] = useState(false);
 
@@ -77,7 +76,6 @@ export default function ControlForm({
       statement: fd.get("statement")?.toString() ?? "",
       controlType: fd.get("controlType")?.toString(),
       processAreaId: fd.get("processAreaId")?.toString() ?? "",
-      subProcessId: fd.get("subProcessId")?.toString() ?? "",
       isHsseCritical: fd.get("isHsseCritical") === "on",
       ramRating: fd.get("ramRating")?.toString() || null,
       riskWeight: parseInt(fd.get("riskWeight")?.toString() || "1"),
@@ -108,6 +106,51 @@ export default function ControlForm({
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error("Failed to save control");
+
+    // Sync junction links for the control
+    const controlId = id || (await res.json()).id;
+    if (!id) {
+      // New control: create junction links
+      for (const spId of linkedSubProcessIds) {
+        await fetch("/api/admin/table/ControlSubProcess/data", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ controlId, subProcessId: spId, isPrimary: spId === primarySubProcessId }),
+        });
+      }
+    } else {
+      // Existing control: sync junction links
+      // Fetch existing links
+      const existingRes = await fetch(`/api/admin/table/ControlSubProcess/data?controlId=${controlId}`);
+      const existingData = await existingRes.json();
+      const existingLinks: { id: string; subProcessId: string }[] = (existingData.rows || []).filter((r: any) => r.controlId === controlId);
+      const existingBySubProcess = new Map(existingLinks.map(l => [l.subProcessId, l.id]));
+
+      // Delete removed
+      for (const link of existingLinks) {
+        if (!linkedSubProcessIds.has(link.subProcessId)) {
+          await fetch(`/api/admin/table/ControlSubProcess/${link.id}`, { method: "DELETE" });
+        }
+      }
+      // Create new / update primary
+      for (const spId of linkedSubProcessIds) {
+        const linkId = existingBySubProcess.get(spId);
+        if (linkId) {
+          await fetch(`/api/admin/table/ControlSubProcess/${linkId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isPrimary: spId === primarySubProcessId }),
+          });
+        } else {
+          await fetch("/api/admin/table/ControlSubProcess/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ controlId, subProcessId: spId, isPrimary: spId === primarySubProcessId }),
+          });
+        }
+      }
+    }
+
     router.refresh();
     router.push("/setup/controls");
   };
@@ -210,82 +253,6 @@ export default function ControlForm({
           </div>
 
           <div className="space-y-1">
-            <label className="text-sm font-medium text-slate-700">Sub-Process *</label>
-            <select
-              name="subProcessId"
-              defaultValue={editing?.subProcessId ?? ""}
-              required
-              className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-            >
-              <option value="" disabled>
-                Select...
-              </option>
-              {filteredSubProcesses.map((sp) => (
-                <option key={sp.id} value={sp.id}>
-                  {sp.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {editing && (
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-slate-700">Linked Sub-Processes</label>
-            <input type="hidden" name="linkedSubProcessIds" value={Array.from(linkedSubProcessIds).join(",")} />
-            <input type="hidden" name="primarySubProcessId" value={primarySubProcessId} />
-            <div className="max-h-48 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
-              {filteredSubProcesses.map(sp => {
-                const isLinked = linkedSubProcessIds.has(sp.id);
-                const isPrimary = primarySubProcessId === sp.id;
-                return (
-                  <label key={sp.id}
-                    className={`flex items-center gap-2 px-3 py-1.5 text-sm ${isPrimary ? 'bg-blue-50' : 'hover:bg-slate-50 cursor-pointer'}`}>
-                    <input type="checkbox" checked={isLinked}
-                      onChange={() => {
-                        const next = new Set(linkedSubProcessIds);
-                        if (next.has(sp.id)) {
-                          next.delete(sp.id);
-                          if (primarySubProcessId === sp.id) setPrimarySubProcessId("");
-                        } else {
-                          next.add(sp.id);
-                          if (!primarySubProcessId) setPrimarySubProcessId(sp.id);
-                        }
-                        setLinkedSubProcessIds(next);
-                      }} className="rounded" />
-                    <span className={`text-slate-700 ${isPrimary ? 'font-medium' : ''}`}>{sp.name}</span>
-                    {isLinked && (
-                      <button
-                        type="button"
-                        onClick={() => setPrimarySubProcessId(sp.id)}
-                        className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isPrimary ? 'bg-blue-100 text-blue-700 font-medium' : 'text-slate-400 hover:text-blue-600'}`}
-                        title={isPrimary ? "Primary sub-process" : "Set as primary"}>
-                        {isPrimary ? "★ Primary" : "☆ Set Primary"}
-                      </button>
-                    )}
-                  </label>
-                );
-              })}
-            </div>
-            {/* Selected summary */}
-            <button type="button" onClick={() => setShowLinkedList(!showLinkedList)}
-              className="text-xs text-blue-600 hover:underline">
-              {showLinkedList ? "▲ Hide" : "▼ Show"} linked sub-processes ({linkedSubProcessIds.size})
-            </button>
-            {showLinkedList && (
-              <div className="rounded border border-slate-200 bg-slate-50 p-2 max-h-32 overflow-y-auto">
-                {[...linkedSubProcessIds].map(id => {
-                  const sp = subProcesses.find(s => s.id === id);
-                  const isPrimary = primarySubProcessId === id;
-                  return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id} {isPrimary && <span className="text-blue-600 font-medium">★ Primary</span>}</div>;
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Control Type *</label>
             <select
               name="controlType"
@@ -297,13 +264,72 @@ export default function ControlForm({
                 Select a control type...
               </option>
               {controlTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
+                <option key={type} value={type}>{type}</option>
               ))}
             </select>
           </div>
+        </div>
 
+        {/* Linked Sub-Processes (junction table) — always visible */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-slate-700">
+            Linked Sub-Processes * <span className="text-xs text-slate-400 font-normal">(select at least one)</span>
+          </label>
+          <input type="hidden" name="linkedSubProcessIds" value={Array.from(linkedSubProcessIds).join(",")} />
+          <input type="hidden" name="primarySubProcessId" value={primarySubProcessId} />
+          <div className="max-h-48 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
+            {filteredSubProcesses.length === 0 && (
+              <p className="px-3 py-2 text-xs text-slate-400">No sub-processes in this process area.</p>
+            )}
+            {filteredSubProcesses.map(sp => {
+              const isLinked = linkedSubProcessIds.has(sp.id);
+              const isPrimary = primarySubProcessId === sp.id;
+              return (
+                <label key={sp.id}
+                  className={`flex items-center gap-2 px-3 py-1.5 text-sm ${isPrimary ? 'bg-blue-50' : 'hover:bg-slate-50 cursor-pointer'}`}>
+                  <input type="checkbox" checked={isLinked}
+                    onChange={() => {
+                      const next = new Set(linkedSubProcessIds);
+                      if (next.has(sp.id)) {
+                        next.delete(sp.id);
+                        if (primarySubProcessId === sp.id) setPrimarySubProcessId("");
+                      } else {
+                        next.add(sp.id);
+                        if (!primarySubProcessId) setPrimarySubProcessId(sp.id);
+                      }
+                      setLinkedSubProcessIds(next);
+                    }} className="rounded" />
+                  <span className={`text-slate-700 ${isPrimary ? 'font-medium' : ''}`}>{sp.name}</span>
+                  {isLinked && (
+                    <button
+                      type="button"
+                      onClick={() => setPrimarySubProcessId(sp.id)}
+                      className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isPrimary ? 'bg-blue-100 text-blue-700 font-medium' : 'text-slate-400 hover:text-blue-600'}`}
+                      title={isPrimary ? "Primary sub-process" : "Set as primary"}>
+                      {isPrimary ? "★ Primary" : "☆ Set Primary"}
+                    </button>
+                  )}
+                </label>
+              );
+            })}
+          </div>
+          {/* Selected summary */}
+          <button type="button" onClick={() => setShowLinkedList(!showLinkedList)}
+            className="text-xs text-blue-600 hover:underline">
+            {showLinkedList ? "▲ Hide" : "▼ Show"} linked sub-processes ({linkedSubProcessIds.size})
+          </button>
+          {showLinkedList && (
+            <div className="rounded border border-slate-200 bg-slate-50 p-2 max-h-32 overflow-y-auto">
+              {[...linkedSubProcessIds].map(id => {
+                const sp = subProcesses.find(s => s.id === id);
+                const isPrimary = primarySubProcessId === id;
+                return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id} {isPrimary && <span className="text-blue-600 font-medium">★ Primary</span>}</div>;
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
             <label className="text-sm font-medium text-slate-700">Control Type Detail</label>
             <input

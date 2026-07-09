@@ -25,7 +25,7 @@ interface ValidationResult {
   canImport: boolean;
 }
 
-const REQUIRED_FIELDS = ["name", "statement", "controlType", "processAreaId", "subProcessId"];
+const REQUIRED_FIELDS = ["name", "statement", "controlType", "processAreaId"];
 const VALID_CONTROL_TYPES = [
   "Administrative",
   "Procedural",

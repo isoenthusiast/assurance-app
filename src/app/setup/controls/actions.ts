@@ -10,7 +10,6 @@ const schema = z.object({
   statement: z.string().min(1, "Control statement is required"),
   controlType: z.string(),
   processAreaId: z.string().min(1, "Process Area is required"),
-  subProcessId: z.string().min(1, "Sub-Process is required"),
   isHsseCritical: z.boolean(),
   ramRating: z.string().optional(),
   riskWeight: z.coerce.number().int().min(1),
@@ -41,7 +40,6 @@ export async function saveControl(formData: FormData) {
     statement: formData.get("statement")?.toString() ?? "",
     controlType: formData.get("controlType")?.toString(),
     processAreaId: formData.get("processAreaId")?.toString() ?? "",
-    subProcessId: formData.get("subProcessId")?.toString() ?? "",
     isHsseCritical: formData.get("isHsseCritical") === "on",
     ramRating: formData.get("ramRating")?.toString() || undefined,
     riskWeight: formData.get("riskWeight")?.toString() || "1",
@@ -84,17 +82,25 @@ export async function saveControl(formData: FormData) {
       });
       // Upsert current links with primary flag
       for (const spId of subProcessIds) {
-        if (spId && spId !== data.subProcessId) {
-          await prisma.controlSubProcess.upsert({
-            where: { controlId_subProcessId: { controlId: id, subProcessId: spId } },
-            create: { controlId: id, subProcessId: spId, isPrimary: spId === primarySpId },
-            update: { isPrimary: spId === primarySpId },
-          });
-        }
+        await prisma.controlSubProcess.upsert({
+          where: { controlId_subProcessId: { controlId: id, subProcessId: spId } },
+          create: { controlId: id, subProcessId: spId, isPrimary: spId === primarySpId },
+          update: { isPrimary: spId === primarySpId },
+        });
       }
     }
   } else {
-    await prisma.control.create({ data });
+    const newControl = await prisma.control.create({ data });
+
+    // Create junction links for the new control
+    const linkedIds = formData.get("linkedSubProcessIds")?.toString();
+    const primarySpId = formData.get("primarySubProcessId")?.toString();
+    const subProcessIds = linkedIds ? linkedIds.split(",").filter(Boolean) : [];
+    for (const spId of subProcessIds) {
+      await prisma.controlSubProcess.create({
+        data: { controlId: newControl.id, subProcessId: spId, isPrimary: spId === primarySpId },
+      });
+    }
   }
 
   revalidatePath("/setup/controls");

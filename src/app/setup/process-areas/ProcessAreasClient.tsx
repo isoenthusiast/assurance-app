@@ -28,7 +28,7 @@ type SubProcess = {
   name: string;
   description: string | null;
   processAreaId: string;
-  _count: { controls: number };
+  _count: { controlSubProcesses: number };
   assessmentCount: number;
   assessments: AssessmentSummary[];
 };

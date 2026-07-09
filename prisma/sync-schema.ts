@@ -31,6 +31,11 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "ActivityLogType_activityType_key" ON "ActivityLogType"("activityType")`);
   console.log("✅ Created unique index on activityType");
 
+  // Drop subProcessId column and FK from Control (migrated to junction table)
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Control" DROP CONSTRAINT IF EXISTS "Control_subProcessId_fkey"`);
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Control" DROP COLUMN IF EXISTS "subProcessId"`);
+  console.log("✅ Dropped subProcessId column from Control");
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }

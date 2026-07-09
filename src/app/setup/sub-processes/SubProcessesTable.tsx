@@ -9,7 +9,7 @@ type SubProcess = {
   name: string;
   description: string | null;
   processArea: { name: string };
-  _count: { controls: number };
+  _count: { controlSubProcesses: number };
 };
 
 export default function SubProcessesTable({
@@ -64,7 +64,7 @@ export default function SubProcessesTable({
               <td className="px-4 py-2 text-slate-600">{sp.processArea.name}</td>
               <td className="px-4 py-2 font-medium text-slate-900">{sp.name}</td>
               <td className="px-4 py-2 text-slate-600">{sp.description}</td>
-              <td className="px-4 py-2 text-slate-600">{sp._count.controls}</td>
+              <td className="px-4 py-2 text-slate-600">{sp._count.controlSubProcesses}</td>
               <td className="px-4 py-2">
                 <div className="flex items-center gap-3">
                   <Link

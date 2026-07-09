@@ -44,7 +44,7 @@ export default async function FlaDashboardPage() {
           control: {
             include: {
               processArea: { select: { id: true, standard: true } },
-              subProcess: { select: { id: true } },
+              controlSubProcesses: { select: { subProcess: { select: { id: true } } } },
             },
           },
         },
@@ -70,7 +70,7 @@ export default async function FlaDashboardPage() {
       })),
       standard: firstControl?.processArea?.standard ?? null,
       processAreaId: firstControl?.processArea?.id ?? null,
-      subProcessId: firstControl?.subProcess?.id ?? null,
+      subProcessId: firstControl?.controlSubProcesses?.[0]?.subProcess?.id ?? null,
     };
   });
 

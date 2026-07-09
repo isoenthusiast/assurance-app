@@ -15,7 +15,7 @@ export default async function SubProcessesPage({
   const [subProcesses, processAreas, editing] = await Promise.all([
     prisma.subProcess.findMany({
       orderBy: [{ processArea: { name: "asc" } }, { name: "asc" }],
-      include: { processArea: true, _count: { select: { controls: true } } },
+      include: { processArea: true, _count: { select: { controlSubProcesses: true } } },
     }),
     prisma.processArea.findMany({ orderBy: { name: "asc" } }),
     edit ? prisma.subProcess.findUnique({ where: { id: edit } }) : Promise.resolve(null),

@@ -336,7 +336,7 @@ async function importControls(rows: string[][]): Promise<ImportStats> {
       });
 
       // Validate required fields
-      const required = ['name', 'statement', 'controlType', 'processAreaId', 'subProcessId'];
+      const required = ['name', 'statement', 'controlType', 'processAreaId'];
       const missing = required.filter(field => !record[field]);
 
       if (missing.length > 0) {
@@ -349,12 +349,8 @@ async function importControls(rows: string[][]): Promise<ImportStats> {
         where: { id: record.processAreaId },
       });
 
-      const sp = await prisma.subProcess.findUnique({
-        where: { id: record.subProcessId },
-      });
-
-      if (!pa || !sp) {
-        stats.warnings.push(`Row ${i + 2}: Invalid ProcessArea or SubProcess ID`);
+      if (!pa) {
+        stats.warnings.push(`Row ${i + 2}: Invalid ProcessArea ID`);
         continue;
       }
 
@@ -367,9 +363,20 @@ async function importControls(rows: string[][]): Promise<ImportStats> {
       data.statement = record.statement;
       data.controlType = record.controlType;
       data.processAreaId = record.processAreaId;
-      data.subProcessId = record.subProcessId;
 
-      await (prisma.control.create as any)({ data });
+      const created = await (prisma.control.create as any)({ data });
+
+      // Create junction link if subProcessId is provided
+      if (record.subProcessId) {
+        const sp = await prisma.subProcess.findUnique({ where: { id: record.subProcessId } });
+        if (sp) {
+          await prisma.controlSubProcess.create({
+            data: { controlId: created.id, subProcessId: record.subProcessId, isPrimary: true },
+          });
+        } else {
+          stats.warnings.push(`Row ${i + 2}: Invalid SubProcess ID — control created without sub-process link`);
+        }
+      }
 
       stats.rowsImported++;
     } catch (error) {
