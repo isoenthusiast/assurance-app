@@ -481,6 +481,15 @@ model UserRoleMapping {
   @@index([userRoleId])
 }
 
+model Company {
+  id           String   @id @default(cuid())
+  companyID    String   @unique
+  companyName  String
+  referenceID  String?
+  shortName    String?
+  createdAt    DateTime @default(now())
+}
+
 enum LOA {
   FirstLine
   SecondLine

@@ -168,7 +168,7 @@ export default function AdminDashboard() {
 function UserManager() {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
-  const [mode, setMode] = useState<"select" | "add" | "manageRoles">("select");
+  const [mode, setMode] = useState<"select" | "add" | "manageRoles" | "manageCompany">("select");
   const [search, setSearch] = useState("");
   const [form, setForm] = useState({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0, position: "", companyId: "" });
   const [saving, setSaving] = useState(false);
@@ -234,6 +234,8 @@ function UserManager() {
               className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "add" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>＋ Add User</button>
             <button onClick={() => setMode("manageRoles")}
               className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "manageRoles" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>👥 Manage Roles</button>
+            <button onClick={() => setMode("manageCompany")}
+              className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "manageCompany" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>🏢 Manage Company</button>
             <button onClick={() => setMode("select")}
               className={`block w-full text-left px-2 py-1 text-xs rounded ${mode === "select" ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>🔍 Select User</button>
           </div>
@@ -262,6 +264,8 @@ function UserManager() {
             <div className="text-slate-400 text-sm">← Search and select a user, or click Add User</div>
           ) : mode === "manageRoles" ? (
             <ManageRoles users={users} />
+          ) : mode === "manageCompany" ? (
+            <ManageCompany users={users} />
           ) : (
             <div className="max-w-md">
               <h3 className="text-sm font-semibold text-slate-900 mb-4">{mode === "add" ? "Add New User" : "Edit User"}</h3>
@@ -602,6 +606,225 @@ function ManageRoles({ users }: { users: any[] }) {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Manage Company ────────────────────────────────────────────────────────
+
+function ManageCompany({ users }: { users: any[] }) {
+  const [companies, setCompanies] = useState<any[]>([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [companyPage, setCompanyPage] = useState(1);
+  const [companyPerPage, setCompanyPerPage] = useState(5);
+  const [companyTotalRows, setCompanyTotalRows] = useState(0);
+  const [companyTotalPages, setCompanyTotalPages] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({ companyID: "", companyName: "", referenceID: "", shortName: "" });
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [submode, setSubmode] = useState<"select" | "add">("select");
+
+  const loadCompanies = useCallback(async (pg = 1, pp = 5) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/table/Company/data?page=${pg}&perPage=${pp}`);
+      const d = await res.json();
+      setCompanies(d.rows || []);
+      setCompanyTotalRows(d.totalRows);
+      setCompanyTotalPages(d.totalPages);
+      setCompanyPage(d.page);
+    } catch { /* ignore */ }
+    finally { setLoading(false); }
+  }, []);
+
+  useEffect(() => { loadCompanies(); }, [loadCompanies]);
+
+  useEffect(() => {
+    if (selectedCompanyId) {
+      const c = companies.find((c: any) => c.id === selectedCompanyId);
+      if (c) setForm({ companyID: c.companyID || "", companyName: c.companyName || "", referenceID: c.referenceID || "", shortName: c.shortName || "" });
+    } else {
+      setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" });
+    }
+  }, [selectedCompanyId, companies]);
+
+  const saveCompany = async () => {
+    setMsg(null);
+    try {
+      const body: any = { companyID: form.companyID, companyName: form.companyName, referenceID: form.referenceID, shortName: form.shortName };
+      let res: Response;
+      if (submode === "add") {
+        body.id = `comp_${Date.now()}`;
+        res = await fetch("/api/admin/table/Company", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      } else {
+        if (!selectedCompanyId) return;
+        res = await fetch(`/api/admin/table/Company/${selectedCompanyId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      }
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setMsg({ type: "ok", text: submode === "add" ? "Company created." : "Company updated." });
+      if (submode === "add") { setSubmode("select"); setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }
+      loadCompanies(companyPage, companyPerPage);
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+  };
+
+  const assignUserToCompany = async () => {
+    if (!selectedUserId || !selectedCompanyId) { setMsg({ type: "err", text: "Select both a user and a company." }); return; }
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/table/User/${selectedUserId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ companyId: selectedCompanyId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Failed");
+      setMsg({ type: "ok", text: "User assigned to company." });
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+  };
+
+  const deleteCompany = async (id: string) => {
+    if (!confirm("Delete this company?")) return;
+    try {
+      await fetch(`/api/admin/table/Company/${id}`, { method: "DELETE" });
+      if (selectedCompanyId === id) { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }
+      loadCompanies(companyPage, companyPerPage);
+    } catch { /* ignore */ }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-2.5 border-b border-slate-200 font-semibold text-slate-900 text-sm">🏢 Manage Company</div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {msg && (
+          <div className={`rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{msg.text}</div>
+        )}
+
+        {/* ─── Company Definitions ─── */}
+        <div className="rounded border border-slate-200">
+          <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-700">Companies</span>
+            <div className="flex items-center gap-2">
+              <select value={companyPerPage} onChange={(e) => { const pp = +e.target.value; setCompanyPerPage(pp); loadCompanies(1, pp); }}
+                className="border rounded px-1.5 py-0.5 text-xs">
+                {[5,10,25,50].map(n => <option key={n} value={n}>{n}/pg</option>)}
+              </select>
+              <button onClick={() => { setSubmode("add"); setSelectedCompanyId(""); }}
+                className="text-xs text-blue-600 hover:underline">＋ Add Company</button>
+            </div>
+          </div>
+          {loading ? <div className="p-3 text-xs text-slate-400">Loading...</div>
+          : companies.length === 0 ? <div className="p-3 text-xs text-slate-400">No companies defined.</div>
+          : (
+            <table className="w-full text-xs">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600 w-8">#</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">Company Name</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">ID</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">Short Name</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">Reference</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600 w-20">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companies.map((c: any, i: number) => (
+                  <tr key={c.id} className={`border-t border-slate-100 hover:bg-slate-50 ${selectedCompanyId === c.id ? "bg-blue-50" : ""}`}>
+                    <td className="px-2 py-1 text-slate-400">{((companyPage - 1) * companyPerPage) + i + 1}</td>
+                    <td className="px-2 py-1">
+                      <button onClick={() => { setSelectedCompanyId(c.id); setSubmode("select"); }}
+                        className="text-blue-600 hover:underline font-medium">{c.companyName}</button>
+                    </td>
+                    <td className="px-2 py-1 text-slate-500 font-mono text-2xs">{c.companyID}</td>
+                    <td className="px-2 py-1 text-slate-600">{c.shortName || "—"}</td>
+                    <td className="px-2 py-1 text-slate-500">{c.referenceID || "—"}</td>
+                    <td className="px-2 py-1">
+                      <button onClick={() => deleteCompany(c.id)} className="text-red-500 hover:underline text-2xs">Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {companyTotalPages > 1 && (
+            <div className="flex items-center justify-between px-3 py-1.5 border-t border-slate-100 bg-slate-50 text-xs">
+              <span className="text-slate-400">{companyTotalRows} companies</span>
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => loadCompanies(1, companyPerPage)} disabled={companyPage<=1} className="px-1.5 py-0.5 border rounded disabled:opacity-30">«</button>
+                <button onClick={() => loadCompanies(companyPage-1, companyPerPage)} disabled={companyPage<=1} className="px-1.5 py-0.5 border rounded disabled:opacity-30">‹</button>
+                <span className="px-1.5">{companyPage}/{companyTotalPages||1}</span>
+                <button onClick={() => loadCompanies(companyPage+1, companyPerPage)} disabled={companyPage>=companyTotalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30">›</button>
+                <button onClick={() => loadCompanies(companyTotalPages, companyPerPage)} disabled={companyPage>=companyTotalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30">»</button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ─── Company Editor ─── */}
+        {(selectedCompanyId || submode === "add") && (
+          <div className="rounded border border-slate-200">
+            <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">
+              {submode === "add" ? "New Company" : `Edit: ${form.companyName}`}
+            </div>
+            <div className="p-3 space-y-2">
+              <div className="grid grid-cols-2 gap-2">
+                <label className="block"><span className="text-xs text-slate-500">Company ID</span>
+                  <input value={form.companyID} onChange={e => setForm(f => ({ ...f, companyID: e.target.value }))}
+                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="e.g. C001" />
+                </label>
+                <label className="block"><span className="text-xs text-slate-500">Short Name</span>
+                  <input value={form.shortName} onChange={e => setForm(f => ({ ...f, shortName: e.target.value }))}
+                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="e.g. SEA" />
+                </label>
+              </div>
+              <label className="block"><span className="text-xs text-slate-500">Company Name</span>
+                <input value={form.companyName} onChange={e => setForm(f => ({ ...f, companyName: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="e.g. Seam Assurance Sdn Bhd" />
+              </label>
+              <label className="block"><span className="text-xs text-slate-500">Reference ID</span>
+                <input value={form.referenceID} onChange={e => setForm(f => ({ ...f, referenceID: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="e.g. REF-001" />
+              </label>
+              <div className="flex gap-2">
+                <button onClick={saveCompany} className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
+                  {submode === "add" ? "Create Company" : "Save Changes"}
+                </button>
+                {submode === "select" && (
+                  <button onClick={() => { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }}
+                    className="rounded border px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ─── User-Company Assignment ─── */}
+        <div className="rounded border border-slate-200">
+          <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
+            <span className="text-xs font-semibold text-slate-700">User ↔ Company Assignment</span>
+          </div>
+          <div className="p-3">
+            <div className="flex items-end gap-2 flex-wrap">
+              <label className="block flex-1 min-w-[180px]">
+                <span className="text-xs text-slate-500">User</span>
+                <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm bg-white">
+                  <option value="">— Select User —</option>
+                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name || u.username} {u.companyId ? `(${u.companyId})` : "(no company)"}</option>)}
+                </select>
+              </label>
+              <label className="block flex-1 min-w-[180px]">
+                <span className="text-xs text-slate-500">Company</span>
+                <select value={selectedCompanyId} onChange={e => setSelectedCompanyId(e.target.value)}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm bg-white">
+                  <option value="">— Select Company —</option>
+                  {companies.map((c: any) => <option key={c.id} value={c.id}>{c.companyName} ({c.shortName || c.companyID})</option>)}
+                </select>
+              </label>
+              <button onClick={assignUserToCompany} className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 h-[30px]">＋ Assign</button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
