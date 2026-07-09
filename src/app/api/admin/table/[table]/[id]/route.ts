@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import bcrypt from "bcryptjs";
 
 /**
  * Check for child records that would block deletion
@@ -215,6 +216,11 @@ export async function PUT(
         },
       });
     } else {
+      // User: hash password before storing
+      if (table === "User" && body.password) {
+        body.passwordHash = await bcrypt.hash(body.password, 10);
+        delete body.password;
+      }
       const camelName = table.charAt(0).toLowerCase() + table.slice(1);
       const model = (prisma as any)[camelName];
       if (!model) {

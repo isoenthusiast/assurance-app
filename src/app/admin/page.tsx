@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users">("tables");
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -56,7 +56,7 @@ export default function AdminDashboard() {
           <div className="space-y-1">
             <button onClick={() => setView("badges")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "badges" ? "bg-blue-50 font-medium" : ""}`}>🏆 Badge Management</button>
             <button onClick={() => setView("templates")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "templates" ? "bg-blue-50 font-medium" : ""}`}>📋 Assessment Templates</button>
-            <button onClick={() => { setView("tables"); selectTable("User"); }} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "tables" && selectedTable === "User" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
+            <button onClick={() => setView("users")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "users" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
           </div>
         </div>
 
@@ -82,6 +82,8 @@ export default function AdminDashboard() {
           <iframe src="/setup/badges" className="w-full h-full border-0" title="Badge Management" />
         ) : view === "templates" ? (
           <iframe src="/admin/templates" className="w-full h-full border-0" title="Assessment Templates" />
+        ) : view === "users" ? (
+          <UserManager />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
@@ -155,6 +157,107 @@ export default function AdminDashboard() {
               )}
             </div>
           </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─── User Manager ──────────────────────────────────────────────────────────
+
+function UserManager() {
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [form, setForm] = useState({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0 });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/admin/table/User/data?perPage=500")
+      .then(r => r.json())
+      .then(d => setUsers(d.rows || []));
+  }, []);
+
+  useEffect(() => {
+    if (!selectedUserId) { setForm({ name: "", username: "", role: "Assessor", password: "", totalPoints: 0 }); return; }
+    const u = users.find((u: any) => u.id === selectedUserId);
+    if (u) setForm({ name: u.name || "", username: u.username || "", role: u.role || "Assessor", password: "", totalPoints: u.totalPoints || 0 });
+  }, [selectedUserId, users]);
+
+  const handleSave = async () => {
+    if (!selectedUserId) return;
+    setSaving(true); setMsg(null);
+    try {
+      const body: any = { name: form.name, username: form.username, role: form.role, totalPoints: Number(form.totalPoints) };
+      if (form.password) body.password = form.password; // will be hashed by API
+      const res = await fetch(`/api/admin/table/User/${selectedUserId}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setMsg({ type: "ok", text: "User updated." });
+      setForm(f => ({ ...f, password: "" }));
+      // Refresh user list
+      const r = await fetch("/api/admin/table/User/data?perPage=500");
+      setUsers((await r.json()).rows || []);
+    } catch (e: any) {
+      setMsg({ type: "err", text: e.message });
+    } finally { setSaving(false); }
+  };
+
+  return (
+    <div className="flex h-full">
+      {/* User selector */}
+      <div className="w-48 border-r border-slate-200 p-3 overflow-y-auto">
+        <div className="text-xs font-semibold text-slate-500 uppercase mb-2">Select User</div>
+        {users.map((u: any) => (
+          <button key={u.id} onClick={() => setSelectedUserId(u.id)}
+            className={`w-full text-left px-2 py-1.5 text-xs rounded mb-0.5 hover:bg-slate-100 ${selectedUserId === u.id ? "bg-blue-50 font-medium" : "text-slate-700"}`}>
+            {u.name || u.username}
+            <span className="text-slate-400 ml-1 text-2xs">{u.role}</span>
+          </button>
+        ))}
+      </div>
+      {/* Edit form */}
+      <div className="flex-1 p-6 overflow-y-auto">
+        {!selectedUserId ? (
+          <div className="text-slate-400 text-sm">← Select a user to edit</div>
+        ) : (
+          <div className="max-w-md">
+            <h3 className="text-sm font-semibold text-slate-900 mb-4">Edit User</h3>
+            {msg && (
+              <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{msg.text}</div>
+            )}
+            <div className="space-y-3">
+              <label className="block">
+                <span className="text-xs text-slate-500">Name</span>
+                <input value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Username</span>
+                <input value={form.username} onChange={e => setForm(f => ({ ...f, username: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Password</span>
+                <input type="password" value={form.password} onChange={e => setForm(f => ({ ...f, password: e.target.value }))} placeholder="Leave blank to keep current" className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+                <span className="text-2xs text-slate-400">Entered password will be hashed before storage</span>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Role</span>
+                <select value={form.role} onChange={e => setForm(f => ({ ...f, role: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm bg-white">
+                  <option value="Assessor">Assessor</option>
+                  <option value="Admin">Admin</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Total Points</span>
+                <input type="number" value={form.totalPoints} onChange={e => setForm(f => ({ ...f, totalPoints: Number(e.target.value) }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />
+              </label>
+              <button onClick={handleSave} disabled={saving}
+                className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>
