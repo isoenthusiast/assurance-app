@@ -262,7 +262,7 @@ function LeaderboardCard({
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="rounded-lg border border-slate-200 bg-white p-6">
-        <h2 className="text-lg font-semibold text-slate-900 mb-4">Leaderboard</h2>
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">Assurance Leaderboard</h2>
         <p className="text-slate-500">No leaderboard data yet.</p>
       </div>
     );
@@ -270,7 +270,7 @@ function LeaderboardCard({
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-6">
-      <h2 className="text-lg font-semibold text-slate-900 mb-4">Leaderboard</h2>
+      <h2 className="text-lg font-semibold text-slate-900 mb-4">Assurance Leaderboard</h2>
 
       {userRank && (
         <div className="mb-4 p-3 bg-blue-50 rounded text-sm">
