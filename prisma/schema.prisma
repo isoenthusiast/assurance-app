@@ -490,6 +490,19 @@ model Company {
   createdAt    DateTime @default(now())
 }
 
+model UserFavorite {
+  id         String   @id @default(cuid())
+  userId     String
+  entityType String
+  entityId   String
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, entityType, entityId])
+  @@index([userId])
+  @@index([entityType])
+  @@index([entityId])
+}
+
 model AssessmentActType {
   id              String   @id @default(cuid())
   assacttypeid    String   @unique

@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 10, 2026 (v2.2.0)  
+**Last Updated:** July 10, 2026 (v2.3.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.3.0 — User Favorites System:** Added `UserFavorite` table for generic entity favoriting (ProcessArea, SubProcess, Control). Unique per user+entityType+entityId. Enables personalized filtered views. Dashboard leaderboard now excludes Admin users and shows top-3 + user's own position.
+>
 > **v2.2.0 — Knowledgebase & Document Conversion:** Added Knowledgebase model for storing converted documents. New `POST /api/convert` endpoint converts .docx/.pdf to Markdown via Python (python-docx + PyMuPDF) and optionally saves to Knowledgebase. New `/admin/knowledgebase` page with drag-and-drop upload, preview, search, and download.
 >
 > **v2.1.0 — Attachment System:** Added Attachment & AttachmentMapping models with reusable AttachmentList component. Actions now support `actionTaken` field and file attachments. Attachments can be linked to any table (Action, Finding, Sample) via the mapping table.
@@ -65,6 +67,12 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 - **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy)
   - Fed by `POST /api/convert` which runs Python (python-docx / PyMuPDF) to convert .docx/.pdf → Markdown
   - UI at `/admin/knowledgebase` with drag-and-drop upload, full-text preview, search, .md download
+
+### Favorites System
+- **UserFavorite** — generic favoriting for any entity (userId, entityType, entityId, createdAt)
+  - `entityType`: "ProcessArea" | "SubProcess" | "Control"
+  - Unique constraint on (userId, entityType, entityId) — cannot favorite the same entity twice
+  - Enables personalized views: "Show only my favorite processes/controls"
 
 ### Template Models
 - **AssessmentTemplate** — reusable templates

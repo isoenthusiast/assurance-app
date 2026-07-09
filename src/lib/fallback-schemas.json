@@ -965,5 +965,32 @@
       "required": true,
       "isId": false
     }
+  },
+  "UserFavorite": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "entityType": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "entityId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
   }
 }
