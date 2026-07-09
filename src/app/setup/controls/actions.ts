@@ -73,21 +73,22 @@ export async function saveControl(formData: FormData) {
   if (id) {
     await prisma.control.update({ where: { id }, data });
 
-    // Preserve existing ControlSubProcess junction links
+    // Sync ControlSubProcess junction links
     const linkedIds = formData.get("linkedSubProcessIds")?.toString();
+    const primarySpId = formData.get("primarySubProcessId")?.toString();
     if (linkedIds !== undefined) {
       const subProcessIds = linkedIds ? linkedIds.split(",").filter(Boolean) : [];
       // Delete links no longer in the set
       await prisma.controlSubProcess.deleteMany({
         where: { controlId: id, subProcessId: { notIn: subProcessIds } },
       });
-      // Upsert current links
+      // Upsert current links with primary flag
       for (const spId of subProcessIds) {
         if (spId && spId !== data.subProcessId) {
           await prisma.controlSubProcess.upsert({
             where: { controlId_subProcessId: { controlId: id, subProcessId: spId } },
-            create: { controlId: id, subProcessId: spId },
-            update: {},
+            create: { controlId: id, subProcessId: spId, isPrimary: spId === primarySpId },
+            update: { isPrimary: spId === primarySpId },
           });
         }
       }

@@ -59,6 +59,10 @@ export default function ControlForm({
 
   const existingLinkedIds = editing?.controlSubProcesses?.map(csp => csp.subProcessId) ?? [];
   const [linkedSubProcessIds, setLinkedSubProcessIds] = useState<Set<string>>(new Set(existingLinkedIds));
+  const [primarySubProcessId, setPrimarySubProcessId] = useState<string>(
+    editing?.subProcessId ?? ""
+  );
+  const [showLinkedList, setShowLinkedList] = useState(false);
 
   const filteredSubProcesses = subProcesses.filter((sp) => sp.processAreaId === processAreaId);
 
@@ -229,22 +233,54 @@ export default function ControlForm({
           <div className="space-y-2">
             <label className="text-sm font-medium text-slate-700">Linked Sub-Processes</label>
             <input type="hidden" name="linkedSubProcessIds" value={Array.from(linkedSubProcessIds).join(",")} />
-            <div className="max-h-40 overflow-y-auto rounded border border-slate-200 p-2">
-              {subProcesses.filter(sp => sp.id !== editing.subProcessId).map(sp => (
-                <label key={sp.id} className="flex items-center gap-2 py-0.5 text-sm cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={linkedSubProcessIds.has(sp.id)}
-                    onChange={e => {
-                      const next = new Set(linkedSubProcessIds);
-                      e.target.checked ? next.add(sp.id) : next.delete(sp.id);
-                      setLinkedSubProcessIds(next);
-                    }}
-                  />
-                  {sp.name}
-                </label>
-              ))}
+            <input type="hidden" name="primarySubProcessId" value={primarySubProcessId} />
+            <div className="max-h-48 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
+              {filteredSubProcesses.map(sp => {
+                const isLinked = linkedSubProcessIds.has(sp.id);
+                const isPrimary = primarySubProcessId === sp.id;
+                return (
+                  <label key={sp.id}
+                    className={`flex items-center gap-2 px-3 py-1.5 text-sm ${isPrimary ? 'bg-blue-50' : 'hover:bg-slate-50 cursor-pointer'}`}>
+                    <input type="checkbox" checked={isLinked}
+                      onChange={() => {
+                        const next = new Set(linkedSubProcessIds);
+                        if (next.has(sp.id)) {
+                          next.delete(sp.id);
+                          if (primarySubProcessId === sp.id) setPrimarySubProcessId("");
+                        } else {
+                          next.add(sp.id);
+                          if (!primarySubProcessId) setPrimarySubProcessId(sp.id);
+                        }
+                        setLinkedSubProcessIds(next);
+                      }} className="rounded" />
+                    <span className={`text-slate-700 ${isPrimary ? 'font-medium' : ''}`}>{sp.name}</span>
+                    {isLinked && (
+                      <button
+                        type="button"
+                        onClick={() => setPrimarySubProcessId(sp.id)}
+                        className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isPrimary ? 'bg-blue-100 text-blue-700 font-medium' : 'text-slate-400 hover:text-blue-600'}`}
+                        title={isPrimary ? "Primary sub-process" : "Set as primary"}>
+                        {isPrimary ? "★ Primary" : "☆ Set Primary"}
+                      </button>
+                    )}
+                  </label>
+                );
+              })}
             </div>
+            {/* Selected summary */}
+            <button type="button" onClick={() => setShowLinkedList(!showLinkedList)}
+              className="text-xs text-blue-600 hover:underline">
+              {showLinkedList ? "▲ Hide" : "▼ Show"} linked sub-processes ({linkedSubProcessIds.size})
+            </button>
+            {showLinkedList && (
+              <div className="rounded border border-slate-200 bg-slate-50 p-2 max-h-32 overflow-y-auto">
+                {[...linkedSubProcessIds].map(id => {
+                  const sp = subProcesses.find(s => s.id === id);
+                  const isPrimary = primarySubProcessId === id;
+                  return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id} {isPrimary && <span className="text-blue-600 font-medium">★ Primary</span>}</div>;
+                })}
+              </div>
+            )}
           </div>
         )}
 
