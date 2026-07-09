@@ -93,6 +93,7 @@ model ControlSubProcess {
   id           String      @id @default(cuid())
   controlId    String
   subProcessId String
+  isPrimary    Boolean     @default(false)
   createdAt    DateTime    @default(now())
   control      Control     @relation(fields: [controlId], references: [id], onDelete: Cascade)
   subProcess   SubProcess  @relation(fields: [subProcessId], references: [id], onDelete: Cascade)

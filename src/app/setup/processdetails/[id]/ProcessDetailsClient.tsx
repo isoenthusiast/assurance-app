@@ -147,6 +147,7 @@ export default function ProcessDetailsClient({
   const [editingControl, setEditingControl] = useState<ControlSummary | null>(null);
   const [editForm, setEditForm] = useState<Record<string, string>>({});
   const [linkedSubProcessIds, setLinkedSubProcessIds] = useState<Set<string>>(new Set());
+  const [primarySubProcessId, setPrimarySubProcessId] = useState<string>("");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -188,6 +189,7 @@ export default function ProcessDetailsClient({
     setFilterStandard("");
     setFilterPA("");
     setShowLinkedList(false);
+    setPrimarySubProcessId("");
 
     // Fetch all process areas and sub-processes for the filter
     const [paRes, spRes] = await Promise.all([
@@ -208,10 +210,11 @@ export default function ProcessDetailsClient({
       const res = await fetch(`/api/admin/table/ControlSubProcess/data?controlId=${control.id}`);
       if (res.ok) {
         const data = await res.json();
-        const linkedIds = (data.rows || [])
-          .filter((row: any) => row.controlId === control.id)
-          .map((row: any) => row.subProcessId);
-        setLinkedSubProcessIds(new Set<string>(linkedIds));
+        const rows = (data.rows || []).filter((r: any) => r.controlId === control.id);
+        setLinkedSubProcessIds(new Set<string>(rows.map((r: any) => r.subProcessId)));
+        // Find which one is primary
+        const primary = rows.find((r: any) => r.isPrimary);
+        if (primary) setPrimarySubProcessId(primary.subProcessId);
       }
     } catch {
       setLinkedSubProcessIds(new Set<string>());
@@ -267,8 +270,20 @@ export default function ProcessDetailsClient({
         await fetch("/api/admin/table/ControlSubProcess/data", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ controlId: editingControl.id, subProcessId: spId }),
+          body: JSON.stringify({ controlId: editingControl.id, subProcessId: spId, isPrimary: spId === primarySubProcessId }),
         }).catch(() => {});
+      }
+      // Update isPrimary on existing links that changed
+      for (const spId of linkedSubProcessIds) {
+        const linkId = existingBySubProcess.get(spId);
+        if (linkId) {
+          const shouldBePrimary = spId === primarySubProcessId;
+          await fetch(`/api/admin/table/ControlSubProcess/${linkId}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ isPrimary: shouldBePrimary }),
+          }).catch(() => {});
+        }
       }
 
       setEditingControl(null);
@@ -928,19 +943,36 @@ export default function ProcessDetailsClient({
                   {allSubProcesses.filter((sp: any) => {
                     if (!filterPA) return true;
                     return sp.processAreaId === filterPA;
-                  }).map((sp: any) => (
+                  }).map((sp: any) => {
+                    const isLinked = linkedSubProcessIds.has(sp.id);
+                    const isPrimary = primarySubProcessId === sp.id;
+                    return (
                       <label key={sp.id}
-                        className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-slate-50 cursor-pointer">
-                        <input type="checkbox" checked={linkedSubProcessIds.has(sp.id)}
+                        className={`flex items-center gap-2 px-3 py-1.5 text-sm ${isPrimary ? 'bg-blue-50' : 'hover:bg-slate-50 cursor-pointer'}`}>
+                        <input type="checkbox" checked={isLinked}
                           onChange={() => {
                             const next = new Set(linkedSubProcessIds);
-                            if (next.has(sp.id)) next.delete(sp.id); else next.add(sp.id);
+                            if (next.has(sp.id)) {
+                              next.delete(sp.id);
+                              if (primarySubProcessId === sp.id) setPrimarySubProcessId("");
+                            } else {
+                              next.add(sp.id);
+                              if (!primarySubProcessId) setPrimarySubProcessId(sp.id);
+                            }
                             setLinkedSubProcessIds(next);
                           }} className="rounded" />
-                        <span className="text-slate-700">{sp.name}</span>
-                        {linkedSubProcessIds.has(sp.id) && <span className="text-xs text-slate-400 ml-auto">linked</span>}
+                        <span className={`text-slate-700 ${isPrimary ? 'font-medium' : ''}`}>{sp.name}</span>
+                        {isLinked && (
+                          <button
+                            onClick={(e) => { e.preventDefault(); setPrimarySubProcessId(sp.id); }}
+                            className={`ml-auto text-xs px-1.5 py-0.5 rounded ${isPrimary ? 'bg-blue-100 text-blue-700 font-medium' : 'text-slate-400 hover:text-blue-600'}`}
+                            title={isPrimary ? "Primary sub-process" : "Set as primary"}>
+                            {isPrimary ? "★ Primary" : "☆ Set Primary"}
+                          </button>
+                        )}
                       </label>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Selected summary */}
@@ -952,7 +984,8 @@ export default function ProcessDetailsClient({
                   <div className="mt-1 rounded border border-slate-200 bg-slate-50 p-2 max-h-32 overflow-y-auto">
                     {[...linkedSubProcessIds].map(id => {
                       const sp = allSubProcesses.find((s: any) => s.id === id);
-                      return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id}</div>;
+                      const isPrimary = primarySubProcessId === id;
+                      return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id} {isPrimary && <span className="text-blue-600 font-medium">★ Primary</span>}</div>;
                     })}
                   </div>
                 )}
