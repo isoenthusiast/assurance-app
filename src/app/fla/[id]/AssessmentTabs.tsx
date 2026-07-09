@@ -6,6 +6,7 @@ import ControlsSelectorWrapper from './ControlsSelectorWrapper';
 import AssignedControlsTable from './AssignedControlsTable';
 import SamplesTable from './SamplesTable';
 import FindingsTable, { Finding, FindingsTableHandle } from './FindingsTable';
+import AssessmentActivitiesPanel from './AssessmentActivitiesPanel';
 import { useRef } from 'react';
 
 const TABS = [
@@ -144,14 +145,12 @@ export default function AssessmentTabs({
         )}
 
         {activeTab === 'activities' && (
-          <div>
+          <div className="flex flex-col h-full">
             <div className="px-4 py-2.5 border-b border-slate-200">
               <span className="font-semibold text-slate-900 text-sm">📅 Assessment Activities</span>
             </div>
-            <div className="p-4">
-              <div className="text-sm text-slate-400 italic p-8 text-center">
-                Assessment activities will be available here. Use this section to track interviews, document reviews, and site visits linked to this assessment.
-              </div>
+            <div className="flex-1 overflow-hidden">
+              <AssessmentActivitiesPanel assessmentId={assessment.id} users={users} />
             </div>
           </div>
         )}
