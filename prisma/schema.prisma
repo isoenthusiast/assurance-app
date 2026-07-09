@@ -498,6 +498,55 @@ model AssessmentActType {
   createddate     DateTime @default(now())
 }
 
+model Aact {
+  id                  String   @id @default(cuid())
+  aaID                String   @unique
+  assuranceID         String
+  assacttypeid        String
+  activityName        String
+  activityDate        DateTime
+  activityStartTime   String
+  activityEndTime     String
+  activityDuration    String?
+  activityDescription String?
+  createdAt           DateTime @default(now())
+}
+
+model AActControls {
+  id        String   @id @default(cuid())
+  aaId      String
+  controlId String
+  createdAt DateTime @default(now())
+
+  @@unique([aaId, controlId])
+  @@index([aaId])
+  @@index([controlId])
+}
+
+model AActUsers {
+  id                String   @id @default(cuid())
+  aaId              String
+  userId            String
+  userRoles         String
+  assignmentRemarks String?
+  createdAt         DateTime @default(now())
+
+  @@unique([aaId, userId])
+  @@index([aaId])
+  @@index([userId])
+}
+
+model AActDetails {
+  id                     String   @id @default(cuid())
+  aactDetID              String   @unique
+  aaId                   String
+  detail                 String?
+  summaryAgainstControls String?
+  createdAt              DateTime @default(now())
+
+  @@index([aaId])
+}
+
 enum LOA {
   FirstLine
   SecondLine

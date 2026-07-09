@@ -785,5 +785,148 @@
       "required": true,
       "isId": false
     }
+  },
+  "Aact": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "aaID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "assuranceID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "assacttypeid": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "activityName": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "activityDate": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    },
+    "activityStartTime": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "activityEndTime": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "activityDuration": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "activityDescription": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AActControls": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "aaId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "controlId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AActUsers": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "aaId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "userRoles": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "assignmentRemarks": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "AActDetails": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "aactDetID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "aaId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "detail": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "summaryAgainstControls": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
   }
 }
