@@ -57,13 +57,22 @@ export async function GET(
     // Generic fetch — works for any Prisma model
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
 
+    // Build optional where clause from query params (e.g. ?controlId=xxx)
+    const url = new URL(request.url);
+    const where: Record<string, string> = {};
+    url.searchParams.forEach((val, key) => {
+      if (key !== "page" && key !== "perPage") where[key] = val;
+    });
+
     try {
       const model = (prisma as any)[camelName];
       if (!model) {
         return NextResponse.json({ error: `Unknown table: ${table}` }, { status: 404 });
       }
 
-      rows = await model.findMany();
+      rows = Object.keys(where).length > 0
+        ? await model.findMany({ where })
+        : await model.findMany();
       totalRows = rows.length;
 
       // ControlAssignment: resolve controlRef/name into a human-readable ControlID
@@ -105,7 +114,6 @@ export async function GET(
     }
 
     // Pagination support
-    const url = new URL(request.url);
     const page = parseInt(url.searchParams.get("page") || "1");
     const perPage = parseInt(url.searchParams.get("perPage") || "50");
     const start = (page - 1) * perPage;
