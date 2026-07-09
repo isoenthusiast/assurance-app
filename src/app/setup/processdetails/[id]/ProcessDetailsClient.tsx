@@ -211,12 +211,10 @@ export default function ProcessDetailsClient({
         const linkedIds = (data.rows || [])
           .filter((row: any) => row.controlId === control.id)
           .map((row: any) => row.subProcessId);
-        const withPrimary = new Set<string>(linkedIds);
-        withPrimary.add(control.subProcessId);
-        setLinkedSubProcessIds(withPrimary);
+        setLinkedSubProcessIds(new Set<string>(linkedIds));
       }
     } catch {
-      setLinkedSubProcessIds(new Set([control.subProcessId]));
+      setLinkedSubProcessIds(new Set<string>());
     }
   };
 
@@ -257,21 +255,14 @@ export default function ProcessDetailsClient({
       }
 
       const existingBySubProcess = new Map(existingLinks.map((l) => [l.subProcessId, l.id]));
-      // Never delete the primary sub-process link
-      const toDelete = existingLinks.filter(
-        (l) => l.subProcessId !== editingControl.subProcessId && !linkedSubProcessIds.has(l.subProcessId)
-      );
-      const toCreate = Array.from(linkedSubProcessIds)
-        .filter((spId) => spId !== editingControl.subProcessId) // primary is always linked
-        .filter((spId) => !existingBySubProcess.has(spId));
-
-      // Delete removed links (excluding primary)
-      for (const link of toDelete) {
-        await fetch(`/api/admin/table/ControlSubProcess/${link.id}`, {
-          method: "DELETE",
-        }).catch(() => {});
-      }
+      // Delete removed links
+      const toDelete = existingLinks.filter((l) => !linkedSubProcessIds.has(l.subProcessId));
       // Create new links
+      const toCreate = Array.from(linkedSubProcessIds).filter((spId) => !existingBySubProcess.has(spId));
+
+      for (const link of toDelete) {
+        await fetch(`/api/admin/table/ControlSubProcess/${link.id}`, { method: "DELETE" }).catch(() => {});
+      }
       for (const spId of toCreate) {
         await fetch("/api/admin/table/ControlSubProcess/data", {
           method: "POST",
@@ -937,24 +928,19 @@ export default function ProcessDetailsClient({
                   {allSubProcesses.filter((sp: any) => {
                     if (!filterPA) return true;
                     return sp.processAreaId === filterPA;
-                  }).map((sp: any) => {
-                    const isPrimary = editingControl?.subProcessId === sp.id;
-                    return (
+                  }).map((sp: any) => (
                       <label key={sp.id}
-                        className={`flex items-center gap-2 px-3 py-1.5 text-sm ${isPrimary ? 'bg-blue-50' : 'hover:bg-slate-50 cursor-pointer'}`}>
-                        <input type="checkbox" checked={linkedSubProcessIds.has(sp.id)} disabled={isPrimary}
+                        className="flex items-center gap-2 px-3 py-1.5 text-sm hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" checked={linkedSubProcessIds.has(sp.id)}
                           onChange={() => {
-                            if (isPrimary) return;
                             const next = new Set(linkedSubProcessIds);
                             if (next.has(sp.id)) next.delete(sp.id); else next.add(sp.id);
                             setLinkedSubProcessIds(next);
                           }} className="rounded" />
-                        <span className={`text-slate-700 ${isPrimary ? 'font-medium' : ''}`}>{sp.name}</span>
-                        {isPrimary ? <span className="text-xs text-blue-600 ml-auto">Primary</span>
-                          : linkedSubProcessIds.has(sp.id) ? <span className="text-xs text-slate-400 ml-auto">linked</span> : null}
+                        <span className="text-slate-700">{sp.name}</span>
+                        {linkedSubProcessIds.has(sp.id) && <span className="text-xs text-slate-400 ml-auto">linked</span>}
                       </label>
-                    );
-                  })}
+                  ))}
                 </div>
 
                 {/* Selected summary */}
@@ -966,8 +952,7 @@ export default function ProcessDetailsClient({
                   <div className="mt-1 rounded border border-slate-200 bg-slate-50 p-2 max-h-32 overflow-y-auto">
                     {[...linkedSubProcessIds].map(id => {
                       const sp = allSubProcesses.find((s: any) => s.id === id);
-                      const isPrimary = editingControl?.subProcessId === id;
-                      return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id} {isPrimary && <span className="text-blue-600">(Primary)</span>}</div>;
+                      return <div key={id} className="text-xs text-slate-600 py-0.5">{sp?.name || id}</div>;
                     })}
                   </div>
                 )}

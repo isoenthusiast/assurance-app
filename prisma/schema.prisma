@@ -108,7 +108,7 @@ model Control {
   statement          String
   controlType        ControlType
   processAreaId      String
-  subProcessId       String
+  subProcessId       String?
   isHsseCritical     Boolean                            @default(false)
   ramRating          String?
   riskWeight         Int                                @default(1)
@@ -137,7 +137,7 @@ model Control {
   controlAssignments ControlAssignment[]
   controlSubProcesses ControlSubProcess[]
   templateLinkages   AssessmentTemplateControlLinkage[]
-  subProcess         SubProcess                         @relation(fields: [subProcessId], references: [id])
+  subProcess         SubProcess?                        @relation(fields: [subProcessId], references: [id])
   processArea        ProcessArea                        @relation(fields: [processAreaId], references: [id])
 
   @@index([controlRef])
