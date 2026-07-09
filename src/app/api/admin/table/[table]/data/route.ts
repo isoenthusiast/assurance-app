@@ -107,6 +107,26 @@ export async function GET(
       }));
     }
 
+    // Final fallback: query information_schema directly for any table with 0 rows
+    if (columns.length === 0) {
+      try {
+        const dbColumns = await (prisma as any).$queryRawUnsafe(
+          `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position`,
+          table
+        ) as Array<{ column_name: string; data_type: string }>;
+        if (dbColumns && dbColumns.length > 0) {
+          columns = dbColumns.map((c) => ({
+            name: c.column_name,
+            type: c.data_type.includes('timestamp') ? 'DateTime'
+                : c.data_type === 'integer' || c.data_type === 'bigint' ? 'Int'
+                : c.data_type === 'boolean' ? 'Boolean'
+                : c.data_type === 'double precision' || c.data_type === 'real' ? 'Float'
+                : 'String',
+          }));
+        }
+      } catch { /* information_schema fallback failed — columns stays empty */ }
+    }
+
     // ControlAssignment: ensure ControlID display column is after controlId
     if (table === 'ControlAssignment' && !columns.some((c) => c.name === 'ControlID')) {
       const idx = columns.findIndex((c) => c.name === 'controlId');
