@@ -44,6 +44,16 @@
       "type": "Boolean",
       "required": false,
       "isId": false
+    },
+    "position": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "companyId": {
+      "type": "String",
+      "required": false,
+      "isId": false
     }
   },
   "ControlAssignment": {
@@ -628,6 +638,119 @@
     "username": {
       "type": "String",
       "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "UserAchievement": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "badgeId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "earnedAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "UserRole": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "uRoleName": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "uRoleDescription": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "uRolePositions": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "uRoleReportingLine": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "UserRoleMapping": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "userId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "userRoleId": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "remarks": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "createdDate": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
+  "Company": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "companyID": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "companyName": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "referenceID": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "shortName": {
+      "type": "String",
+      "required": false,
       "isId": false
     },
     "createdAt": {
