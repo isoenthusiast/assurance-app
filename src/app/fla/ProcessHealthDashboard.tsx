@@ -44,6 +44,14 @@ export default function ProcessHealthDashboard({
 
   return (
     <div className="space-y-4">
+      {/* Legend */}
+      <div className="flex items-center gap-4 text-xs text-slate-500 bg-white rounded border border-slate-200 px-4 py-2">
+        <span className="font-medium text-slate-600">Legend:</span>
+        <span className="flex items-center gap-1"><span className="text-base">🟢</span> &gt;80 Healthy</span>
+        <span className="flex items-center gap-1"><span className="text-base">🟡</span> 50–80 Tolerable</span>
+        <span className="flex items-center gap-1"><span className="text-base">🔴</span> &lt;50 Not Tolerable</span>
+      </div>
+
       {Object.entries(grouped).map(([standard, items]) => {
         const totalControls = items.reduce((sum, p) => sum + p.controlCount, 0);
         const avgStandard = items.reduce((sum, p) => sum + p.avgHealth, 0) / items.length;
@@ -104,14 +112,6 @@ export default function ProcessHealthDashboard({
           </div>
         );
       })}
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 text-xs text-slate-500 bg-white rounded border border-slate-200 px-4 py-2">
-        <span className="font-medium text-slate-600">Legend:</span>
-        <span className="flex items-center gap-1"><span className="text-base">🟢</span> &gt;80 Healthy</span>
-        <span className="flex items-center gap-1"><span className="text-base">🟡</span> 50–80 Tolerable</span>
-        <span className="flex items-center gap-1"><span className="text-base">🔴</span> &lt;50 Not Tolerable</span>
-      </div>
     </div>
   );
 }
