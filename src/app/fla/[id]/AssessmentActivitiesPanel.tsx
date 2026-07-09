@@ -59,7 +59,6 @@ export default function AssessmentActivitiesPanel({
   // Add form state
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({
-    aaID: '',
     assacttypeid: 'ACT-001',
     activityName: '',
     activityDate: new Date().toISOString().slice(0, 10),
@@ -152,7 +151,7 @@ export default function AssessmentActivitiesPanel({
       if (!res.ok) throw new Error((await res.json()).error || 'Failed');
       setMsg({ type: 'ok', text: 'Activity created.' });
       setShowAdd(false);
-      setAddForm({ aaID: '', assacttypeid: 'ACT-001', activityName: '', activityDate: new Date().toISOString().slice(0, 10), activityStartTime: '09:00', activityEndTime: '10:00', activityDuration: '1h', activityDescription: '' });
+      setAddForm({ assacttypeid: 'ACT-001', activityName: '', activityDate: new Date().toISOString().slice(0, 10), activityStartTime: '09:00', activityEndTime: '10:00', activityDuration: '1h', activityDescription: '' });
       loadActivities();
     } catch (e: any) { setMsg({ type: 'err', text: e.message }); }
   };
