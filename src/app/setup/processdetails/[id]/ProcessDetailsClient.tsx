@@ -196,6 +196,7 @@ export default function ProcessDetailsClient({
     ]);
     if (paRes.ok) { const d = await paRes.json(); setAllProcessAreas(d.rows || []); }
     if (spRes.ok) { const d = await spRes.json(); setAllSubProcesses(d.rows || []); }
+    else { setAllSubProcesses(subProcesses); } // fallback to props
 
     // Fetch existing ControlSubProcess junction links
     try {
@@ -822,7 +823,7 @@ export default function ProcessDetailsClient({
 
       {editingControl && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
+          <div className="w-full max-w-2xl rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
             <h3 className="text-lg font-semibold text-slate-900 mb-4">Edit Control</h3>
 
             {saveError && (
@@ -928,7 +929,10 @@ export default function ProcessDetailsClient({
 
                 {/* Sub-Process checklist */}
                 <div className="max-h-40 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
-                  {allSubProcesses.filter((sp: any) => !filterPA || sp.processAreaId === filterPA).map((sp: any) => {
+                  {allSubProcesses.filter((sp: any) => {
+                    if (!filterPA) return true;
+                    return sp.processAreaId === filterPA;
+                  }).map((sp: any) => {
                     const isPrimary = editingControl?.subProcessId === sp.id;
                     return (
                       <label key={sp.id}
