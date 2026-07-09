@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { writeFile, mkdir, unlink } from "fs/promises";
+import { existsSync } from "fs";
 import { execFile } from "child_process";
 import path from "path";
 import os from "os";
@@ -15,13 +17,13 @@ function getPythonCommand(): string {
   if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY === "true") {
     return process.env.PYTHON_PATH || "python3";
   }
-  // Local dev: prefer .venv, fall back to system Python
+  // Local dev: prefer .venv
   const venvPython = path.join(process.cwd(), "..", ".venv", "Scripts", "python.exe");
-  try {
-    const { existsSync } = require("fs");
-    if (existsSync(venvPython)) return venvPython;
-  } catch {}
-  return "python3";
+  if (existsSync(venvPython)) return venvPython;
+  // Fallback: system Python (Windows paths)
+  const systemPython = "C:/Users/edwar/AppData/Local/Microsoft/WindowsApps/python3.13.exe";
+  if (existsSync(systemPython)) return systemPython;
+  return "python";
 }
 
 // POST — upload a .docx or .pdf and get Markdown back
@@ -34,6 +36,8 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File;
+    const saveToKB = formData.get("saveToKnowledgebase")?.toString() === "true";
+    const remarks = formData.get("remarks")?.toString() || null;
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
@@ -61,7 +65,7 @@ export async function POST(request: Request) {
     let stderr: string;
 
     try {
-      const result = await execFileAsync(pythonCmd, [SCRIPT, tmpPath, "--output", "-"], {
+      const result = await execFileAsync(pythonCmd, [SCRIPT, tmpPath], {
         timeout: 60_000, // 60 second timeout
         maxBuffer: 10 * 1024 * 1024, // 10 MB
       });
@@ -87,6 +91,20 @@ export async function POST(request: Request) {
     const originalName = file.name.replace(ext, "");
     const mdFileName = `${originalName}.md`;
 
+    // Optionally save to Knowledgebase
+    let kbRecord = null;
+    if (saveToKB) {
+      const username = (session.user as { name?: string }).name || "unknown";
+      kbRecord = await prisma.knowledgebase.create({
+        data: {
+          knowledgeName: originalName,
+          knowledgeContent: stdout,
+          remarks,
+          addedBy: username,
+        },
+      });
+    }
+
     return NextResponse.json({
       success: true,
       markdown: stdout,
@@ -94,6 +112,7 @@ export async function POST(request: Request) {
       sourceFileName: file.name,
       sourceSize: file.size,
       mdLength: stdout.length,
+      ...(kbRecord ? { knowledgebaseId: kbRecord.kID } : {}),
     });
   } catch (error) {
     console.error("Conversion error:", error);

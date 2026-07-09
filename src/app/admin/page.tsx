@@ -17,7 +17,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates" | "users">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase">("tables");
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -57,6 +57,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("badges")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "badges" ? "bg-blue-50 font-medium" : ""}`}>🏆 Badge Management</button>
             <button onClick={() => setView("templates")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "templates" ? "bg-blue-50 font-medium" : ""}`}>📋 Assessment Templates</button>
             <button onClick={() => setView("users")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "users" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
+            <button onClick={() => setView("knowledgebase")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "knowledgebase" ? "bg-blue-50 font-medium" : ""}`}>📚 Knowledgebase</button>
           </div>
         </div>
 
@@ -84,6 +85,8 @@ export default function AdminDashboard() {
           <iframe src="/admin/templates" className="w-full h-full border-0" title="Assessment Templates" />
         ) : view === "users" ? (
           <UserManager />
+        ) : view === "knowledgebase" ? (
+          <iframe src="/admin/knowledgebase" className="w-full h-full border-0" title="Knowledgebase" />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (

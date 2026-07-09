@@ -547,6 +547,19 @@ model AActDetails {
   @@index([aaId])
 }
 
+model Knowledgebase {
+  kID              String   @id @default(cuid())
+  knowledgeName    String
+  knowledgeContent String
+  remarks          String?
+  createdDate      DateTime @default(now())
+  addedBy          String
+
+  @@index([knowledgeName])
+  @@index([createdDate])
+  @@index([addedBy])
+}
+
 enum LOA {
   FirstLine
   SecondLine

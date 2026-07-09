@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 8, 2026 (v2.1.0)  
+**Last Updated:** July 10, 2026 (v2.2.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.2.0 — Knowledgebase & Document Conversion:** Added Knowledgebase model for storing converted documents. New `POST /api/convert` endpoint converts .docx/.pdf to Markdown via Python (python-docx + PyMuPDF) and optionally saves to Knowledgebase. New `/admin/knowledgebase` page with drag-and-drop upload, preview, search, and download.
+>
 > **v2.1.0 — Attachment System:** Added Attachment & AttachmentMapping models with reusable AttachmentList component. Actions now support `actionTaken` field and file attachments. Attachments can be linked to any table (Action, Finding, Sample) via the mapping table.
 
 ## 1. Executive Summary
@@ -28,7 +30,7 @@ The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control test
 | Testing | Playwright | 1.61.1 |
 | Deployment | Railway | Docker + PG Plugin |
 
-## 3. Database Schema (26 Models, 10 Enums)
+## 3. Database Schema (27 Models, 10 Enums)
 
 ### Enums
 Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 types), AssessmentStatus (Planned/InProgress/Completed/Cancelled), SampleStatus/Conclusion, Effectiveness, FindingSeverity, EmotionalDrive (8 drives), BadgeRarity
@@ -58,6 +60,11 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 ### Attachment System
 - **Attachment** — file metadata (fileName, filePath, fileSize, description, uploadedBy, uploadDate)
 - **AttachmentMapping** — polymorphic M2M: Attachment → any table (destTable, recId)
+
+### Knowledge Management
+- **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy)
+  - Fed by `POST /api/convert` which runs Python (python-docx / PyMuPDF) to convert .docx/.pdf → Markdown
+  - UI at `/admin/knowledgebase` with drag-and-drop upload, full-text preview, search, .md download
 
 ### Template Models
 - **AssessmentTemplate** — reusable templates
@@ -90,7 +97,7 @@ seam-assurance-app/
 │   │   ├── login/   # Client-side credentials form
 │   │   ├── fla/     # Dashboard, Create, Detail workflow
 │   │   ├── setup/   # Process Areas, Controls, Sub-Processes, Activity Types
-│   │   ├── admin/   # Admin dashboard, templates, generic table editor, CSV
+│   │   ├── admin/   # Admin dashboard, templates, knowledgebase, generic table editor, CSV
 │   │   └── api/     # 60+ API routes
 │   ├── components/  # NavBar, SignOutButton, GamificationDashboard
 │   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts
@@ -122,6 +129,9 @@ Full CRUD at `/api/admin/samples`, `/findings`, `/actions` with `/[id]`
 ### Attachments
 GET `/api/attachments?destTable=X&recId=Y`, POST (FormData upload), DELETE `/[id]`
 
+### Document Conversion
+POST `/api/convert` — upload .docx/.pdf, returns Markdown; optional `saveToKnowledgebase=true` + `remarks` to persist to Knowledgebase table. Uses Python script (`scripts/convert_to_md.py`) with python-docx and PyMuPDF.
+
 ### Templates
 GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
 
@@ -145,6 +155,7 @@ POST `/api/controls/reference` — quick-add sample types and record source type
 | `/fla/[id]` | Full assessment workflow (info, controls, samples, findings, actions) |
 | `/admin` | Admin dashboard with 12 table tiles |
 | `/admin/templates` | Template list + editor |
+| `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
 | `/admin/table/[table]` | Generic table editor + SQL executor |
 | `/setup/process-areas` | Process areas with standard filter |
 | `/setup/processdetails/[id]` | 3-tab drill-down (Overview, Controls, Assessments) |
