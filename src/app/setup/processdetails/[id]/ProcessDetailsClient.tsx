@@ -195,8 +195,13 @@ export default function ProcessDetailsClient({
       fetch("/api/admin/table/SubProcess/data?perPage=5000"),
     ]);
     if (paRes.ok) { const d = await paRes.json(); setAllProcessAreas(d.rows || []); }
-    if (spRes.ok) { const d = await spRes.json(); setAllSubProcesses(d.rows || []); }
-    else { setAllSubProcesses(subProcesses); } // fallback to props
+    if (spRes.ok) {
+      const d = await spRes.json();
+      const rows = d.rows || [];
+      // Deduplicate by id
+      const seen = new Set<string>();
+      setAllSubProcesses(rows.filter((r: any) => seen.has(r.id) ? false : seen.add(r.id)));
+    } else { setAllSubProcesses(subProcesses); } // fallback to props
 
     // Fetch existing ControlSubProcess junction links
     try {
