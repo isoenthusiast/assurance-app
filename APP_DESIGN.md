@@ -1,12 +1,14 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 10, 2026 (v2.3.0)  
+**Last Updated:** July 10, 2026 (v2.4.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.3.0 — User Favorites System:** Added `UserFavorite` table for generic entity favoriting (ProcessArea, SubProcess, Control). Unique per user+entityType+entityId. Enables personalized filtered views. Dashboard leaderboard now excludes Admin users and shows top-3 + user's own position.
+> **v2.4.0 — Process Health & Control Scoring:** Added Process Health Dashboard on `/fla` main panel showing average control health scores per process area, grouped by Standard with collapsible sections and traffic-light indicators (🟢>80 Healthy, 🟡50-80 Tolerable, 🔴<50 Not Tolerable). `Control.rawHealthScore` now auto-recalculates on every effectiveness change or unassign via 90-day window (`Effective/Total × 100`). Batch script `scripts/recalc_control_health.py` for bulk recalculation. Leaderboard excludes only username "admin", shows top-3 + user's own position with gaps.
 >
-> **v2.2.0 — Knowledgebase & Document Conversion:** Added Knowledgebase model for storing converted documents. New `POST /api/convert` endpoint converts .docx/.pdf to Markdown via Python (python-docx + PyMuPDF) and optionally saves to Knowledgebase. New `/admin/knowledgebase` page with drag-and-drop upload, preview, search, and download.
+> **v2.3.0 — User Roles, Company & Favorites:** Added `UserRole`, `UserRoleMapping`, `Company` tables. User model extended with `position` and `companyId`. Admin pages: Manage Roles (role CRUD + user↔role mapping), Manage Company (company CRUD + user↔company assignment). `UserFavorite` table for generic entity favoriting (ProcessArea, SubProcess, Control). Assessment detail page restructured into 2-panel tabbed layout (Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities). Assessment Activities panel with activity CRUD, user assignment, and control mapping via `Aact`/`AActUsers`/`AActControls` tables.
+>
+> **v2.2.0 — Knowledgebase & Document Conversion:** Added Knowledgebase model for storing converted documents. New `POST /api/convert` endpoint converts .docx/.pdf to Markdown via Python (python-docx + PyMuPDF) and optionally saves to Knowledgebase. Knowledgebase page at `/admin/knowledgebase` with drag-and-drop upload, preview, search, and download. `MapArt2Know` table for artifact-to-knowledge mapping.
 >
 > **v2.1.0 — Attachment System:** Added Attachment & AttachmentMapping models with reusable AttachmentList component. Actions now support `actionTaken` field and file attachments. Attachments can be linked to any table (Action, Finding, Sample) via the mapping table.
 
@@ -15,8 +17,10 @@
 The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control testing platform for oil & gas operations. It enables:
 
 - Manage Controls, Plan Assessments, Execute Tests via samples/findings/actions
-- Gamification with 8 emotional drives, badges, milestones, and points
+- Gamification with 8 emotional drives, badges, and points-based leaderboard
 - Activity Logging with 31 event types across all user actions
+- Process Health Monitoring via auto-calculated control effectiveness scores
+- Role-based user management with company assignments and favorites
 
 **Core Design Principle:** Decouple controls from samples — assessments have independent relationships to both.
 
@@ -29,31 +33,48 @@ The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control test
 | ORM | Prisma + @prisma/adapter-pg | 7.8.0 |
 | Auth | NextAuth.js (Auth.js) | 5.x beta |
 | UI | React + Tailwind CSS | 19.2.4 / 4.x |
-| Testing | Playwright | 1.61.1 |
 | Deployment | Railway | Docker + PG Plugin |
 
-## 3. Database Schema (27 Models, 10 Enums)
+## 3. Database Schema (37 Models, 10 Enums)
 
 ### Enums
 Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 types), AssessmentStatus (Planned/InProgress/Completed/Cancelled), SampleStatus/Conclusion, Effectiveness, FindingSeverity, EmotionalDrive (8 drives), BadgeRarity
 
 ### Core Models
-- **User** — accounts with gamification stats (totalPoints, dailyPointStreak)
+- **User** — accounts with gamification stats (totalPoints, dailyPointStreak, position, companyId)
 - **ActivityLog** — audit trail (timestamp, description, activityType, username, refTable, refRecord)
 - **ActivityLogType** — catalog of 31 valid activity types
+
+### User Management Models
+- **UserRole** — role definitions (uRoleName, uRoleDescription, uRolePositions, uRoleReportingLine)
+- **UserRoleMapping** — M2M: User ⟷ UserRole with remarks and createdDate
+- **Company** — company definitions (companyID, companyName, referenceID, shortName)
+  - User.companyId links to Company.id via Manage Company admin page
+- **UserFavorite** — generic favoriting (userId, entityType, entityId)
+  - entityType: "ProcessArea" | "SubProcess" | "Control"
+  - Unique per (userId, entityType, entityId)
 
 ### Setup Models
 - **ProcessArea** — name (unique), pId, standard
 - **SubProcess** — name, processAreaId
-- **Control** — 28 fields (CSF framework, risk, testing approach, etc.)
+- **Control** — 28 fields (CSF framework, risk, testing approach, rawHealthScore auto-calculated)
 - **ControlSubProcess** — M2M: Control ⟷ SubProcess
 - **AssuranceActivityType** — name (unique), defaultLOA
+- **AssessmentActType** — activity type definitions (assacttypeid, assacttypeName, description)
+  - Seeded with: Interview (ACT-001), DocumentReview (ACT-002), Site Visit (ACT-003)
 
 ### Assessment Models
 - **Assessment** — activityTypeId, assessorId, dates, loa, status
 - **ControlAssignment** — M2M: Assessment ⟷ Control + effectiveness tracking
+  - Effectiveness changes auto-trigger `rawHealthScore` recalculation on parent Control
 - **Sample** — evidence records (sampleTypeId, recordSourceId, status, conclusion)
 - **SampleType / RecordSourceType** — dynamic lookup tables
+
+### Assessment Activity Models
+- **Aact** — assurance activities tied to assessments (aaID, assuranceID, assacttypeid, activityName, activityDate, startTime, endTime, duration, description)
+- **AActControls** — M2M: Aact ⟷ Control (maps controls being tested in an activity)
+- **AActUsers** — M2M: Aact ⟷ User with userRoles and assignmentRemarks
+- **AActDetails** — activity detail text and summary against controls (aactDetID, aaId, detail, summaryAgainstControls)
 
 ### Findings & Actions
 - **Finding** — FID-XXXXXX IDs, severity, risks, controls
@@ -66,7 +87,8 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 ### Knowledge Management
 - **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy)
   - Fed by `POST /api/convert` which runs Python (python-docx / PyMuPDF) to convert .docx/.pdf → Markdown
-  - UI at `/admin/knowledgebase` with drag-and-drop upload, full-text preview, search, .md download
+  - Rendered as direct component in admin page (not iframe) with drag-and-drop upload, full-text preview, search, .md download
+- **MapArt2Know** — artifact-to-knowledge mapping (mapA2KID, artName, artID, kID, whyToMap)
 
 ### Favorites System
 - **UserFavorite** — generic favoriting for any entity (userId, entityType, entityId, createdAt)
@@ -80,35 +102,48 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 
 ### Gamification Models
 - **PointTransaction** — points with emotional drive and multiplier
-- **BehaviorMeasurement** — daily counters (plans, tests, evidence, team, quality)
 - **EmotionalDriveMetric** — weekly 8-drive rollup with overall engagement
 - **Milestone** — tracked achievements (title, targetValue, currentValue, type)
-- **AchievementBadge** — 18 badges across 8 drives
+- **AchievementBadge** — badges across 8 drives with rarity levels
 - **UserAchievement** — M2M: User ⟷ Badge
+- **GameAttribute** — game attribute definitions (attributeName, status)
+- **GameAttributeRule** — per-activity-type scoring rules (basePoints, perControlPoints, hsseBonus, qualityBonus, multiplier)
+
+### Control Health System
+- `Control.rawHealthScore` is calculated dynamically: (Effective assignments / Total assignments) × 100 over the last 90 days
+- Auto-recalculated on every effectiveness change (PUT) or unassign (DELETE) in `POST/PUT /api/admin/control-assignments/[id]`
+- Batch recalculation via `scripts/recalc_control_health.py`
+- Dashboard displays average health per process area, grouped by Standard with traffic-light indicators
 
 ### Key Relationships
 ```
 User ──< Assessment (assessor)
+User ──< UserRoleMapping >── UserRole
+User ──< UserFavorite (entityType + entityId)
+User ──< AActUsers >── Aact
 Assessment ──< ControlAssignment >── Control
 Assessment ──< Sample, Finding ──< Action
 Control ──< ControlSubProcess >── SubProcess
+Control ──< AActControls >── Aact
 Attachment ──< AttachmentMapping >── (Action | Finding | Sample)
+Knowledgebase ──< MapArt2Know (artifact mapping)
 ```
 
 ## 4. Architecture
 
 ```
 seam-assurance-app/
-├── prisma/          # Schema, seeds, migrations, sync scripts
+├── prisma/          # Schema, seeds, migrations
+├── scripts/         # Python DB migration scripts (psycopg2)
 ├── src/
-│   ├── app/         # 33 routes (all dynamic)
+│   ├── app/         # 40+ routes (all dynamic)
 │   │   ├── login/   # Client-side credentials form
-│   │   ├── fla/     # Dashboard, Create, Detail workflow
-│   │   ├── setup/   # Process Areas, Controls, Sub-Processes, Activity Types
-│   │   ├── admin/   # Admin dashboard, templates, knowledgebase, generic table editor, CSV
-│   │   └── api/     # 60+ API routes
-│   ├── components/  # NavBar, SignOutButton, GamificationDashboard
-│   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts
+│   │   ├── fla/     # Dashboard, Create, Detail workflow with tabbed layout
+│   │   ├── setup/   # Process Areas, Controls, Sub-Processes, Activity Types, Badges
+│   │   ├── admin/   # Admin dashboard, templates, knowledgebase, generic table editor, CSV, user/role/company management
+│   │   └── api/     # 70+ API routes
+│   ├── components/  # NavBar, SignOutButton, GamificationDashboard, DeleteButton, AttachmentList, UserSearchSelect
+│   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts, schema-introspection.ts, fallback-schemas.ts
 │   └── generated/   # Generated Prisma client
 ├── railway.toml     # RAILPACK builder, pre-deploy schema sync + seed
 ├── next.config.ts   # standalone output, pg external
@@ -123,13 +158,13 @@ seam-assurance-app/
 - JWT callbacks inject id and role into session
 - BCrypt password hashing
 
-## 6. API Routes (60+ endpoints)
+## 6. API Routes (70+ endpoints)
 
 ### Assessments
-GET/POST `/api/admin/assessments`, GET/PUT/DELETE `/[id]`, PUT `/controls`
+GET/POST `/api/admin/assessments`, GET/PUT/DELETE `/[id]`
 
 ### Control Assignments
-PUT/DELETE `/api/admin/control-assignments/[id]`
+PUT/DELETE `/api/admin/control-assignments/[id]` — auto-recalculates `Control.rawHealthScore`
 
 ### Samples, Findings, Actions
 Full CRUD at `/api/admin/samples`, `/findings`, `/actions` with `/[id]`
@@ -138,36 +173,33 @@ Full CRUD at `/api/admin/samples`, `/findings`, `/actions` with `/[id]`
 GET `/api/attachments?destTable=X&recId=Y`, POST (FormData upload), DELETE `/[id]`
 
 ### Document Conversion
-POST `/api/convert` — upload .docx/.pdf, returns Markdown; optional `saveToKnowledgebase=true` + `remarks` to persist to Knowledgebase table. Uses Python script (`scripts/convert_to_md.py`) with python-docx and PyMuPDF.
+POST `/api/convert` — upload .docx/.pdf, returns Markdown; optional `saveToKnowledgebase=true` + `remarks` to persist to Knowledgebase table
 
 ### Templates
 GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
 
 ### Gamification
-POST `/api/gamification/award`, GET `/stats/[userId]`, GET `/leaderboard`
+POST `/api/gamification/award`, GET `/stats/[userId]`, GET `/leaderboard` — leaderboard excludes username "admin", uses cumulative `SUM(PointTransaction.points)`
 
 ### Admin Utilities
-CSV validate/import, table CRUD, column management, SQL executor, database management, export, diagnostics
+CSV validate/import, generic table CRUD (all 37 models), column management, SQL executor, database management, export, diagnostics, information_schema column discovery
 
-### Public Endpoints (No Admin Required)
-GET `/api/controls` — process areas, sub-processes, controls, sample types, record sources
-POST `/api/controls/reference` — quick-add sample types and record source types
-
-## 7. Frontend Pages (17 primary routes)
+## 7. Frontend Pages
 
 | Route | Description |
 |-------|-------------|
 | `/login` | Login form |
-| `/fla` | Dashboard with standards filter + gamification widget |
+| `/fla` | **Assurance Management Dashboard** — Process Health Dashboard (collapsible by standard, traffic-light indicators) + Gamification sidebar (points, earned badges, leaderboard top-3) |
 | `/fla/new` | Create assessment with cascading control picker |
-| `/fla/[id]` | Full assessment workflow (info, controls, samples, findings, actions) |
-| `/admin` | Admin dashboard with 12 table tiles |
+| `/fla/[id]` | **2-panel tabbed assessment**: Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities (with activity CRUD, user/control mapping) |
+| `/admin` | Admin dashboard with 37 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), Knowledgebase |
 | `/admin/templates` | Template list + editor |
 | `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
-| `/admin/table/[table]` | Generic table editor + SQL executor |
+| `/admin/table/[table]` | Generic table editor (auto-discovers columns via information_schema) |
 | `/setup/process-areas` | Process areas with standard filter |
 | `/setup/processdetails/[id]` | 3-tab drill-down (Overview, Controls, Assessments) |
 | `/setup/controls` | 28-field control form |
+| `/setup/badges` | Badge generation and management |
 
 ## 8. Activity Logging
 
@@ -178,12 +210,19 @@ POST `/api/controls/reference` — quick-add sample types and record source type
 ## 9. Gamification
 
 - 8 emotional drives (Octalysis-inspired): Diversity, Belonging, Recognition, Achievement, Excellence, Growth, Contribution, Security
-- 18 achievement badges across all drives
-- Point system: 30-200 points per action with HSSE/quality bonuses
-- Daily behavior tracking, weekly emotional drive rollups, milestone tracking
-- Leaderboard with personal rank
+- Achievement badges across all drives with rarity levels (Common through Legendary)
+- Point system: configurable per activity type via GameAttributeRule (basePoints, perControlPoints, HSSE/quality bonuses, multiplier)
+- Weekly emotional drive rollups, milestone tracking
+- **Assurance Leaderboard**: top-3 + user's own position, cumulative points from `SUM(PointTransaction.points)`, excludes username "admin"
 
-## 10. Deployment
+## 10. Control Health System
+
+- `rawHealthScore` = (Effective ÷ Total) × 100 over last 90 days of assessments
+- **Auto-recalculated** on every control effectiveness change or unassign via `PUT/DELETE /api/admin/control-assignments/[id]`
+- Batch recalculation: `scripts/recalc_control_health.py` (VS Code task "Recalculate Control Health")
+- Dashboard visualization: collapsible by Standard, per-process health bars, traffic-light emoji indicators
+
+## 11. Deployment
 
 ```toml
 # railway.toml
