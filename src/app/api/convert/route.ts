@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import path from "path";
 import mammoth from "mammoth";
 import pdfParse from "pdf-parse";
+import { createWorker } from "tesseract.js";
+import { createCanvas } from "@napi-rs/canvas";
 
 // ── .docx → Markdown ─────────────────────────────────────────────────
 
@@ -12,29 +14,159 @@ async function docxToMarkdown(buffer: Buffer): Promise<string> {
   return result.value;
 }
 
-// ── .pdf → Markdown ──────────────────────────────────────────────────
+// ── PDF text extraction (fast path) ───────────────────────────────────
 
-async function pdfToMarkdown(buffer: Buffer): Promise<string> {
-  const data = await pdfParse(buffer);
+function formatTextPages(
+  pages: string[],
+  meta: { numpages: number; info?: { Title?: string } }
+): string {
   const lines: string[] = [];
-
-  lines.push(`# ${data.info?.Title || "PDF Document"}\n`);
-
-  // Split into pages (pdf-parse doesn't always paginate cleanly, but
-  // it adds form-feed characters for page breaks when available)
-  const pages = data.text.split("\f");
-  const pageCount = data.numpages || pages.length;
+  lines.push(`# ${meta.info?.Title || "PDF Document"}\n`);
 
   for (let i = 0; i < pages.length; i++) {
-    const pageText = pages[i].trim();
-    if (!pageText) continue;
-    if (pageCount > 1) {
+    const text = pages[i].trim();
+    if (!text) continue;
+    if (meta.numpages > 1) {
       lines.push(`## Page ${i + 1}\n`);
     }
-    lines.push(pageText);
+    lines.push(text);
   }
 
   return lines.join("\n\n");
+}
+
+// ── OCR path (scanned PDFs) ──────────────────────────────────────────
+
+const OCR_TEXT_THRESHOLD = 80; // avg chars per page below which we try OCR
+let _ocrAvailable: boolean | null = null;
+
+async function isOcrAvailable(): Promise<boolean> {
+  if (_ocrAvailable !== null) return _ocrAvailable;
+  try {
+    // Quick smoke test: can we create a canvas and OCR a tiny image?
+    const canvas = createCanvas(50, 20);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, 50, 20);
+    ctx.fillStyle = "#000000";
+    ctx.font = "12px sans-serif";
+    ctx.fillText("Test", 2, 14);
+    const png = canvas.toBuffer("image/png");
+
+    const worker = await createWorker("eng");
+    const { data } = await worker.recognize(png);
+    await worker.terminate();
+
+    _ocrAvailable = data.text.trim().length > 0;
+  } catch {
+    _ocrAvailable = false;
+  }
+  return _ocrAvailable;
+}
+
+async function ocrPdfToMarkdown(
+  buffer: Buffer,
+  textMeta: { numpages: number; info?: { Title?: string } }
+): Promise<string> {
+  // Check OCR availability first
+  const available = await isOcrAvailable();
+  if (!available) {
+    throw new Error(
+      "OCR is not available on this platform. Scanned/image-based PDFs require " +
+        "a platform with native Canvas support (Linux/Docker/Railway). " +
+        "Text-based PDFs work everywhere."
+    );
+  }
+
+  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const uint8 = new Uint8Array(buffer);
+
+  // Standard font data path for Node.js rendering
+  const fontPath = path.join(
+    process.cwd(),
+    "node_modules",
+    "pdfjs-dist",
+    "standard_fonts",
+    ""
+  );
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: uint8,
+    standardFontDataUrl: fontPath,
+  });
+  const doc =
+    "promise" in loadingTask
+      ? await (loadingTask as any).promise
+      : loadingTask;
+
+  const pageCount = doc.numPages;
+  const lines: string[] = [];
+  lines.push(`# ${textMeta.info?.Title || "Scanned PDF Document"}\n`);
+  lines.push(`> *OCR extracted — ${pageCount} page(s)*\n`);
+
+  const worker = await createWorker("eng");
+
+  for (let i = 1; i <= pageCount; i++) {
+    const page = await doc.getPage(i);
+    const viewport = page.getViewport({ scale: 2.0 });
+
+    const canvas = createCanvas(viewport.width, viewport.height);
+    const ctx = canvas.getContext("2d");
+
+    // White background for better OCR contrast
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, viewport.width, viewport.height);
+
+    try {
+      await page.render({ canvasContext: ctx as any, viewport }).promise;
+    } catch (renderErr: any) {
+      console.warn(
+        `Page ${i} render issue:`,
+        renderErr.message?.slice(0, 120)
+      );
+      // Continue — partial render may still OCR some text
+    }
+
+    const pngBuffer = canvas.toBuffer("image/png");
+
+    const {
+      data: { text },
+    } = await worker.recognize(pngBuffer);
+
+    const pageText = text.trim();
+    if (pageText) {
+      if (pageCount > 1) lines.push(`## Page ${i}\n`);
+      lines.push(pageText);
+    }
+  }
+
+  await worker.terminate();
+  return lines.join("\n\n");
+}
+
+// ── PDF → Markdown (auto-detect text vs scanned) ─────────────────────
+
+async function pdfToMarkdown(buffer: Buffer): Promise<string> {
+  // Fast path: try text extraction first
+  let data: Awaited<ReturnType<typeof pdfParse>>;
+  try {
+    data = await pdfParse(buffer);
+  } catch {
+    // pdf-parse failed entirely — likely a scanned/image-only PDF
+    return await ocrPdfToMarkdown(buffer, { numpages: 1 });
+  }
+
+  const pageCount = data.numpages || 1;
+  const avgCharsPerPage = data.text.length / pageCount;
+
+  // If text extraction yields enough content, it's a text PDF
+  if (avgCharsPerPage >= OCR_TEXT_THRESHOLD && data.text.trim()) {
+    const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
+    return formatTextPages(pages, data);
+  }
+
+  // Low text yield → likely scanned, use OCR
+  return await ocrPdfToMarkdown(buffer, data);
 }
 
 // ── POST handler ─────────────────────────────────────────────────────
@@ -84,7 +216,10 @@ export async function POST(request: Request) {
 
     if (!markdown || !markdown.trim()) {
       return NextResponse.json(
-        { error: "No text content extracted. The file may be empty or scanned (OCR not yet supported)." },
+        {
+          error:
+            "No readable content found. The file may be empty, image-only, or heavily scanned.",
+        },
         { status: 422 }
       );
     }
