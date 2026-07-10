@@ -32,7 +32,10 @@ export default function AttachmentList({
   const fetchAttachments = async () => {
     try {
       const res = await fetch(`/api/attachments?destTable=${destTable}&recId=${recId}`);
-      if (res.ok) setAttachments(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setAttachments(Array.isArray(data) ? data.filter(Boolean) : []);
+      }
     } catch {}
   };
 

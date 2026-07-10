@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       orderBy: { attachment: { uploadDate: "desc" } },
     });
 
-    return NextResponse.json(mappings.map(m => m.attachment));
+    return NextResponse.json(mappings.map(m => m.attachment).filter(Boolean));
   } catch (error) {
     console.error("Error fetching attachments:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
