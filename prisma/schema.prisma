@@ -603,6 +603,44 @@ model DocumentExtract {
   @@index([documentNumber])
 }
 
+model ControlFromDocument {
+  id                 String        @id @default(cuid())
+  documentExtractId  String
+  name               String
+  statement          String
+  controlType        ControlType
+  processAreaId      String
+  isHsseCritical     Boolean       @default(false)
+  ramRating          String?
+  riskWeight         Int           @default(1)
+  rawHealthScore     Int           @default(80)
+  lastTestedDate     DateTime?
+  lastTestResult     String?
+  createdAt          DateTime      @default(now())
+  controlRef         String?
+  sourceFile         String?
+  practiceDocument   String?
+  controlTypeDetail  String?
+  csfWho             String?
+  csfWhat            String?
+  csfWhen            String?
+  csfWhere           String?
+  csfWhy             String?
+  csfHow             String?
+  csfEvidence        String?
+  keyActivities      String?
+  riskAddressed      String?
+  testingApproach    String?
+  uncertainFlags     String?
+  standard           String?
+  pId                String?
+  Requirements       String?
+  documentExtract    DocumentExtract @relation(fields: [documentExtractId], references: [id], onDelete: Cascade)
+
+  @@index([documentExtractId])
+  @@index([controlRef])
+}
+
 enum LOA {
   FirstLine
   SecondLine
