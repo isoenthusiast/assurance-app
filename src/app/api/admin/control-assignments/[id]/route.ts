@@ -4,6 +4,29 @@ import { NextResponse } from "next/server";
 
 const EFFECTIVENESS_VALUES = ["Effective", "NotEffective"];
 
+async function recalcControlHealth(controlId: string) {
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+
+  const stats = await prisma.$queryRawUnsafe<Array<{ total: number; effective: number }>>(`
+    SELECT
+      COUNT(*)::int AS "total",
+      COUNT(*) FILTER (WHERE ca."effective" = 'Effective')::int AS "effective"
+    FROM "ControlAssignment" ca
+    JOIN "Assessment" a ON a."id" = ca."assessmentId"
+    WHERE ca."controlId" = $1 AND a."createdAt" >= $2
+  `, controlId, ninetyDaysAgo);
+
+  const total = Number(stats[0]?.total ?? 0);
+  const effective = Number(stats[0]?.effective ?? 0);
+  const newScore = total === 0 ? 0 : Math.round((effective / total) * 100);
+
+  await prisma.control.update({
+    where: { id: controlId },
+    data: { rawHealthScore: newScore },
+  });
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -55,6 +78,9 @@ export async function PUT(
           lastTestResult,
         },
       });
+
+      // Recalculate rawHealthScore for this control based on last 90 days
+      await recalcControlHealth(updated.control.id);
     }
 
     return NextResponse.json(updated);
@@ -79,7 +105,18 @@ export async function DELETE(
 
     const { id } = await params;
 
+    // Get controlId before deleting
+    const assignment = await prisma.controlAssignment.findUnique({
+      where: { id },
+      select: { controlId: true },
+    });
+
     await prisma.controlAssignment.delete({ where: { id } });
+
+    // Recalculate health score for the affected control
+    if (assignment) {
+      await recalcControlHealth(assignment.controlId);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
