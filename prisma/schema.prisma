@@ -78,13 +78,14 @@ model ProcessArea {
 }
 
 model SubProcess {
-  id                  String               @id @default(cuid())
-  name                String
-  description         String?
-  processAreaId       String
-  createdAt           DateTime             @default(now())
-  processArea         ProcessArea          @relation(fields: [processAreaId], references: [id])
-  controlSubProcesses ControlSubProcess[]
+  id                     String                  @id @default(cuid())
+  name                   String
+  description            String?
+  processAreaId          String
+  createdAt              DateTime                @default(now())
+  processArea            ProcessArea             @relation(fields: [processAreaId], references: [id])
+  controlSubProcesses    ControlSubProcess[]
+  controlFDSubProcesses  ControlFDSubProcess[]
 }
 
 // Many-to-many: a Control can belong to multiple SubProcesses (e.g. the same
@@ -102,6 +103,22 @@ model ControlSubProcess {
 
   @@unique([controlId, subProcessId])
   @@index([controlId])
+  @@index([subProcessId])
+}
+
+// Many-to-many: a ControlFromDocument can belong to multiple SubProcesses.
+// Mirrors ControlSubProcess but for document-extracted controls.
+model ControlFDSubProcess {
+  id                     String               @id @default(cuid())
+  controlFromDocumentId  String
+  subProcessId           String
+  isPrimary              Boolean              @default(false)
+  createdAt              DateTime             @default(now())
+  controlFromDocument    ControlFromDocument  @relation(fields: [controlFromDocumentId], references: [id], onDelete: Cascade)
+  subProcess             SubProcess           @relation(fields: [subProcessId], references: [id], onDelete: Cascade)
+
+  @@unique([controlFromDocumentId, subProcessId])
+  @@index([controlFromDocumentId])
   @@index([subProcessId])
 }
 
@@ -639,7 +656,8 @@ model ControlFromDocument {
   standard           String?
   pId                String?
   Requirements       String?
-  documentExtract    DocumentExtract @relation(fields: [documentExtractId], references: [id], onDelete: Cascade)
+  documentExtract       DocumentExtract        @relation(fields: [documentExtractId], references: [id], onDelete: Cascade)
+  controlFDSubProcesses ControlFDSubProcess[]
 
   @@index([documentExtractId])
   @@index([controlRef])

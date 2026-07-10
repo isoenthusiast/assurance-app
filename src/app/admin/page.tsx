@@ -171,6 +171,7 @@ export default function AdminDashboard() {
 
 function UserManager() {
   const [users, setUsers] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [mode, setMode] = useState<"select" | "add" | "manageRoles" | "manageCompany">("select");
   const [search, setSearch] = useState("");
@@ -181,6 +182,8 @@ function UserManager() {
   useEffect(() => {
     fetch("/api/admin/table/User/data?perPage=500")
       .then(r => r.json()).then(d => setUsers(d.rows || []));
+    fetch("/api/admin/table/Company/data?perPage=500")
+      .then(r => r.json()).then(d => setCompanies(d.rows || []));
   }, []);
 
   useEffect(() => {
@@ -295,8 +298,14 @@ function UserManager() {
                 <label className="block"><span className="text-xs text-slate-500">Position (Job Title)</span>
                   <input value={form.position} onChange={e => setForm(f => ({ ...f, position: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" placeholder="e.g. Senior HSSE Engineer" />
                 </label>
-                <label className="block"><span className="text-xs text-slate-500">Company ID</span>
-                  <input value={form.companyId} onChange={e => setForm(f => ({ ...f, companyId: e.target.value }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" placeholder="e.g. C001" />
+                <label className="block"><span className="text-xs text-slate-500">Company</span>
+                  <select value={form.companyId} onChange={e => setForm(f => ({ ...f, companyId: e.target.value }))}
+                    className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm bg-white">
+                    <option value="">— Select Company —</option>
+                    {companies.map((c: any) => (
+                      <option key={c.id} value={c.id}>{c.companyName}{c.shortName ? ` (${c.shortName})` : ''}</option>
+                    ))}
+                  </select>
                 </label>
                 <label className="block"><span className="text-xs text-slate-500">Total Points</span>
                   <input type="number" value={form.totalPoints} onChange={e => setForm(f => ({ ...f, totalPoints: Number(e.target.value) }))} className="mt-1 w-full rounded border border-slate-300 px-3 py-1.5 text-sm" />

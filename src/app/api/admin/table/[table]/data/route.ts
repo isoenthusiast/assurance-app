@@ -67,13 +67,37 @@ export async function GET(
     try {
       const model = (prisma as any)[camelName];
       if (!model) {
-        return NextResponse.json({ error: `Unknown table: ${table}` }, { status: 404 });
+        // Fallback: query via raw SQL for tables not in the Prisma client (e.g., new models)
+        // Query columns from information_schema
+        if (columns.length === 0) {
+          const dbCols = await (prisma as any).$queryRawUnsafe(
+            `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position`,
+            table
+          ) as Array<{ column_name: string; data_type: string }>;
+          if (dbCols && dbCols.length > 0) {
+            columns = dbCols.map((c: any) => ({
+              name: c.column_name,
+              type: c.data_type.includes('timestamp') ? 'DateTime'
+                  : c.data_type === 'integer' || c.data_type === 'bigint' ? 'Int'
+                  : c.data_type === 'boolean' ? 'Boolean'
+                  : c.data_type === 'double precision' || c.data_type === 'real' ? 'Float'
+                  : 'String',
+            }));
+          }
+        }
+        // Query rows via raw SQL
+        const quotedTable = `"${table}"`;
+        const rawRows = await (prisma as any).$queryRawUnsafe(
+          `SELECT * FROM ${quotedTable} LIMIT 1000`
+        );
+        rows = Array.isArray(rawRows) ? rawRows : [];
+        totalRows = rows.length;
+      } else {
+        rows = Object.keys(where).length > 0
+          ? await model.findMany({ where })
+          : await model.findMany();
+        totalRows = rows.length;
       }
-
-      rows = Object.keys(where).length > 0
-        ? await model.findMany({ where })
-        : await model.findMany();
-      totalRows = rows.length;
 
       // ControlAssignment: resolve controlRef/name into a human-readable ControlID
       if (table === 'ControlAssignment') {
