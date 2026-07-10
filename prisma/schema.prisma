@@ -652,6 +652,7 @@ model ControlFromDocument {
   keyActivities      String?
   riskAddressed      String?
   testingApproach    String?
+  keyRiskIndicator   String?
   uncertainFlags     String?
   standard           String?
   pId                String?

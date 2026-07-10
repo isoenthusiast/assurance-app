@@ -31,6 +31,12 @@ type ControlFD = {
   riskAddressed?: string | null;
   testingApproach?: string | null;
   ramRating?: string | null;
+  keyRiskIndicator?: string | null;
+  // Joined from DocumentExtract
+  _docNo?: number;
+  _documentNumber?: string | null;
+  _documentTitle?: string | null;
+  _documentStatus?: string | null;
 };
 
 type TreeSubProcess = {
@@ -79,12 +85,24 @@ export function DocumentControlsManager() {
     setLoading(true);
     setError(null);
     try {
-      const [pas, sps, junctions, controls] = await Promise.all([
+      const [pas, sps, junctions, controls, documents] = await Promise.all([
         fetchTable("ProcessArea"),
         fetchTable("SubProcess"),
         fetchTable("ControlFDSubProcess"),
         fetchTable("ControlFromDocument"),
+        fetchTable("DocumentExtract"),
       ]);
+
+      // Build DocumentExtract lookup: id → metadata
+      const docMap = new Map<string, { docNo: number; documentNumber?: string; documentTitle: string; status: string }>();
+      (documents as any[]).forEach((d: any) => {
+        docMap.set(d.id, {
+          docNo: d.docNo,
+          documentNumber: d.documentNumber || undefined,
+          documentTitle: d.documentTitle || "",
+          status: d.Status || "Not Started",
+        });
+      });
 
       const paMap = new Map<string, ProcessArea>();
       (pas as unknown as ProcessArea[]).forEach((pa) => paMap.set(pa.id, pa));
@@ -96,7 +114,17 @@ export function DocumentControlsManager() {
       });
 
       const cfMap = new Map<string, ControlFD>();
-      (controls as unknown as ControlFD[]).forEach((c) => cfMap.set(c.id, c));
+      (controls as unknown as ControlFD[]).forEach((c) => {
+        // Attach document metadata
+        const docMeta = docMap.get(c.documentExtractId);
+        if (docMeta) {
+          c._docNo = docMeta.docNo;
+          c._documentNumber = docMeta.documentNumber;
+          c._documentTitle = docMeta.documentTitle;
+          c._documentStatus = docMeta.status;
+        }
+        cfMap.set(c.id, c);
+      });
 
       // Build junction: subProcessId → ControlFD[]
       const spControls = new Map<string, ControlFD[]>();
@@ -158,8 +186,8 @@ export function DocumentControlsManager() {
                 c.name.toLowerCase().includes(q) ||
                 (c.statement || "").toLowerCase().includes(q) ||
                 (c.controlRef || "").toLowerCase().includes(q) ||
-                (c.csfWhat || "").toLowerCase().includes(q) ||
-                sp.name.toLowerCase().includes(q)
+                (c.csfWhat || "").toLowerCase().includes(q) ||                (c._documentNumber || "").toLowerCase().includes(q) ||
+                (c._documentTitle || "").toLowerCase().includes(q) ||                sp.name.toLowerCase().includes(q)
             ),
           }))
           .filter((sp) => sp.controls.length > 0),
@@ -395,13 +423,38 @@ export function DocumentControlsManager() {
 
               {/* Document Extract Info */}
               {selectedControl.documentExtractId && (
-                <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2">
+                <div className="bg-amber-50 border border-amber-200 rounded px-3 py-2 space-y-1">
                   <span className="text-xs font-medium text-amber-800">
-                    📎 Extracted from Document
+                    📎 Source Document
                   </span>
-                  <p className="text-xs text-amber-700 mt-0.5">
-                    Document ID: {selectedControl.documentExtractId}
-                  </p>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-0.5 text-xs text-amber-700">
+                    {selectedControl._documentTitle && (
+                      <div className="col-span-2">
+                        <span className="text-amber-500">Title:</span>{" "}
+                        {selectedControl._documentTitle}
+                      </div>
+                    )}
+                    {selectedControl._documentNumber && (
+                      <div>
+                        <span className="text-amber-500">Doc #:</span>{" "}
+                        {selectedControl._documentNumber}
+                      </div>
+                    )}
+                    {selectedControl._docNo != null && (
+                      <div>
+                        <span className="text-amber-500">Doc No:</span>{" "}
+                        {selectedControl._docNo}
+                      </div>
+                    )}
+                    <div>
+                      <span className="text-amber-500">Status:</span>{" "}
+                      {selectedControl._documentStatus || "—"}
+                    </div>
+                    <div>
+                      <span className="text-amber-500">ID:</span>{" "}
+                      {selectedControl.documentExtractId}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
