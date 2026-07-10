@@ -10,7 +10,7 @@ interface Template {
   description: string | null;
   controlLinkages: Array<{
     id: string;
-    control: { id: string; name: string; statement: string; processAreaId: string };
+    control: { id: string; name: string; statement: string; processAreaId: string; controlSubProcesses?: { subProcess?: { id: string; name: string } }[] };
   }>;
   activityTypes: Array<{
     id: string;
@@ -101,7 +101,9 @@ export default function PlanAssessmentFromTemplatePage() {
         link.control.processAreaId === selectedProcessAreaId;
       const matchSP =
         selectedSubProcessId === 'all' ||
-        link.control.processAreaId === selectedProcessAreaId; // Note: controls don't have subProcessId in our response
+        (link.control.controlSubProcesses || []).some(
+          (csp: any) => csp.subProcess?.id === selectedSubProcessId
+        );
       return matchPA && matchSP;
     });
   }, [template, selectedProcessAreaId, selectedSubProcessId]);

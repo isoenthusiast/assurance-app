@@ -21,7 +21,7 @@ export async function GET(
         controlLinkages: {
           include: {
             control: {
-              select: { id: true, name: true, processAreaId: true },
+              select: { id: true, name: true, processAreaId: true, controlSubProcesses: { include: { subProcess: { select: { id: true, name: true } } } } },
             },
           },
         },
