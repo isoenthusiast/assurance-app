@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import path from "path";
 import mammoth from "mammoth";
-import pdfParse from "pdf-parse";
 import { createWorker } from "tesseract.js";
 import { createCanvas } from "@napi-rs/canvas";
 
@@ -14,14 +13,69 @@ async function docxToMarkdown(buffer: Buffer): Promise<string> {
   return result.value;
 }
 
-// ── PDF text extraction (fast path) ───────────────────────────────────
+// ── PDF text extraction via pdfjs-dist (pure JS, no native deps) ─────
+
+async function getPdfjsLib() {
+  return await import("pdfjs-dist/legacy/build/pdf.mjs");
+}
+
+function getFontPath(): string {
+  return path.join(process.cwd(), "node_modules", "pdfjs-dist", "standard_fonts", "");
+}
+
+async function pdfExtractText(buffer: Buffer): Promise<{
+  text: string;
+  numpages: number;
+  title?: string;
+}> {
+  const pdfjsLib = await getPdfjsLib();
+  const uint8 = new Uint8Array(buffer);
+
+  const loadingTask = pdfjsLib.getDocument({
+    data: uint8,
+    standardFontDataUrl: getFontPath(),
+  });
+  const doc = "promise" in loadingTask ? await (loadingTask as any).promise : loadingTask;
+
+  const pageCount = doc.numPages;
+  const pages: string[] = [];
+  let title = "";
+
+  for (let i = 1; i <= pageCount; i++) {
+    const page = await doc.getPage(i);
+    const textContent = await page.getTextContent();
+
+    // Extract first non-empty text as potential title
+    if (!title && textContent.items.length > 0) {
+      const firstItem = textContent.items.find((item: any) => item.str?.trim());
+      if (firstItem) title = firstItem.str.trim();
+    }
+
+    // Build page text from text items
+    const pageText = textContent.items
+      .map((item: any) => item.str || "")
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (pageText) pages.push(pageText);
+  }
+
+  return {
+    text: pages.join("\f"),
+    numpages: pageCount,
+    title: title || undefined,
+  };
+}
+
+// ── Markdown formatting ──────────────────────────────────────────────
 
 function formatTextPages(
   pages: string[],
-  meta: { numpages: number; info?: { Title?: string } }
+  meta: { numpages: number; title?: string }
 ): string {
   const lines: string[] = [];
-  lines.push(`# ${meta.info?.Title || "PDF Document"}\n`);
+  lines.push(`# ${meta.title || "PDF Document"}\n`);
 
   for (let i = 0; i < pages.length; i++) {
     const text = pages[i].trim();
@@ -37,13 +91,12 @@ function formatTextPages(
 
 // ── OCR path (scanned PDFs) ──────────────────────────────────────────
 
-const OCR_TEXT_THRESHOLD = 80; // avg chars per page below which we try OCR
+const OCR_TEXT_THRESHOLD = 80;
 let _ocrAvailable: boolean | null = null;
 
 async function isOcrAvailable(): Promise<boolean> {
   if (_ocrAvailable !== null) return _ocrAvailable;
   try {
-    // Quick smoke test: can we create a canvas and OCR a tiny image?
     const canvas = createCanvas(50, 20);
     const ctx = canvas.getContext("2d");
     ctx.fillStyle = "#ffffff";
@@ -66,42 +119,28 @@ async function isOcrAvailable(): Promise<boolean> {
 
 async function ocrPdfToMarkdown(
   buffer: Buffer,
-  textMeta: { numpages: number; info?: { Title?: string } }
+  textMeta: { numpages: number; title?: string }
 ): Promise<string> {
-  // Check OCR availability first
   const available = await isOcrAvailable();
   if (!available) {
     throw new Error(
-      "OCR is not available on this platform. Scanned/image-based PDFs require " +
-        "a platform with native Canvas support (Linux/Docker/Railway). " +
-        "Text-based PDFs work everywhere."
+      "OCR is not available on this platform (no native Canvas). " +
+        "Text-based PDFs should still work."
     );
   }
 
-  const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  const pdfjsLib = await getPdfjsLib();
   const uint8 = new Uint8Array(buffer);
-
-  // Standard font data path for Node.js rendering
-  const fontPath = path.join(
-    process.cwd(),
-    "node_modules",
-    "pdfjs-dist",
-    "standard_fonts",
-    ""
-  );
 
   const loadingTask = pdfjsLib.getDocument({
     data: uint8,
-    standardFontDataUrl: fontPath,
+    standardFontDataUrl: getFontPath(),
   });
-  const doc =
-    "promise" in loadingTask
-      ? await (loadingTask as any).promise
-      : loadingTask;
+  const doc = "promise" in loadingTask ? await (loadingTask as any).promise : loadingTask;
 
   const pageCount = doc.numPages;
   const lines: string[] = [];
-  lines.push(`# ${textMeta.info?.Title || "Scanned PDF Document"}\n`);
+  lines.push(`# ${textMeta.title || "Scanned PDF Document"}\n`);
   lines.push(`> *OCR extracted — ${pageCount} page(s)*\n`);
 
   const worker = await createWorker("eng");
@@ -113,25 +152,17 @@ async function ocrPdfToMarkdown(
     const canvas = createCanvas(viewport.width, viewport.height);
     const ctx = canvas.getContext("2d");
 
-    // White background for better OCR contrast
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, viewport.width, viewport.height);
 
     try {
       await page.render({ canvasContext: ctx as any, viewport }).promise;
     } catch (renderErr: any) {
-      console.warn(
-        `Page ${i} render issue:`,
-        renderErr.message?.slice(0, 120)
-      );
-      // Continue — partial render may still OCR some text
+      console.warn(`Page ${i} render issue:`, renderErr.message?.slice(0, 120));
     }
 
     const pngBuffer = canvas.toBuffer("image/png");
-
-    const {
-      data: { text },
-    } = await worker.recognize(pngBuffer);
+    const { data: { text } } = await worker.recognize(pngBuffer);
 
     const pageText = text.trim();
     if (pageText) {
@@ -147,52 +178,47 @@ async function ocrPdfToMarkdown(
 // ── PDF → Markdown (auto-detect text vs scanned) ─────────────────────
 
 async function pdfToMarkdown(buffer: Buffer): Promise<string> {
-  // Fast path: try text extraction first
-  let data: Awaited<ReturnType<typeof pdfParse>>;
-  let textExtractionFailed = false;
-
+  // Step 1: Extract text via pdfjs-dist (pure JS, works everywhere)
+  let extracted: { text: string; numpages: number; title?: string };
   try {
-    data = await pdfParse(buffer);
-  } catch (parseErr: any) {
-    console.error("pdf-parse failed:", parseErr.message);
-    textExtractionFailed = true;
-    data = { numpages: 1, text: "", info: {} } as any;
-  }
-
-  const pageCount = data.numpages || 1;
-  const avgCharsPerPage = data.text.length / Math.max(pageCount, 1);
-
-  // If text extraction yielded enough content, use it directly
-  if (avgCharsPerPage >= OCR_TEXT_THRESHOLD && data.text.trim()) {
-    const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
-    return formatTextPages(pages, data);
-  }
-
-  // Low text yield — try OCR if available
-  if (textExtractionFailed || avgCharsPerPage < OCR_TEXT_THRESHOLD) {
+    extracted = await pdfExtractText(buffer);
+  } catch (extractErr: any) {
+    console.error("PDF text extraction failed:", extractErr.message);
+    // Last resort: try OCR directly
     try {
-      return await ocrPdfToMarkdown(buffer, data);
+      return await ocrPdfToMarkdown(buffer, { numpages: 1 });
     } catch (ocrErr: any) {
-      console.error("OCR fallback failed:", ocrErr.message);
-      // If we have SOME text from pdf-parse, return it rather than failing
-      if (data.text.trim()) {
-        const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
-        const md = formatTextPages(pages, data);
-        return (
-          `> ⚠️ *OCR unavailable — showing partial text extraction only.*\n\n` +
-          md
-        );
-      }
       throw new Error(
-        `Cannot read this PDF. Text extraction found no content and OCR is unavailable. ` +
-          `OCR error: ${ocrErr.message}`
+        `Cannot read this PDF. Text extraction failed: ${extractErr.message}. ` +
+          `OCR also failed: ${ocrErr.message}`
       );
     }
   }
 
-  // Shouldn't reach here, but just in case
-  const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
-  return formatTextPages(pages, data);
+  const pages = extracted.text.split("\f").map((p) => p.trim()).filter(Boolean);
+  const avgCharsPerPage = extracted.text.length / Math.max(extracted.numpages, 1);
+
+  // Good text yield → use it directly
+  if (avgCharsPerPage >= OCR_TEXT_THRESHOLD && pages.length > 0) {
+    return formatTextPages(pages, { numpages: extracted.numpages, title: extracted.title });
+  }
+
+  // Low text — try OCR fallback
+  try {
+    return await ocrPdfToMarkdown(buffer, extracted);
+  } catch (ocrErr: any) {
+    console.error("OCR fallback failed:", ocrErr.message);
+    // Return whatever text we extracted, with a warning
+    if (pages.length > 0) {
+      return (
+        `> ⚠️ *OCR unavailable — showing partial text extraction only.*\n\n` +
+        formatTextPages(pages, { numpages: extracted.numpages, title: extracted.title })
+      );
+    }
+    throw new Error(
+      `Cannot read this PDF. No text found and OCR unavailable. OCR error: ${ocrErr.message}`
+    );
+  }
 }
 
 // ── POST handler ─────────────────────────────────────────────────────
