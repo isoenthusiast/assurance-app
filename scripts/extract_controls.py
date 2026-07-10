@@ -35,6 +35,38 @@ import psycopg2
 import psycopg2.extras
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SCHEMA-AWARE CONSTANTS — MUST match prisma/schema.prisma enums
+# ═══════════════════════════════════════════════════════════════════════════════
+
+VALID_CONTROL_TYPES = {
+    'Administrative',
+    'Procedural',
+    'Analytical',
+    'Behavioral',
+    'Informational',
+    'Engineering',
+}
+
+# ── Classification mapping: internal label → valid Prisma enum value ──
+# These are the ONLY allowed output values. Any new classification logic
+# MUST map to one of these exact strings.
+CONTROL_TYPE_CLASSIFICATION = {
+    # Behavioral indicators → Behavioral
+    'behavioral': 'Behavioral',
+    # Engineering/design indicators → Engineering
+    'engineering': 'Engineering',
+    # Analytical/review indicators → Analytical
+    'analytical': 'Analytical',
+    # Operational/procedural indicators → Procedural
+    'procedural': 'Procedural',
+    # Informational/reporting → Informational
+    'informational': 'Informational',
+    # Default / policy / governance → Administrative
+    'administrative': 'Administrative',
+}
+
+
 # ---------------------------------------------------------------------------
 # DATABASE
 # ---------------------------------------------------------------------------
@@ -484,22 +516,30 @@ def build_control_record(doc, candidate, index, total_candidates):
     if len(statement) > 2000:
         statement = statement[:1997] + '...'
 
-    # Control Type (context-aware)
+    # Control Type — MUST be a valid Prisma ControlType enum value
     context = candidate.get('context_text', '') + ' ' + candidate.get('risk_context', '')
+    doc_type_lower = (doc_type or '').lower()
+
     if re.search(r'\b(?:behavi|mindset|culture|awareness|competenc|training|capabilit|skill|attitude|human\s*factor)\b', context, re.IGNORECASE):
-        control_type = 'Behavioural'
+        control_type = 'Behavioral'
     elif re.search(r'\b(?:design|engineer|install|construct|fabricat|commission|technical\s*specif|drawing|calculation|structural)\b', context, re.IGNORECASE):
         control_type = 'Engineering'
-    elif re.search(r'\b(?:operate|execute|perform|conduct|carry\s*out|undertake|complete|implement|do|run)\b', context, re.IGNORECASE):
-        control_type = 'Operational'
     elif re.search(r'\b(?:analyz|analys|assess|evaluate|review|investigate|measure|monitor|test|inspect|verify|validate|audit|check|examine)\b', context, re.IGNORECASE):
         control_type = 'Analytical'
-    elif 'procedure' in (doc_type or '').lower() or 'instruction' in (doc_type or '').lower():
-        control_type = 'Operational'
-    elif 'policy' in (doc_type or '').lower() or 'standard' in (doc_type or '').lower():
+    elif re.search(r'\b(?:operate|execute|perform|conduct|carry\s*out|undertake|complete|implement|do|run)\b', context, re.IGNORECASE):
+        control_type = 'Procedural'
+    elif 'procedure' in doc_type_lower or 'instruction' in doc_type_lower or 'work instruction' in doc_type_lower:
+        control_type = 'Procedural'
+    elif 'policy' in doc_type_lower or 'standard' in doc_type_lower:
         control_type = 'Administrative'
+    elif 'narrative' in doc_type_lower or 'report' in doc_type_lower:
+        control_type = 'Informational'
     else:
         control_type = 'Administrative'
+
+    # ── GUARD: ensure control_type is a valid Prisma enum value ──
+    assert control_type in VALID_CONTROL_TYPES, \
+        f"INVALID CONTROL TYPE '{control_type}' — must be one of {sorted(VALID_CONTROL_TYPES)}"
 
     # Risk Weight
     risk_context = candidate.get('risk_context', '')
