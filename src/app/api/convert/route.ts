@@ -149,24 +149,50 @@ async function ocrPdfToMarkdown(
 async function pdfToMarkdown(buffer: Buffer): Promise<string> {
   // Fast path: try text extraction first
   let data: Awaited<ReturnType<typeof pdfParse>>;
+  let textExtractionFailed = false;
+
   try {
     data = await pdfParse(buffer);
-  } catch {
-    // pdf-parse failed entirely — likely a scanned/image-only PDF
-    return await ocrPdfToMarkdown(buffer, { numpages: 1 });
+  } catch (parseErr: any) {
+    console.error("pdf-parse failed:", parseErr.message);
+    textExtractionFailed = true;
+    data = { numpages: 1, text: "", info: {} } as any;
   }
 
   const pageCount = data.numpages || 1;
-  const avgCharsPerPage = data.text.length / pageCount;
+  const avgCharsPerPage = data.text.length / Math.max(pageCount, 1);
 
-  // If text extraction yields enough content, it's a text PDF
+  // If text extraction yielded enough content, use it directly
   if (avgCharsPerPage >= OCR_TEXT_THRESHOLD && data.text.trim()) {
     const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
     return formatTextPages(pages, data);
   }
 
-  // Low text yield → likely scanned, use OCR
-  return await ocrPdfToMarkdown(buffer, data);
+  // Low text yield — try OCR if available
+  if (textExtractionFailed || avgCharsPerPage < OCR_TEXT_THRESHOLD) {
+    try {
+      return await ocrPdfToMarkdown(buffer, data);
+    } catch (ocrErr: any) {
+      console.error("OCR fallback failed:", ocrErr.message);
+      // If we have SOME text from pdf-parse, return it rather than failing
+      if (data.text.trim()) {
+        const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
+        const md = formatTextPages(pages, data);
+        return (
+          `> ⚠️ *OCR unavailable — showing partial text extraction only.*\n\n` +
+          md
+        );
+      }
+      throw new Error(
+        `Cannot read this PDF. Text extraction found no content and OCR is unavailable. ` +
+          `OCR error: ${ocrErr.message}`
+      );
+    }
+  }
+
+  // Shouldn't reach here, but just in case
+  const pages = data.text.split("\f").map((p) => p.trim()).filter(Boolean);
+  return formatTextPages(pages, data);
 }
 
 // ── POST handler ─────────────────────────────────────────────────────
