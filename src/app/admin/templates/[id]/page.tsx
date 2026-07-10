@@ -17,7 +17,7 @@ interface Control {
   name: string;
   processAreaId: string;
   processArea: { name: string };
-  controlSubProcesses?: { subProcess?: { id: string; name: string }; subProcessId?: string }[];
+  controlSubProcesses?: { subProcess?: { id: string; name: string } }[];
 }
 
 interface ActivityType {
@@ -68,44 +68,21 @@ export default function TemplateFormPage() {
   const [activityTypesLoading, setActivityTypesLoading] = useState(true);
 
   useEffect(() => {
-    // Load controls
-    const fetchControls = async () => {
+    // Load controls, process areas, sub-processes in one call
+    const fetchData = async () => {
       try {
-        const res = await fetch('/api/admin/table/Control/data');
-        if (!res.ok) throw new Error('Failed to fetch controls');
+        const res = await fetch('/api/controls');
+        if (!res.ok) throw new Error('Failed to fetch data');
         const data = await res.json();
-        setControls([...data.rows].sort((a, b) => a.name.localeCompare(b.name)));
+
+        setControls([...data.controls].sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        setProcessAreas([...data.processAreas].sort((a: any, b: any) => a.name.localeCompare(b.name)));
+        setSubProcesses([...data.subProcesses].sort((a: any, b: any) => a.name.localeCompare(b.name)));
       } catch (err) {
-        console.error('Error loading controls:', err);
+        console.error('Error loading data:', err);
       } finally {
         setControlsLoading(false);
-      }
-    };
-
-    // Load process areas
-    const fetchProcessAreas = async () => {
-      try {
-        const res = await fetch('/api/admin/table/ProcessArea/data');
-        if (!res.ok) throw new Error('Failed to fetch process areas');
-        const data = await res.json();
-        setProcessAreas([...data.rows].sort((a, b) => a.name.localeCompare(b.name)));
-      } catch (err) {
-        console.error('Error loading process areas:', err);
-      } finally {
         setProcessAreasLoading(false);
-      }
-    };
-
-    // Load sub-processes
-    const fetchSubProcesses = async () => {
-      try {
-        const res = await fetch('/api/admin/table/SubProcess/data');
-        if (!res.ok) throw new Error('Failed to fetch sub-processes');
-        const data = await res.json();
-        setSubProcesses([...data.rows].sort((a, b) => a.name.localeCompare(b.name)));
-      } catch (err) {
-        console.error('Error loading sub-processes:', err);
-      } finally {
         setSubProcessesLoading(false);
       }
     };
@@ -116,7 +93,7 @@ export default function TemplateFormPage() {
         const res = await fetch('/api/admin/table/AssuranceActivityType/data');
         if (!res.ok) throw new Error('Failed to fetch activity types');
         const data = await res.json();
-        setActivityTypes([...data.rows].sort((a, b) => a.name.localeCompare(b.name)));
+        setActivityTypes([...data.rows].sort((a: any, b: any) => a.name.localeCompare(b.name)));
       } catch (err) {
         console.error('Error loading activity types:', err);
       } finally {
@@ -124,9 +101,7 @@ export default function TemplateFormPage() {
       }
     };
 
-    fetchControls();
-    fetchProcessAreas();
-    fetchSubProcesses();
+    fetchData();
     fetchActivityTypes();
   }, []);
 
@@ -167,7 +142,7 @@ export default function TemplateFormPage() {
       return false;
     }
     if (selectedSubProcessId !== 'all') {
-      const linkedIds = (control.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id || csp.subProcessId);
+      const linkedIds = (control.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id).filter(Boolean);
       if (!linkedIds.includes(selectedSubProcessId)) return false;
     }
     return true;
@@ -181,11 +156,7 @@ export default function TemplateFormPage() {
   // Helper to get sub-process name
   const getSubProcessName = (control: Control) => {
     const primary = control.controlSubProcesses?.[0];
-    if (primary?.subProcess?.name) return primary.subProcess.name;
-    if (primary?.subProcessId) {
-      return subProcesses.find((sp) => sp.id === primary.subProcessId)?.name || 'Unknown';
-    }
-    return '—';
+    return primary?.subProcess?.name || '—';
   };
 
   // Filter activity types based on selected LOA
