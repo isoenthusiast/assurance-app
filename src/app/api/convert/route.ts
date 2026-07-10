@@ -9,7 +9,8 @@ import { createCanvas } from "@napi-rs/canvas";
 // ── .docx → Markdown ─────────────────────────────────────────────────
 
 async function docxToMarkdown(buffer: Buffer): Promise<string> {
-  const result = await mammoth.convertToMarkdown({ buffer });
+  // mammoth v2 types don't expose convertToMarkdown in strict mode
+  const result = await (mammoth as any).convertToMarkdown({ buffer });
   return result.value;
 }
 
