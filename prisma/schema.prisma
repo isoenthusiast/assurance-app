@@ -588,6 +588,21 @@ model MapArt2Know {
   @@index([artID])
 }
 
+model DocumentExtract {
+  id              String   @id @default(cuid())
+  docNo           Int
+  documentNumber  String?
+  documentType    String?
+  documentTitle   String
+  custodian       String?
+  authorizer      String?
+  content         String
+  createdAt       DateTime @default(now())
+
+  @@index([docNo])
+  @@index([documentNumber])
+}
+
 enum LOA {
   FirstLine
   SecondLine

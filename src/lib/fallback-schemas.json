@@ -1002,5 +1002,52 @@
       "required": true,
       "isId": false
     }
+  },
+  "DocumentExtract": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "docNo": {
+      "type": "Int",
+      "required": true,
+      "isId": false
+    },
+    "documentNumber": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "documentType": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "documentTitle": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "custodian": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "authorizer": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "content": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
   }
 }
