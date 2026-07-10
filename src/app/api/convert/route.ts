@@ -1,32 +1,44 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { writeFile, mkdir, unlink } from "fs/promises";
-import { existsSync } from "fs";
-import { execFile } from "child_process";
 import path from "path";
-import os from "os";
-import { promisify } from "util";
+import mammoth from "mammoth";
+import pdfParse from "pdf-parse";
 
-const execFileAsync = promisify(execFile);
+// ── .docx → Markdown ─────────────────────────────────────────────────
 
-const SCRIPT = path.join(process.cwd(), "scripts", "convert_to_md.py");
-
-function getPythonCommand(): string {
-  // Railway production
-  if (process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY === "true") {
-    return process.env.PYTHON_PATH || "python3";
-  }
-  // Local dev: prefer .venv
-  const venvPython = path.join(process.cwd(), "..", ".venv", "Scripts", "python.exe");
-  if (existsSync(venvPython)) return venvPython;
-  // Fallback: system Python (Windows paths)
-  const systemPython = "C:/Users/edwar/AppData/Local/Microsoft/WindowsApps/python3.13.exe";
-  if (existsSync(systemPython)) return systemPython;
-  return "python";
+async function docxToMarkdown(buffer: Buffer): Promise<string> {
+  const result = await mammoth.convertToMarkdown({ buffer });
+  return result.value;
 }
 
-// POST — upload a .docx or .pdf and get Markdown back
+// ── .pdf → Markdown ──────────────────────────────────────────────────
+
+async function pdfToMarkdown(buffer: Buffer): Promise<string> {
+  const data = await pdfParse(buffer);
+  const lines: string[] = [];
+
+  lines.push(`# ${data.info?.Title || "PDF Document"}\n`);
+
+  // Split into pages (pdf-parse doesn't always paginate cleanly, but
+  // it adds form-feed characters for page breaks when available)
+  const pages = data.text.split("\f");
+  const pageCount = data.numpages || pages.length;
+
+  for (let i = 0; i < pages.length; i++) {
+    const pageText = pages[i].trim();
+    if (!pageText) continue;
+    if (pageCount > 1) {
+      lines.push(`## Page ${i + 1}\n`);
+    }
+    lines.push(pageText);
+  }
+
+  return lines.join("\n\n");
+}
+
+// ── POST handler ─────────────────────────────────────────────────────
+
 export async function POST(request: Request) {
   try {
     const session = await auth();
@@ -51,43 +63,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Save temp file
-    const tmpDir = path.join(os.tmpdir(), "seam-convert");
-    await mkdir(tmpDir, { recursive: true });
-    const tmpPath = path.join(tmpDir, `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`);
-
     const bytes = await file.arrayBuffer();
-    await writeFile(tmpPath, Buffer.from(bytes));
+    const buffer = Buffer.from(bytes);
 
-    // Run Python converter
-    const pythonCmd = getPythonCommand();
-    let stdout: string;
-    let stderr: string;
-
+    // Convert using Node.js (works everywhere: local, Railway, Docker)
+    let markdown: string;
     try {
-      const result = await execFileAsync(pythonCmd, [SCRIPT, tmpPath], {
-        timeout: 60_000, // 60 second timeout
-        maxBuffer: 10 * 1024 * 1024, // 10 MB
-      });
-      stdout = result.stdout;
-      stderr = result.stderr;
-    } catch (execError: any) {
-      // Clean up temp file on error
-      await unlink(tmpPath).catch(() => {});
-      console.error("Python conversion error:", execError.stderr || execError.message);
+      if (ext === ".docx") {
+        markdown = await docxToMarkdown(buffer);
+      } else {
+        markdown = await pdfToMarkdown(buffer);
+      }
+    } catch (convError: any) {
+      console.error("Conversion error:", convError);
       return NextResponse.json(
-        {
-          error: "Conversion failed",
-          details: execError.stderr || execError.message,
-        },
+        { error: "Conversion failed", details: convError.message },
         { status: 500 }
       );
     }
 
-    // Clean up temp file
-    await unlink(tmpPath).catch(() => {});
+    if (!markdown || !markdown.trim()) {
+      return NextResponse.json(
+        { error: "No text content extracted. The file may be empty or scanned (OCR not yet supported)." },
+        { status: 422 }
+      );
+    }
 
-    // Return the Markdown
     const originalName = file.name.replace(ext, "");
     const mdFileName = `${originalName}.md`;
 
@@ -98,7 +99,7 @@ export async function POST(request: Request) {
       kbRecord = await prisma.knowledgebase.create({
         data: {
           knowledgeName: originalName,
-          knowledgeContent: stdout,
+          knowledgeContent: markdown,
           remarks,
           addedBy: username,
         },
@@ -107,11 +108,11 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      markdown: stdout,
+      markdown,
       fileName: mdFileName,
       sourceFileName: file.name,
       sourceSize: file.size,
-      mdLength: stdout.length,
+      mdLength: markdown.length,
       ...(kbRecord ? { knowledgebaseId: kbRecord.kID } : {}),
     });
   } catch (error) {
