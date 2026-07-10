@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { KnowledgebaseManager } from "./knowledgebase/page";
+import { DocumentControlsManager } from "./document-controls/page";
 
 interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
@@ -18,7 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls">("tables");
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -59,6 +60,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("templates")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "templates" ? "bg-blue-50 font-medium" : ""}`}>📋 Assessment Templates</button>
             <button onClick={() => setView("users")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "users" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
             <button onClick={() => setView("knowledgebase")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "knowledgebase" ? "bg-blue-50 font-medium" : ""}`}>📚 Knowledgebase</button>
+            <button onClick={() => setView("documentControls")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "documentControls" ? "bg-blue-50 font-medium" : ""}`}>📄 Document Controls</button>
           </div>
         </div>
 
@@ -88,6 +90,8 @@ export default function AdminDashboard() {
           <UserManager />
         ) : view === "knowledgebase" ? (
           <KnowledgebaseManager />
+        ) : view === "documentControls" ? (
+          <DocumentControlsManager />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
