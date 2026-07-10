@@ -923,6 +923,16 @@
       "required": false,
       "isId": false
     },
+    "checklists": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "activityNotes": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
     "createdAt": {
       "type": "DateTime",
       "required": true,

@@ -37,7 +37,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const SUB_TABS = [
-  { id: 'users' as const, label: 'Users & Attachments' },
+  { id: 'users' as const, label: 'Users' },
   { id: 'details' as const, label: 'Activity Details' },
   { id: 'controls' as const, label: 'Controls Mapping' },
 ];
@@ -77,6 +77,8 @@ export default function AssessmentActivitiesPanel({
     activityDuration: '',
     activityDescription: '',
     assacttypeid: '',
+    checklists: '',
+    activityNotes: '',
   });
 
   // Users sub-tab state
@@ -113,10 +115,22 @@ export default function AssessmentActivitiesPanel({
     fetch(`/api/admin/table/AActControls/data?perPage=500`)
       .then(r => r.json())
       .then(d => setActControls((d.rows || []).filter((c: AActControl) => c.aaId === selectedId)));
-    // Load edit form
+    // Load AActDetails for checklists/activityNotes
+    fetch(`/api/admin/table/AActDetails/data?perPage=500`)
+      .then(r => r.json())
+      .then(d => {
+        const details = (d.rows || []).find((det: any) => det.aaId === selectedId);
+        setEditForm(prev => ({
+          ...prev,
+          checklists: details?.checklists || '',
+          activityNotes: details?.activityNotes || '',
+        }));
+      });
+    // Load edit form basics from Aact
     const act = activities.find(a => a.id === selectedId);
     if (act) {
-      setEditForm({
+      setEditForm(prev => ({
+        ...prev,
         activityName: act.activityName || '',
         activityDate: act.activityDate ? act.activityDate.slice(0, 10) : '',
         activityStartTime: act.activityStartTime || '',
@@ -124,7 +138,7 @@ export default function AssessmentActivitiesPanel({
         activityDuration: act.activityDuration || '',
         activityDescription: act.activityDescription || '',
         assacttypeid: act.assacttypeid || 'ACT-001',
-      });
+      }));
     }
   }, [selectedId, activities]);
 
@@ -160,14 +174,39 @@ export default function AssessmentActivitiesPanel({
     if (!selectedId) return;
     setMsg(null);
     try {
+      const { checklists, activityNotes, ...aactFields } = editForm;
       const body = {
-        ...editForm,
+        ...aactFields,
         activityDate: editForm.activityDate ? new Date(editForm.activityDate).toISOString() : undefined,
       };
       const res = await fetch(`/api/admin/table/Aact/${selectedId}`, {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error((await res.json()).error || 'Failed');
+
+      // Save checklists/activityNotes to AActDetails (upsert)
+      const existingDetailsRes = await fetch(`/api/admin/table/AActDetails/data?perPage=500`);
+      const existingDetails = await existingDetailsRes.json();
+      const detail = (existingDetails.rows || []).find((d: any) => d.aaId === selectedId);
+
+      const detailBody = {
+        aaId: selectedId,
+        checklists: checklists || '',
+        activityNotes: activityNotes || '',
+      };
+
+      if (detail) {
+        await fetch(`/api/admin/table/AActDetails/${detail.id}`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(detailBody),
+        });
+      } else {
+        await fetch('/api/admin/table/AActDetails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: `aad_${Date.now()}`, aactDetID: `AAD-${Date.now()}`, ...detailBody }),
+        });
+      }
+
       setMsg({ type: 'ok', text: 'Activity updated.' });
       loadActivities();
     } catch (e: any) { setMsg({ type: 'err', text: e.message }); }
@@ -322,12 +361,6 @@ export default function AssessmentActivitiesPanel({
                     )}
                   </div>
 
-                  {/* Attachments placeholder */}
-                  <div className="rounded border border-slate-200">
-                    <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">📎 Attachments</div>
-                    <div className="p-3 text-xs text-slate-400 italic">Attachment upload will be available soon.</div>
-                  </div>
-
                   {/* User Assignment */}
                   <div className="rounded border border-slate-200">
                     <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">👤 Assigned Participants</div>
@@ -437,6 +470,23 @@ export default function AssessmentActivitiesPanel({
                     <textarea value={editForm.activityDescription || ''} onChange={e => setEditForm(f => ({ ...f, activityDescription: e.target.value }))}
                       rows={4} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" />
                   </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Checklists</span>
+                    <textarea value={editForm.checklists || ''} onChange={e => setEditForm(f => ({ ...f, checklists: e.target.value }))}
+                      rows={4} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="Checklist items for this activity..." />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Activity Notes</span>
+                    <textarea value={editForm.activityNotes || ''} onChange={e => setEditForm(f => ({ ...f, activityNotes: e.target.value }))}
+                      rows={4} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm" placeholder="General notes about this activity..." />
+                  </label>
+
+                  {/* Attachments */}
+                  <div className="rounded border border-slate-200">
+                    <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">📎 Activity Attachments</div>
+                    <div className="p-3 text-xs text-slate-400 italic">Attachments linked to this assessment activity will appear here.</div>
+                  </div>
+
                   <button onClick={handleSaveEdit}
                     className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                     Save Changes

@@ -555,6 +555,8 @@ model AActDetails {
   aaId                   String
   detail                 String?
   summaryAgainstControls String?
+  checklists             String?
+  activityNotes          String?
   createdAt              DateTime @default(now())
 
   @@index([aaId])
