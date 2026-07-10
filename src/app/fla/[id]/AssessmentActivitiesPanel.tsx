@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import AttachmentList from '@/components/AttachmentList';
 
 interface AactRecord {
   id: string;
@@ -482,10 +483,7 @@ export default function AssessmentActivitiesPanel({
                   </label>
 
                   {/* Attachments */}
-                  <div className="rounded border border-slate-200">
-                    <div className="px-3 py-2 bg-slate-50 border-b border-slate-200 text-xs font-semibold text-slate-700">📎 Activity Attachments</div>
-                    <div className="p-3 text-xs text-slate-400 italic">Attachments linked to this assessment activity will appear here.</div>
-                  </div>
+                  <AttachmentList destTable="Aact" recId={selectedId!} />
 
                   <button onClick={handleSaveEdit}
                     className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
