@@ -20,11 +20,17 @@ type ControlFD = {
   controlRef?: string | null;
   sourceFile?: string | null;
   documentExtractId: string;
-  csfWho?: string | null;
-  csfWhat?: string | null;
   isHsseCritical: boolean;
   riskWeight: number;
+  csfWho?: string | null;
+  csfWhat?: string | null;
+  csfWhen?: string | null;
+  csfWhere?: string | null;
+  csfWhy?: string | null;
+  csfHow?: string | null;
+  riskAddressed?: string | null;
   testingApproach?: string | null;
+  ramRating?: string | null;
 };
 
 type TreeSubProcess = {
@@ -353,25 +359,38 @@ export function DocumentControlsManager() {
                 </p>
               </div>
 
-              {/* CSF Fields */}
-              <div className="grid grid-cols-2 gap-3">
+              <hr className="border-slate-100" />
+
+              {/* CSF Detail Fields */}
+              <div className="space-y-3">
                 {[
-                  ["Who", selectedControl.csfWho],
-                  ["What", selectedControl.csfWhat],
-                  ["Risk Weight", selectedControl.riskWeight],
-                  ["Source File", selectedControl.sourceFile],
-                  [
-                    "Testing Approach",
-                    selectedControl.testingApproach,
-                  ],
+                  ["🎯 Objective", selectedControl.csfWhy],
+                  ["⚠️ Risk", selectedControl.riskAddressed],
+                  ["👤 Who", selectedControl.csfWho],
+                  ["📋 What", selectedControl.csfWhat],
+                  ["📅 When", selectedControl.csfWhen],
+                  ["📍 Where", selectedControl.csfWhere],
+                  ["🔧 How", selectedControl.csfHow],
+                  ["🧪 Testing Method", selectedControl.testingApproach],
+                  ["📊 Key Risk Indicator", selectedControl.ramRating],
                 ].map(([label, value]) => (
                   <div key={label}>
-                    <span className="text-2xs text-slate-400 uppercase">{label}</span>
-                    <p className="text-xs text-slate-700">
+                    <span className="text-xs font-semibold text-slate-600">
+                      {label}
+                    </span>
+                    <p className="text-xs text-slate-700 mt-0.5 whitespace-pre-wrap">
                       {value || "—"}
                     </p>
                   </div>
                 ))}
+              </div>
+
+              {/* Meta row */}
+              <div className="flex gap-4 text-2xs text-slate-400 pt-2 border-t border-slate-100">
+                <span>Risk Weight: {selectedControl.riskWeight}</span>
+                {selectedControl.sourceFile && (
+                  <span>Source: {selectedControl.sourceFile}</span>
+                )}
               </div>
 
               {/* Document Extract Info */}
