@@ -589,18 +589,22 @@ model MapArt2Know {
 }
 
 model DocumentExtract {
-  id              String   @id @default(cuid())
-  docNo           Int
-  documentNumber  String?
-  documentType    String?
-  documentTitle   String
-  custodian       String?
-  authorizer      String?
-  content         String
-  createdAt       DateTime @default(now())
+  id                    String                  @id @default(cuid())
+  docNo                 Int
+  documentNumber        String?
+  documentType          String?
+  documentTitle         String
+  custodian             String?
+  authorizer            String?
+  content               String
+  Status                String                  @default("Not Started")
+  CompletedOn           DateTime?
+  createdAt             DateTime                @default(now())
+  controlFromDocuments  ControlFromDocument[]
 
   @@index([docNo])
   @@index([documentNumber])
+  @@index([Status])
 }
 
 model ControlFromDocument {
