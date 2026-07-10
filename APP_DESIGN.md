@@ -1,6 +1,6 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 10, 2026 (v2.4.0)  
+**Last Updated:** July 10, 2026 (v2.4.1)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
@@ -74,7 +74,7 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 - **Aact** — assurance activities tied to assessments (aaID, assuranceID, assacttypeid, activityName, activityDate, startTime, endTime, duration, description)
 - **AActControls** — M2M: Aact ⟷ Control (maps controls being tested in an activity)
 - **AActUsers** — M2M: Aact ⟷ User with userRoles and assignmentRemarks
-- **AActDetails** — activity detail text and summary against controls (aactDetID, aaId, detail, summaryAgainstControls)
+- **AActDetails** — activity detail text, summary, checklists (long text), activity notes (long text) (aactDetID, aaId, detail, summaryAgainstControls, checklists, activityNotes)
 
 ### Findings & Actions
 - **Finding** — FID-XXXXXX IDs, severity, risks, controls
@@ -191,7 +191,7 @@ CSV validate/import, generic table CRUD (all 37 models), column management, SQL 
 | `/login` | Login form |
 | `/fla` | **Assurance Management Dashboard** — Process Health Dashboard (collapsible by standard, traffic-light indicators) + Gamification sidebar (points, earned badges, leaderboard top-3) |
 | `/fla/new` | Create assessment with cascading control picker |
-| `/fla/[id]` | **2-panel tabbed assessment**: Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities (with activity CRUD, user/control mapping) |
+| `/fla/[id]` | **2-panel tabbed assessment**: Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities (activity CRUD with User assignment, Details form with checklists/notes/attachments, Controls mapping) |
 | `/admin` | Admin dashboard with 37 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), Knowledgebase |
 | `/admin/templates` | Template list + editor |
 | `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
