@@ -945,12 +945,28 @@ function RequirementManager() {
   const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || selPAId) : "";
 
   // ── Edit helpers ───────────────────────────────────────────────────
+  // Normalize requirement data: handles both Prisma field names (rId, pId) and
+  // raw DB column names (rID, pID) that the generic API may return.
+  const normalizeReq = (req: any) => ({
+    rId: req.rId ?? req.rID ?? "",
+    standard: req.standard ?? "",
+    pId: req.pId ?? req.pID ?? "",
+    processAreaId: req.processAreaId ?? "",
+    requirementId: req.requirementId ?? "",
+    clauseContent: req.clauseContent ?? "",
+    intentOutcome: req.intentOutcome ?? "",
+    clauseApplicability: req.clauseApplicability ?? "",
+    references: req.references ?? "",
+    applicable: req.applicable ?? true,
+  });
+
   const hasUnsavedChanges = (): boolean => {
     if (!expandedReqId) return false;
-    const original = requirements.find((r: any) => r.rId === expandedReqId);
+    const original = requirements.find((r: any) => (r.rId ?? r.rID) === expandedReqId);
     if (!original) return false;
+    const orig = normalizeReq(original);
     const fields = ["standard", "pId", "processAreaId", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable"];
-    return fields.some(f => (editForm[f] ?? "") !== (original[f] ?? ""));
+    return fields.some(f => String(editForm[f] ?? "") !== String(orig[f] ?? ""));
   };
 
   const toggleExpand = (rId: number) => {
@@ -967,22 +983,20 @@ function RequirementManager() {
     if (expandedReqId !== null && hasUnsavedChanges()) {
       const choice = confirm("You have unsaved changes.\n\nClick OK to SAVE before switching.\nClick Cancel to DISCARD changes and switch.");
       if (choice) {
-        // Save first, then switch (async handled inline)
         handleSave().then(() => {
-          const req = requirements.find((r: any) => r.rId === rId);
+          const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
+          if (req) setEditForm(normalizeReq(req));
           setExpandedReqId(rId);
-          setEditForm(req ? { ...req } : {});
           setMsg(null);
         });
         return;
       }
-      // Cancel = discard and switch (fall through)
     }
 
     // Open new row
-    const req = requirements.find((r: any) => r.rId === rId);
+    const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
     setExpandedReqId(rId);
-    setEditForm(req ? { ...req } : {});
+    setEditForm(req ? normalizeReq(req) : {});
     setMsg(null);
   };
 
