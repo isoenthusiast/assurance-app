@@ -856,18 +856,15 @@ function ManageCompany({ users }: { users: any[] }) {
 function RequirementManager() {
   const [requirements, setRequirements] = useState<any[]>([]);
   const [processAreas, setProcessAreas] = useState<any[]>([]);
-  const [subProcesses, setSubProcesses] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Tree expand/collapse state
   const [expandedStandards, setExpandedStandards] = useState<Set<string>>(new Set());
-  const [expandedPAIds, setExpandedPAIds] = useState<Set<string>>(new Set());
 
   // Current selection (drives table filter + breadcrumb)
   const [selStandard, setSelStandard] = useState<string>("");
   const [selPAId, setSelPAId] = useState<string>("");       // ProcessArea.id
-  const [selSPId, setSelSPId] = useState<string>("");        // SubProcess.id
 
   // Table pagination
   const [page, setPage] = useState(1);
@@ -885,11 +882,9 @@ function RequirementManager() {
     Promise.all([
       fetch("/api/admin/table/Requirement/data?perPage=2000").then(r => r.json()),
       fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
-      fetch("/api/admin/table/SubProcess/data?perPage=500").then(r => r.json()),
-    ]).then(([reqData, paData, spData]) => {
+    ]).then(([reqData, paData]) => {
       setRequirements(reqData.rows || []);
       setProcessAreas(paData.rows || []);
-      setSubProcesses(spData.rows || []);
     }).catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
@@ -907,10 +902,6 @@ function RequirementManager() {
     );
   };
 
-  // SPs for a given PA
-  const getSPsForPA = (paId: string) =>
-    subProcesses.filter(sp => sp.processAreaId === paId);
-
   // ── Toggle helpers ─────────────────────────────────────────────────
   const toggleStandard = (std: string) => {
     setExpandedStandards(prev => {
@@ -920,39 +911,18 @@ function RequirementManager() {
     });
     setSelStandard(std);
     setSelPAId("");
-    setSelSPId("");
     setPage(1);
   };
 
-  const togglePA = (paId: string, paStandard: string) => {
-    setExpandedPAIds(prev => {
-      const next = new Set(prev);
-      if (next.has(paId)) next.delete(paId); else next.add(paId);
-      return next;
-    });
+  const selectPA = (paId: string, paStandard: string) => {
     setSelStandard(paStandard);
     setSelPAId(paId);
-    setSelSPId("");
-    setPage(1);
-  };
-
-  const selectSP = (spId: string, paId: string, paStandard: string) => {
-    setSelStandard(paStandard);
-    setSelPAId(paId);
-    setSelSPId(spId);
     setPage(1);
   };
 
   // ── Filtering ──────────────────────────────────────────────────────
   const filteredReqs = requirements.filter((r: any) => {
-    if (selSPId) {
-      const sp = subProcesses.find((s: any) => s.id === selSPId);
-      if (!sp) return false;
-      return r.processAreaId === sp.processAreaId;
-    }
-    if (selPAId) {
-      return r.processAreaId === selPAId;
-    }
+    if (selPAId) return r.processAreaId === selPAId;
     if (selStandard) return r.standard === selStandard;
     return true;
   });
@@ -971,14 +941,8 @@ function RequirementManager() {
     const pa = processAreas.find((p: any) => p.pId === req.pId);
     return pa ? pa.name : req.pId;
   };
-  const getSPName = (spId: string) => {
-    const sp = subProcesses.find((s: any) => s.id === spId);
-    return sp ? sp.name : spId;
-  };
-
   // ── Breadcrumb labels ──────────────────────────────────────────────
   const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || selPAId) : "";
-  const selSPName = selSPId ? getSPName(selSPId) : "";
 
   // ── Edit helpers ───────────────────────────────────────────────────
   const toggleExpand = (rId: number) => {
@@ -1009,8 +973,8 @@ function RequirementManager() {
   };
 
   const clearAll = () => {
-    setSelStandard(""); setSelPAId(""); setSelSPId("");
-    setExpandedStandards(new Set()); setExpandedPAIds(new Set());
+    setSelStandard(""); setSelPAId("");
+    setExpandedStandards(new Set());
     setExpandedReqId(null); setEditForm({}); setPage(1);
   };
 
@@ -1064,36 +1028,18 @@ function RequirementManager() {
 
                   {/* Process Areas (children of standard) */}
                   {isExpanded && pas.map(pa => {
-                    const sps = getSPsForPA(pa.id);
-                    const isPAExpanded = expandedPAIds.has(pa.id);
-                    const isPASelected = selPAId === pa.id && !selSPId;
+                    const isPASelected = selPAId === pa.id;
                     const paReqCount = requirements.filter(r => r.processAreaId === pa.id).length;
 
                     return (
-                      <div key={pa.id}>
-                        <button
-                          onClick={() => togglePA(pa.id, std)}
-                          className={`w-full text-left pl-8 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
-                        >
-                          <span className="w-3 text-center text-2xs">{sps.length > 0 ? (isPAExpanded ? "▾" : "▸") : "·"}</span>
-                          <span className="truncate">{pa.name}</span>
-                          <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{paReqCount}</span>
-                        </button>
-
-                        {/* SubProcesses (children of PA) */}
-                        {isPAExpanded && sps.map(sp => {
-                          const isSPSelected = selSPId === sp.id;
-                          return (
-                            <button
-                              key={sp.id}
-                              onClick={() => selectSP(sp.id, pa.id, std)}
-                              className={`w-full text-left pl-14 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isSPSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-500"}`}
-                            >
-                              <span className="truncate">{sp.name}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                      <button
+                        key={pa.id}
+                        onClick={() => selectPA(pa.id, std)}
+                        className={`w-full text-left pl-8 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+                      >
+                        <span className="truncate">{pa.name}</span>
+                        <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{paReqCount}</span>
+                      </button>
                     );
                   })}
                 </div>
@@ -1110,7 +1056,7 @@ function RequirementManager() {
             {selStandard && (
               <>
                 <span className="text-slate-300">›</span>
-                <button onClick={() => { setSelStandard(selStandard); setSelPAId(""); setSelSPId(""); setPage(1); }}
+                <button onClick={() => { setSelPAId(""); setPage(1); }}
                   className={`hover:text-blue-600 hover:underline ${!selPAId ? "font-medium text-slate-700" : ""}`}>
                   {selStandard.length > 40 ? selStandard.substring(0, 40) + "..." : selStandard}
                 </button>
@@ -1119,16 +1065,7 @@ function RequirementManager() {
             {selPAId && (
               <>
                 <span className="text-slate-300">›</span>
-                <button onClick={() => { setSelSPId(""); setPage(1); }}
-                  className={`hover:text-blue-600 hover:underline ${!selSPId ? "font-medium text-slate-700" : ""}`}>
-                  {selPAName}
-                </button>
-              </>
-            )}
-            {selSPId && (
-              <>
-                <span className="text-slate-300">›</span>
-                <span className="font-medium text-slate-700">{selSPName}</span>
+                <span className="font-medium text-slate-700">{selPAName}</span>
               </>
             )}
             <span className="ml-auto text-slate-400">{filteredReqs.length} req{filteredReqs.length !== 1 ? "s" : ""}</span>
