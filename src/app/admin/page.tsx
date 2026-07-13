@@ -1248,7 +1248,8 @@ function RequirementManager() {
                         </tr>
                       )}
                     </React.Fragment>
-                  );})}
+                  )}
+                ))}
               </tbody>
             </table>
           </div>
