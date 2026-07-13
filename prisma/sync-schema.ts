@@ -36,9 +36,18 @@ async function main() {
   await prisma.$executeRawUnsafe(`ALTER TABLE "Control" DROP COLUMN IF EXISTS "subProcessId"`);
   console.log("✅ Dropped subProcessId column from Control");
 
-  // Create MRequirement table (SMDS ICOP Statutory Requirements)
+  // Rename MRequirement → Requirement (if old table exists)
+  const oldTable = await prisma.$queryRawUnsafe<Array<{exists: boolean}>>(
+    `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'MRequirement')`
+  );
+  if (oldTable[0]?.exists) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "MRequirement" RENAME TO "Requirement"`);
+    console.log("✅ Renamed MRequirement → Requirement");
+  }
+
+  // Create Requirement table (SMDS ICOP Statutory Requirements)
   await prisma.$executeRawUnsafe(`
-    CREATE TABLE IF NOT EXISTS "MRequirement" (
+    CREATE TABLE IF NOT EXISTS "Requirement" (
       "rID" INTEGER PRIMARY KEY,
       "standard" TEXT NOT NULL,
       "pID" TEXT NOT NULL,
@@ -51,7 +60,7 @@ async function main() {
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  console.log("✅ Created MRequirement table");
+  console.log("✅ Created Requirement table");
 
   await prisma.$disconnect();
   console.log("Schema sync complete.");

@@ -664,10 +664,10 @@ model ControlFromDocument {
   @@index([controlRef])
 }
 
-// ── MRequirement — SMDS ICOP Statutory Requirements ─────────────────────
+// ── Requirement — SMDS ICOP Statutory Requirements ─────────────────────
 // Imported from frontline library/mRequirement.csv.
 // rID is the canonical requirement identifier (from source data, not auto-generated).
-model MRequirement {
+model Requirement {
   rId                 Int      @id @map("rID")
   standard            String
   pId                 String   @map("pID")
@@ -679,7 +679,7 @@ model MRequirement {
   applicable          Boolean  @default(true)
   createdAt           DateTime @default(now())
 
-  @@map("MRequirement")
+  @@map("Requirement")
 }
 
 enum LOA {

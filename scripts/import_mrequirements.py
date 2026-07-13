@@ -1,5 +1,5 @@
 """
-Import mRequirement.csv into MRequirement table.
+Import mRequirement.csv into Requirement table.
 Creates table if not exists, then bulk-inserts all rows.
 rID is the primary key (from source CSV).
 """
@@ -38,9 +38,9 @@ def main():
     cur = conn.cursor()
 
     # Step 1: Create table
-    print("Creating MRequirement table...")
+    print("Creating Requirement table...")
     cur.execute("""
-        CREATE TABLE IF NOT EXISTS "MRequirement" (
+        CREATE TABLE IF NOT EXISTS "Requirement" (
             "rID" INTEGER PRIMARY KEY,
             "standard" TEXT NOT NULL,
             "pID" TEXT NOT NULL,
@@ -89,7 +89,7 @@ def main():
             if len(batch) >= 50:
                 try:
                     cur.executemany("""
-                        INSERT INTO "MRequirement" ("rID", "standard", "pID", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable")
+                        INSERT INTO "Requirement" ("rID", "standard", "pID", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable")
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT ("rID") DO NOTHING
                     """, batch)
@@ -104,7 +104,7 @@ def main():
         if batch:
             try:
                 cur.executemany("""
-                    INSERT INTO "MRequirement" ("rID", "standard", "pID", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable")
+                    INSERT INTO "Requirement" ("rID", "standard", "pID", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable")
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ON CONFLICT ("rID") DO NOTHING
                 """, batch)
@@ -118,12 +118,12 @@ def main():
         print(f"Skipped (duplicates): {skipped} rows")
 
     # Step 3: Verify
-    cur.execute('SELECT COUNT(*) FROM "MRequirement"')
+    cur.execute('SELECT COUNT(*) FROM "Requirement"')
     count = cur.fetchone()[0]
     print(f"Total in table: {count} rows")
 
     # Step 4: Sample
-    cur.execute('SELECT "rID", "standard", "requirementId" FROM "MRequirement" ORDER BY "rID" LIMIT 5')
+    cur.execute('SELECT "rID", "standard", "requirementId" FROM "Requirement" ORDER BY "rID" LIMIT 5')
     print("\nFirst 5 rows:")
     for row in cur.fetchall():
         print(f"  rID={row[0]}  standard={row[1][:50]}  reqID={row[2]}")

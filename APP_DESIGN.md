@@ -1,10 +1,12 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 13, 2026 (v2.4.4)  
+**Last Updated:** July 13, 2026 (v2.4.5)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.4.4 — MRequirement Table:** Added `MRequirement` model (696 rows) from `frontline library/mRequirement.csv` — SMDS ICOP statutory requirements with rID as primary key. Includes standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, and applicable fields. Import script at `scripts/import_mrequirements.py`.
+> **v2.4.5 — Requirement Admin UI:** Renamed `MRequirement` → `Requirement` (model + DB table). Added Manage Requirements admin panel with 2-panel layout: left panel has hierarchical filter (Standard → Process Area → SubProcess), right panel lists requirements in a table (Process Area, Requirement ID, clauseContent truncated to 100 chars). Click any row to expand an inline full-form editor for all columns. Uses generic `/api/admin/table/Requirement` endpoints.
+>
+> **v2.4.4 — Requirement Table:** Added `Requirement` model (696 rows) from `frontline library/mRequirement.csv` — SMDS ICOP statutory requirements with rID as primary key. Includes standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, and applicable fields. Import script at `scripts/import_mrequirements.py`.
 >
 > **v2.4.3 — Schema Audit:** Verified 41 models / 10 enums in sync between Prisma schema and live DB. Fixed model count (was 37). Added missing Document Ingestion models: `DocumentExtract`, `ControlFromDocument`, `ControlFDSubProcess`. Documented manual `sync-schema.ts` sync mechanism (no Prisma Migrate).
 >
@@ -113,10 +115,9 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
   - Unique on (controlFromDocumentId, subProcessId) with isPrimary flag
 
 ### SMDS ICOP Statutory Requirements
-- **MRequirement** — 696 statutory/regulatory requirements from SMDS ICOP framework (rID as PK, standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable)
+- **Requirement** — 696 statutory/regulatory requirements from SMDS ICOP framework (rID as PK, standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable)
   - Imported from `frontline library/mRequirement.csv` via `scripts/import_mrequirements.py`
-  - rID range: 3–817, grouped across 8 standards (Process Safety, Workplace Health, HSSE Foundations, ISO 9001/45001/22301, Environmental, Transport)
-  - 82 rows include external references; all rows have clause content and applicability
+  - Admin UI at `/admin` → "📋 Requirements" with hierarchical filter (Standard → Process Area → SubProcess) and inline full-form editor
 
 ### Template Models
 - **AssessmentTemplate** — reusable templates
@@ -289,7 +290,8 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v2.4.4 | 2026-07-13 | Added MRequirement table (696 statutory requirements from SMDS ICOP). Import script at scripts/import_mrequirements.py. |
+| v2.4.4 | 2026-07-13 | Added Requirement table (696 statutory requirements from SMDS ICOP). Import script at scripts/import_mrequirements.py. |
+| v2.4.5 | 2026-07-13 | Renamed MRequirement → Requirement. Added Manage Requirements admin panel with hierarchical filter and inline editor. |
 | v2.4.3 | 2026-07-13 | Schema audit: verified 41 models/10 enums in sync. Added DocumentExtract, ControlFromDocument, ControlFDSubProcess to schema docs. |
 | v2.4.2 | 2026-07-13 | Design doc audit: fix stale conversion tech, add Known Architectural Debt (§11), document execute-sql risk & admin/check inconsistency |
 | v2.0.0 | 2026-07-07 | PostgreSQL migration, Railway deployment, ActivityLogType, force-dynamic, trustHost |

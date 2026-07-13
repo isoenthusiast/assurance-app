@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { KnowledgebaseManager } from "./knowledgebase/page";
 import { DocumentControlsManager } from "./document-controls/page";
 
@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements">("tables");
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -61,6 +61,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("users")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "users" ? "bg-blue-50 font-medium" : ""}`}>👤 User Management</button>
             <button onClick={() => setView("knowledgebase")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "knowledgebase" ? "bg-blue-50 font-medium" : ""}`}>📚 Knowledgebase</button>
             <button onClick={() => setView("documentControls")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "documentControls" ? "bg-blue-50 font-medium" : ""}`}>📄 Document Controls</button>
+            <button onClick={() => setView("requirements")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "requirements" ? "bg-blue-50 font-medium" : ""}`}>📋 Requirements</button>
           </div>
         </div>
 
@@ -92,6 +93,8 @@ export default function AdminDashboard() {
           <KnowledgebaseManager />
         ) : view === "documentControls" ? (
           <DocumentControlsManager />
+        ) : view === "requirements" ? (
+          <RequirementManager />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
@@ -841,6 +844,351 @@ function ManageCompany({ users }: { users: any[] }) {
               </label>
               <button onClick={assignUserToCompany} className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 h-[30px]">＋ Assign</button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Requirement Manager ────────────────────────────────────────────────────
+
+function RequirementManager() {
+  const [requirements, setRequirements] = useState<any[]>([]);
+  const [processAreas, setProcessAreas] = useState<any[]>([]);
+  const [subProcesses, setSubProcesses] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Hierarchy selection state
+  const [selectedStandard, setSelectedStandard] = useState<string>("");
+  const [selectedPId, setSelectedPId] = useState<string>("");
+  const [selectedSubProcessId, setSelectedSubProcessId] = useState<string>("");
+
+  // Expanded requirement for full-form editing
+  const [expandedReqId, setExpandedReqId] = useState<number | null>(null);
+  const [editForm, setEditForm] = useState<any>({});
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // Load all data on mount
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      fetch("/api/admin/table/Requirement/data?perPage=2000").then(r => r.json()),
+      fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
+      fetch("/api/admin/table/SubProcess/data?perPage=500").then(r => r.json()),
+    ]).then(([reqData, paData, spData]) => {
+      setRequirements(reqData.rows || []);
+      setProcessAreas(paData.rows || []);
+      setSubProcesses(spData.rows || []);
+    }).catch(e => setError(e.message))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Derive unique standards from requirements
+  const standards = [...new Set(requirements.map((r: any) => r.standard).filter(Boolean))].sort();
+
+  // Process Areas filtered by selected standard
+  const filteredPAs = selectedStandard
+    ? processAreas.filter((pa: any) => pa.standard === selectedStandard || pa.pId && requirements.some((r: any) => r.standard === selectedStandard && r.pId === pa.pId))
+    : [];
+
+  // SubProcesses filtered by selected process area
+  const filteredSPs = selectedPId
+    ? subProcesses.filter((sp: any) => {
+        const pa = processAreas.find((p: any) => p.pId === selectedPId || p.id === selectedPId);
+        return pa && sp.processAreaId === pa.id;
+      })
+    : [];
+
+  // Requirements filtered by selection
+  const filteredReqs = requirements.filter((r: any) => {
+    if (selectedSubProcessId) {
+      const sp = subProcesses.find((s: any) => s.id === selectedSubProcessId);
+      if (!sp) return false;
+      const pa = processAreas.find((p: any) => p.id === sp.processAreaId);
+      return pa && r.pId === pa.pId && r.standard === pa.standard;
+    }
+    if (selectedPId) {
+      return r.pId === selectedPId || processAreas.some((pa: any) => (pa.id === selectedPId || pa.pId === selectedPId) && r.pId === pa.pId && r.standard === pa.standard);
+    }
+    if (selectedStandard) {
+      return r.standard === selectedStandard;
+    }
+    return true;
+  });
+
+  // Get ProcessArea name by pId
+  const getPAName = (pId: string) => {
+    const pa = processAreas.find((p: any) => p.pId === pId);
+    return pa ? pa.name : pId;
+  };
+
+  // Get SubProcess name by id
+  const getSPName = (spId: string) => {
+    const sp = subProcesses.find((s: any) => s.id === spId);
+    return sp ? sp.name : spId;
+  };
+
+  // Expand/collapse a requirement row
+  const toggleExpand = (rId: number) => {
+    if (expandedReqId === rId) {
+      setExpandedReqId(null);
+      setEditForm({});
+    } else {
+      const req = requirements.find((r: any) => r.rId === rId);
+      setExpandedReqId(rId);
+      setEditForm(req ? { ...req } : {});
+      setMsg(null);
+    }
+  };
+
+  // Save edited requirement
+  const handleSave = async () => {
+    if (!expandedReqId) return;
+    setSaving(true); setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/table/Requirement/${expandedReqId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setMsg({ type: "ok", text: "Requirement updated." });
+      // Refresh data
+      const r = await fetch("/api/admin/table/Requirement/data?perPage=2000");
+      const d = await r.json();
+      setRequirements(d.rows || []);
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+    finally { setSaving(false); }
+  };
+
+  // Clear all selections
+  const clearSelection = () => {
+    setSelectedStandard("");
+    setSelectedPId("");
+    setSelectedSubProcessId("");
+    setExpandedReqId(null);
+    setEditForm({});
+  };
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-full text-slate-400 text-sm">Loading requirements...</div>;
+  }
+
+  if (error) {
+    return <div className="flex items-center justify-center h-full text-red-500 text-sm">Error: {error}</div>;
+  }
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
+        <span className="font-semibold text-slate-900 text-sm">📋 Manage Requirements ({requirements.length} rows)</span>
+        <button onClick={clearSelection} className="text-xs text-blue-600 hover:underline">Clear Filters</button>
+      </div>
+      <div className="flex flex-1 overflow-hidden">
+        {/* ═════════ LEFT PANEL — Hierarchy Menu ═════════ */}
+        <div className="w-56 border-r border-slate-200 flex flex-col overflow-y-auto">
+          {/* Level 0: Standards */}
+          <div className="px-3 py-2 border-b border-slate-100">
+            <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Standard</div>
+            <div className="space-y-0.5 max-h-[30vh] overflow-y-auto">
+              <button onClick={() => { setSelectedStandard(""); setSelectedPId(""); setSelectedSubProcessId(""); }}
+                className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedStandard ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                📂 All Standards
+              </button>
+              {standards.map(std => (
+                <button key={std} onClick={() => { setSelectedStandard(std); setSelectedPId(""); setSelectedSubProcessId(""); }}
+                  className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${selectedStandard === std && !selectedPId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                  {std}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Level 1: Process Areas (shown when a standard is selected) */}
+          {selectedStandard && (
+            <div className="px-3 py-2 border-b border-slate-100">
+              <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Process Area</div>
+              <div className="space-y-0.5 max-h-[25vh] overflow-y-auto">
+                <button onClick={() => { setSelectedPId(""); setSelectedSubProcessId(""); }}
+                  className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedPId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                  📁 All Process Areas
+                </button>
+                {filteredPAs.map(pa => (
+                  <button key={pa.id} onClick={() => { setSelectedPId(pa.pId || pa.id); setSelectedSubProcessId(""); }}
+                    className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${(selectedPId === pa.pId || selectedPId === pa.id) && !selectedSubProcessId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                    {pa.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Level 2: SubProcesses (shown when a process area is selected) */}
+          {selectedPId && (
+            <div className="px-3 py-2 border-b border-slate-100">
+              <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">SubProcess</div>
+              <div className="space-y-0.5 max-h-[25vh] overflow-y-auto">
+                <button onClick={() => setSelectedSubProcessId("")}
+                  className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedSubProcessId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                  📄 All SubProcesses
+                </button>
+                {filteredSPs.map(sp => (
+                  <button key={sp.id} onClick={() => setSelectedSubProcessId(sp.id)}
+                    className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${selectedSubProcessId === sp.id ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
+                    {sp.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Breadcrumb / active filter summary */}
+          <div className="px-3 py-2 mt-auto border-t border-slate-200 bg-slate-50">
+            <div className="text-2xs text-slate-400">
+              {selectedStandard && <div>Standard: <span className="text-slate-600 font-medium">{selectedStandard}</span></div>}
+              {selectedPId && <div>PA: <span className="text-slate-600 font-medium">{getPAName(selectedPId)}</span></div>}
+              {selectedSubProcessId && <div>SP: <span className="text-slate-600 font-medium">{getSPName(selectedSubProcessId)}</span></div>}
+              {!selectedStandard && <div className="text-slate-400 italic">Select a Standard to begin</div>}
+            </div>
+          </div>
+        </div>
+
+        {/* ═════════ RIGHT PANEL — Requirements Table ═════════ */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Table */}
+          <div className="flex-1 overflow-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead className="sticky top-0 bg-slate-100 z-10">
+                <tr>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600 w-8">#</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Process Area</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Requirement ID</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600">Clause Content</th>
+                  <th className="px-3 py-2 text-left font-medium text-slate-600 w-16">Standard</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredReqs.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400">
+                      {selectedStandard ? "No requirements match the selected filters." : "← Select a Standard from the left panel to filter requirements."}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredReqs.map((req: any, i: number) => (
+                    <React.Fragment key={req.rId}>
+                      <tr
+                        onClick={() => toggleExpand(req.rId)}
+                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${expandedReqId === req.rId ? "bg-blue-50" : ""}`}
+                      >
+                        <td className="px-3 py-1.5 text-slate-400">{i + 1}</td>
+                        <td className="px-3 py-1.5 text-slate-700">
+                          <span className="text-blue-600 hover:underline">{req.pId}</span>
+                          <div className="text-2xs text-slate-400">{getPAName(req.pId)}</div>
+                        </td>
+                        <td className="px-3 py-1.5 font-mono text-slate-700">{req.requirementId}</td>
+                        <td className="px-3 py-1.5 text-slate-600 max-w-[400px]">
+                          <span className="line-clamp-2">
+                            {(req.clauseContent || "").length > 100
+                              ? (req.clauseContent || "").substring(0, 100) + "..."
+                              : req.clauseContent}
+                          </span>
+                        </td>
+                        <td className="px-3 py-1.5 text-slate-500 text-2xs">{req.standard}</td>
+                      </tr>
+                      {/* Expanded full-form row */}
+                      {expandedReqId === req.rId && (
+                        <tr key={`exp-${req.rId}`}>
+                          <td colSpan={5} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
+                            <div className="max-w-3xl">
+                              <h3 className="text-sm font-semibold text-slate-900 mb-4">
+                                Edit Requirement — {req.requirementId}
+                              </h3>
+                              {msg && (
+                                <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                                  {msg.text}
+                                </div>
+                              )}
+                              <div className="grid grid-cols-2 gap-3">
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">rID (Primary Key)</span>
+                                  <input value={editForm.rId ?? ""} disabled
+                                    className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">Standard</span>
+                                  <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">Process Area ID (pID)</span>
+                                  <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">Requirement ID</span>
+                                  <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                </label>
+                                <label className="block col-span-2">
+                                  <span className="text-xs text-slate-500">Clause Content</span>
+                                  <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))}
+                                    rows={3}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                </label>
+                                <label className="block col-span-2">
+                                  <span className="text-xs text-slate-500">Intent / Outcome</span>
+                                  <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))}
+                                    rows={2}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                </label>
+                                <label className="block col-span-2">
+                                  <span className="text-xs text-slate-500">Clause Applicability</span>
+                                  <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">References</span>
+                                  <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">Applicable</span>
+                                  <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
+                                    <option value="true">Yes</option>
+                                    <option value="false">No</option>
+                                  </select>
+                                </label>
+                              </div>
+                              <div className="flex gap-2 mt-4">
+                                <button onClick={handleSave} disabled={saving}
+                                  className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                                  {saving ? "Saving..." : "Save Changes"}
+                                </button>
+                                <button onClick={() => toggleExpand(req.rId)}
+                                  className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {/* Footer summary */}
+          <div className="px-4 py-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-400 flex justify-between">
+            <span>{filteredReqs.length} requirement{filteredReqs.length !== 1 ? "s" : ""} shown</span>
+            {expandedReqId && <span>Editing rID: {expandedReqId}</span>}
           </div>
         </div>
       </div>
