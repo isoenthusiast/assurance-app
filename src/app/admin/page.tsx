@@ -897,12 +897,14 @@ function RequirementManager() {
   // ── Derived tree data ──────────────────────────────────────────────
   const standards = [...new Set(requirements.map((r: any) => r.standard).filter(Boolean))].sort();
 
-  // PAs for a given standard — use processAreaId for direct lookup
+  // PAs for a given standard — use both processAreaId lookup AND ProcessArea.standard
   const getPAsForStandard = (std: string) => {
     const paIdsFromReqs = new Set(
       requirements.filter(r => r.standard === std && r.processAreaId).map(r => r.processAreaId)
     );
-    return processAreas.filter(pa => paIdsFromReqs.has(pa.id));
+    return processAreas.filter(pa =>
+      paIdsFromReqs.has(pa.id) || pa.standard === std
+    );
   };
 
   // SPs for a given PA
@@ -1065,6 +1067,7 @@ function RequirementManager() {
                     const sps = getSPsForPA(pa.id);
                     const isPAExpanded = expandedPAIds.has(pa.id);
                     const isPASelected = selPAId === pa.id && !selSPId;
+                    const paReqCount = requirements.filter(r => r.processAreaId === pa.id).length;
 
                     return (
                       <div key={pa.id}>
@@ -1074,7 +1077,7 @@ function RequirementManager() {
                         >
                           <span className="w-3 text-center text-2xs">{sps.length > 0 ? (isPAExpanded ? "▾" : "▸") : "·"}</span>
                           <span className="truncate">{pa.name}</span>
-                          <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{reqCount}</span>
+                          <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{paReqCount}</span>
                         </button>
 
                         {/* SubProcesses (children of PA) */}
