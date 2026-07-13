@@ -1157,11 +1157,13 @@ function RequirementManager() {
                     </td>
                   </tr>
                 ) : (
-                  pagedReqs.map((req: any, i: number) => (
-                    <React.Fragment key={req.rId}>
+                  pagedReqs.map((req: any, i: number) => {
+                    const rid = req.rId ?? req.rID;
+                    return (
+                    <React.Fragment key={rid}>
                       <tr
-                        onClick={() => toggleExpand(req.rId)}
-                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${expandedReqId === req.rId ? "bg-blue-50" : ""}`}
+                        onClick={() => toggleExpand(rid)}
+                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${expandedReqId === rid ? "bg-blue-50" : ""}`}
                       >
                         <td className="px-2 py-1 text-slate-400 text-2xs">{(page - 1) * perPage + i + 1}</td>
                         <td className="px-2 py-1 font-mono text-2xs text-slate-700 whitespace-nowrap">{req.requirementId}</td>
@@ -1177,8 +1179,8 @@ function RequirementManager() {
                         </td>
                       </tr>
                       {/* Expanded full-form row */}
-                      {expandedReqId === req.rId && (
-                        <tr key={`exp-${req.rId}`}>
+                      {expandedReqId === rid && (
+                        <tr key={`exp-${rid}`}>
                           <td colSpan={6} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
                             <div className="max-w-3xl">
                               <h3 className="text-sm font-semibold text-slate-900 mb-4">
@@ -1239,15 +1241,14 @@ function RequirementManager() {
                                 <button onClick={handleSave} disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
                                   {saving ? "Saving..." : "Save Changes"}
                                 </button>
-                                <button onClick={() => toggleExpand(req.rId)} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+                                <button onClick={() => toggleExpand(rid)} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
                               </div>
                             </div>
                           </td>
                         </tr>
                       )}
                     </React.Fragment>
-                  ))
-                )}
+                  );})}
               </tbody>
             </table>
           </div>
