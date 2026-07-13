@@ -62,6 +62,17 @@ async function main() {
   `);
   console.log("✅ Created Requirement table");
 
+  // Add processAreaId column (backfilled from ProcessArea via pID mapping)
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Requirement" ADD COLUMN IF NOT EXISTS "processAreaId" TEXT`);
+  // Backfill: match Requirement.pID → ProcessArea.pId
+  const backfillResult = await prisma.$executeRawUnsafe(`
+    UPDATE "Requirement" r
+    SET "processAreaId" = pa.id
+    FROM "ProcessArea" pa
+    WHERE r."pID" = pa."pId" AND r."processAreaId" IS NULL
+  `);
+  console.log(`✅ Added processAreaId column, backfilled ${backfillResult} rows`);
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }

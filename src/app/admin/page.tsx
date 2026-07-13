@@ -897,10 +897,12 @@ function RequirementManager() {
   // ── Derived tree data ──────────────────────────────────────────────
   const standards = [...new Set(requirements.map((r: any) => r.standard).filter(Boolean))].sort();
 
-  // PAs for a given standard
+  // PAs for a given standard — use processAreaId for direct lookup
   const getPAsForStandard = (std: string) => {
-    const paIdsFromReqs = new Set(requirements.filter(r => r.standard === std).map(r => r.pId));
-    return processAreas.filter(pa => paIdsFromReqs.has(pa.pId) || pa.standard === std);
+    const paIdsFromReqs = new Set(
+      requirements.filter(r => r.standard === std && r.processAreaId).map(r => r.processAreaId)
+    );
+    return processAreas.filter(pa => paIdsFromReqs.has(pa.id));
   };
 
   // SPs for a given PA
@@ -944,13 +946,10 @@ function RequirementManager() {
     if (selSPId) {
       const sp = subProcesses.find((s: any) => s.id === selSPId);
       if (!sp) return false;
-      const pa = processAreas.find((p: any) => p.id === sp.processAreaId);
-      return pa && r.pId === pa.pId && r.standard === pa.standard;
+      return r.processAreaId === sp.processAreaId;
     }
     if (selPAId) {
-      const pa = processAreas.find((p: any) => p.id === selPAId);
-      if (!pa) return r.pId === selPAId || processAreas.some((x: any) => x.id === selPAId && x.pId === r.pId);
-      return r.pId === pa.pId && r.standard === (pa.standard || selStandard);
+      return r.processAreaId === selPAId;
     }
     if (selStandard) return r.standard === selStandard;
     return true;
@@ -961,9 +960,14 @@ function RequirementManager() {
   const pagedReqs = filteredReqs.slice((page - 1) * perPage, page * perPage);
 
   // ── Name lookups ───────────────────────────────────────────────────
-  const getPAName = (pId: string) => {
-    const pa = processAreas.find((p: any) => p.pId === pId);
-    return pa ? pa.name : pId;
+  const getPAName = (req: any) => {
+    if (req.processAreaId) {
+      const pa = processAreas.find((p: any) => p.id === req.processAreaId);
+      if (pa) return pa.name;
+    }
+    // Fallback: match by pId (for un-backfilled rows)
+    const pa = processAreas.find((p: any) => p.pId === req.pId);
+    return pa ? pa.name : req.pId;
   };
   const getSPName = (spId: string) => {
     const sp = subProcesses.find((s: any) => s.id === spId);
@@ -971,7 +975,7 @@ function RequirementManager() {
   };
 
   // ── Breadcrumb labels ──────────────────────────────────────────────
-  const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || getPAName(selPAId)) : "";
+  const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || selPAId) : "";
   const selSPName = selSPId ? getSPName(selSPId) : "";
 
   // ── Edit helpers ───────────────────────────────────────────────────
@@ -1170,7 +1174,7 @@ function RequirementManager() {
                       >
                         <td className="px-2 py-1 text-slate-400 text-2xs">{(page - 1) * perPage + i + 1}</td>
                         <td className="px-2 py-1 font-mono text-2xs text-slate-700 whitespace-nowrap">{req.requirementId}</td>
-                        <td className="px-2 py-1 text-2xs text-blue-600 font-mono whitespace-nowrap" title={getPAName(req.pId)}>{req.pId}</td>
+                        <td className="px-2 py-1 text-2xs text-blue-600 font-mono whitespace-nowrap" title={getPAName(req)}>{req.pId}</td>
                         <td className="px-2 py-1 text-2xs text-slate-600 truncate" title={req.clauseContent}>
                           {req.clauseContent || ""}
                         </td>
@@ -1206,6 +1210,10 @@ function RequirementManager() {
                                 <label className="block">
                                   <span className="text-xs text-slate-500">pID</span>
                                   <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                </label>
+                                <label className="block">
+                                  <span className="text-xs text-slate-500">Process Area ID</span>
+                                  <input value={editForm.processAreaId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, processAreaId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" placeholder="Auto-backfilled from pID" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Requirement ID</span>

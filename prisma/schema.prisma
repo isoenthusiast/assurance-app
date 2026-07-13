@@ -75,6 +75,7 @@ model ProcessArea {
   controls     Control[]
   subProcesses SubProcess[]
   badges       AchievementBadge[]
+  requirements Requirement[]
 }
 
 model SubProcess {
@@ -667,19 +668,23 @@ model ControlFromDocument {
 // ── Requirement — SMDS ICOP Statutory Requirements ─────────────────────
 // Imported from frontline library/mRequirement.csv.
 // rID is the canonical requirement identifier (from source data, not auto-generated).
+// processAreaId is backfilled from ProcessArea via pID → ProcessArea.pId mapping.
 model Requirement {
-  rId                 Int      @id @map("rID")
+  rId                 Int          @id @map("rID")
   standard            String
-  pId                 String   @map("pID")
+  pId                 String       @map("pID")
+  processAreaId       String?
   requirementId       String
   clauseContent       String
   intentOutcome       String
   clauseApplicability String
   references          String?
-  applicable          Boolean  @default(true)
-  createdAt           DateTime @default(now())
+  applicable          Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  processArea         ProcessArea? @relation(fields: [processAreaId], references: [id])
 
   @@map("Requirement")
+  @@index([processAreaId])
 }
 
 enum LOA {

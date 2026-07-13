@@ -117,12 +117,22 @@ def main():
     if skipped > 0:
         print(f"Skipped (duplicates): {skipped} rows")
 
-    # Step 3: Verify
+    # Step 3: Backfill processAreaId from ProcessArea
+    print("\nBackfilling processAreaId...")
+    cur.execute("""
+        UPDATE "Requirement" r
+        SET "processAreaId" = pa.id
+        FROM "ProcessArea" pa
+        WHERE r."pID" = pa."pId" AND r."processAreaId" IS NULL
+    """)
+    print(f"Backfilled: {cur.rowcount} rows")
+
+    # Step 4: Verify
     cur.execute('SELECT COUNT(*) FROM "Requirement"')
     count = cur.fetchone()[0]
     print(f"Total in table: {count} rows")
 
-    # Step 4: Sample
+    # Step 5: Sample
     cur.execute('SELECT "rID", "standard", "requirementId" FROM "Requirement" ORDER BY "rID" LIMIT 5')
     print("\nFirst 5 rows:")
     for row in cur.fetchall():
