@@ -267,13 +267,20 @@ export async function PUT(
       if (!model) {
         // Raw SQL fallback for models not accessible via Proxy (e.g. Requirement)
         const pkField = getPkField(table);
+        // Map Prisma field names → DB column names (handles @map directives)
+        const fieldToCol: Record<string, string> = {
+          rId: "rID", pId: "pID",
+        };
         const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
+        const dbPkCol = fieldToCol[pkField] || pkField;
         const setClauses: string[] = [];
         const values: any[] = [];
         let paramIdx = 1;
         for (const [key, val] of Object.entries(body)) {
+          // Skip PK fields and auto-generated fields
           if (key === "rId" || key === "rID" || key === "id" || key === "createdAt") continue;
-          setClauses.push(`"${key}" = $${paramIdx}`);
+          const colName = fieldToCol[key] || key;
+          setClauses.push(`"${colName}" = $${paramIdx}`);
           values.push(val);
           paramIdx++;
         }
@@ -281,7 +288,7 @@ export async function PUT(
         if (setClauses.length === 0) {
           return NextResponse.json({ error: "No fields to update" }, { status: 400 });
         }
-        const sql = `UPDATE "${table}" SET ${setClauses.join(", ")} WHERE "${pkField}" = $${paramIdx} RETURNING *`;
+        const sql = `UPDATE "${table}" SET ${setClauses.join(", ")} WHERE "${dbPkCol}" = $${paramIdx} RETURNING *`;
         const rows = await (prisma as any).$queryRawUnsafe(sql, ...values);
         result = Array.isArray(rows) ? rows[0] : rows;
       } else {
