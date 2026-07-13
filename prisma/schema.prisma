@@ -84,7 +84,7 @@ model ProcessArea {
   createdAt    DateTime           @default(now())
   pId          String?
   standard     String?
-  standardId   String?
+  standardId   String?            @map("StandardID")
   standardRef  Standard?          @relation(fields: [standardId], references: [id])
   controls     Control[]
   subProcesses SubProcess[]

@@ -146,7 +146,7 @@
       "required": false,
       "isId": false
     },
-    "standardId": {
+    "StandardID": {
       "type": "String",
       "required": false,
       "isId": false
