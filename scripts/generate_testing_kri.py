@@ -129,82 +129,329 @@ def generate_testing_approach(statement: str, csf_how: str, csf_evidence: str,
 
 # ── Key Risk Indicator generator ──────────────────────────────────────
 
-RISK_METRIC_PATTERNS = [
-    (r'(\d+)\s*%', r'Target: ≥\1% compliance rate'),
-    (r'(\d+)\s*days?', r'Threshold: ≤\1 days'),
-    (r'(\d+)\s*months?', r'Threshold: ≤\1 months'),
-    (r'zero\s+(incident|accident|spill|leak|fatality)', r'Target: Zero \1s'),
-    (r'100\s*%', r'Target: 100% compliance'),
-    (r'no\s+(incident|accident|spill|leak|fatality|finding)', r'Target: Zero \1s'),
-]
+# Control-type-specific KRI templates
+CONTROL_TYPE_KRIS = {
+    "inspection": {
+        "lead": [
+            "% of inspections completed on schedule",
+            "Average days overdue for scheduled inspections",
+            "% of inspection findings closed within target timeframe",
+        ],
+        "lag": [
+            "Number of defects found late (outside scheduled inspection)",
+            "Equipment failure rate for items under inspection program",
+        ],
+    },
+    "approval": {
+        "lead": [
+            "% of submissions approved within SLA timeframe",
+            "Number of pending approvals older than target",
+            "Approval rejection rate (first-pass yield)",
+        ],
+        "lag": [
+            "Number of incidents linked to delayed approvals",
+            "Non-compliance events from unapproved activities",
+        ],
+    },
+    "verification": {
+        "lead": [
+            "% of verifications completed per schedule",
+            "Discrepancy rate in verified records",
+            "Average time from submission to verification",
+        ],
+        "lag": [
+            "Number of incidents traced to unverified work",
+            "Audit findings related to verification gaps",
+        ],
+    },
+    "monitoring": {
+        "lead": [
+            "% of monitoring points within acceptable range",
+            "Number of monitoring gaps (missing data points)",
+            "Alert response time (time from alert to action)",
+        ],
+        "lag": [
+            "Number of threshold exceedances per period",
+            "Incidents not predicted by monitoring trends",
+        ],
+    },
+    "maintenance": {
+        "lead": [
+            "% of preventive maintenance completed on time",
+            "Maintenance backlog (count and aging)",
+            "Mean time between failures (MTBF) trend",
+        ],
+        "lag": [
+            "Number of breakdown maintenance events",
+            "Production loss hours due to equipment failure",
+        ],
+    },
+    "training": {
+        "lead": [
+            "% of personnel with current required certifications",
+            "Training compliance rate by role/department",
+            "Average days to close training gaps",
+        ],
+        "lag": [
+            "Number of competency-related incidents",
+            "Audit findings citing inadequate training",
+        ],
+    },
+    "documentation": {
+        "lead": [
+            "% of documents reviewed within review cycle",
+            "Number of documents past review date",
+            "Document control non-conformance rate",
+        ],
+        "lag": [
+            "Number of incidents attributed to outdated procedures",
+            "Regulatory findings on document control",
+        ],
+    },
+    "testing": {
+        "lead": [
+            "% of required tests completed on schedule",
+            "First-pass test success rate",
+            "Average time to resolve test failures",
+        ],
+        "lag": [
+            "Number of in-service failures of tested items",
+            "Incidents linked to inadequate testing",
+        ],
+    },
+    "general": {
+        "lead": [
+            "Control implementation compliance rate (%)",
+            "Timeliness of control execution vs. schedule",
+            "Quality of control evidence (complete/accurate records)",
+        ],
+        "lag": [
+            "Number of risk events occurring despite control",
+            "Control effectiveness rating from assurance reviews",
+        ],
+    },
+}
 
-RISK_CATEGORY_KEYWORDS = {
-    "safety": ["safety", "fatality", "injury", "loto", "isolation", "confined space", "working at height"],
-    "environmental": ["spill", "leak", "emission", "discharge", "environmental", "waste"],
-    "process": ["upset", "shutdown", "trip", "overpressure", "loss of containment"],
-    "asset": ["failure", "damage", "corrosion", "erosion", "degradation", "breakdown"],
-    "regulatory": ["non-compliance", "violation", "legal", "permit", "license", "regulation"],
-    "operational": ["downtime", "delay", "backlog", "production loss", "outage"],
-    "quality": ["defect", "rework", "non-conformance", "deviation", "out of spec"],
-    "security": ["breach", "unauthorized", "access", "cyber"],
+# Keywords that map to control types (with weights — higher = more specific)
+CONTROL_TYPE_KEYWORDS = {
+    "inspection": [
+        ("inspect", 3), ("inspection", 3), ("examine", 2), ("ndt", 3),
+        ("walkdown", 3), ("survey", 2), ("visual check", 3),
+        ("non-destructive", 3), ("thickness measurement", 3),
+    ],
+    "approval": [
+        ("approve", 3), ("approval", 3), ("authorize", 3), ("sign-off", 3),
+        ("sign off", 3), ("endorse", 3), ("authorization", 3),
+        ("acceptance", 2), ("concur", 2),
+    ],
+    "verification": [
+        ("verify", 3), ("verification", 3), ("validate", 3), ("validation", 3),
+        ("confirm", 2), ("check against", 3), ("cross-check", 3),
+        ("reconcile", 2), ("audit", 3),
+    ],
+    "monitoring": [
+        ("monitor", 3), ("monitoring", 3), ("surveillance", 3),
+        ("continuous", 2), ("real-time", 3), ("sampling", 2),
+        ("measure", 2), ("measurement", 2), ("meter", 2), ("gauge", 2),
+    ],
+    "maintenance": [
+        ("maintenance", 3), ("maintain", 2), ("repair", 3), ("overhaul", 3),
+        ("preventive", 3), ("corrective", 3), ("breakdown", 2),
+        ("service", 2), ("replace", 2), ("restore", 2),
+    ],
+    "training": [
+        ("train", 2), ("training", 3), ("competency", 3), ("competent", 2),
+        ("certification", 3), ("certify", 3), ("qualification", 3),
+        ("qualified", 2), ("authorized person", 3),
+    ],
+    "documentation": [
+        ("record", 1), ("register", 2), ("log", 1), ("checklist", 2),
+        ("form", 1), ("template", 1), ("data sheet", 2),
+        ("document control", 3), ("version control", 3),
+    ],
+    "testing": [
+        ("test", 2), ("testing", 3), ("calibrat", 3), ("function test", 3),
+        ("pressure test", 3), ("leak test", 3), ("hydrotest", 3),
+        ("performance test", 3), ("commissioning test", 3),
+    ],
 }
 
 
-def generate_key_risk_indicator(statement: str, risk_addressed: str,
-                                 doc_content: str) -> str:
-    """Derive a key risk indicator from the risk and document content."""
+def derive_control_type(control_name: str, statement: str, csf_what: str, csf_how: str) -> str:
+    """Determine the primary control type from statement content."""
+    # Include the control name for better detection
+    combined = f"{control_name} {statement} {csf_what} {csf_how}".lower()
+    # Strip document metadata boilerplate
+    combined = re.sub(r'(document owner|custodian|author:|approver:|process owner|'
+                      r'local management system|process focal point|'
+                      r'shell mds|ams |revision date|classification|'
+                      r'security classification|eccn|page \d+ of \d+)',
+                      '', combined)
+
+    scores = {}
+    for ctype, keywords in CONTROL_TYPE_KEYWORDS.items():
+        score = 0
+        for kw, weight in keywords:
+            if kw in combined:
+                score += weight
+        if score > 0:
+            scores[ctype] = score
+
+    if not scores:
+        return "general"
+    return max(scores, key=scores.get)
+
+
+def extract_subject(statement: str, csf_what: str, csf_why: str) -> str:
+    """Extract the specific subject/domain of this control."""
+    combined = statement or csf_what or ""
+    # Strip document boilerplate
+    combined = re.sub(
+        r'(?i)(document owner|custodian|author:|approver:|process owner|'
+        r'local management system|process focal point|shell mds|ams |'
+        r'revision date|classification|security classification|eccn|'
+        r'page \d+ of \d+|role\s+name\s+signature\s+date)',
+        '', combined
+    )
+    # Strip actor prefix pattern: "X performs", "X shall"
+    combined = re.sub(r'(?i)\S+\s+(performs?|shall|must|will|is to)\s+', '', combined)
+    # Remove common prefixes
+    combined = re.sub(r'^(the |a |an |this |all |any )', '', combined.strip(), flags=re.IGNORECASE)
+    # Collapse whitespace
+    combined = re.sub(r'\s+', ' ', combined).strip()
+    # Take first meaningful segment
+    subject = combined[:80].strip().rstrip(".")
+    if len(subject) < 5:
+        subject = (csf_why or "this control").strip()
+    return subject
+
+
+def extract_measurable_aspects(all_text: str) -> dict:
+    """Extract measurable numbers, frequencies, and thresholds."""
+    aspects = {}
+
+    # Frequencies
+    freq_match = re.search(
+        r'(annually|annual|quarterly|monthly|weekly|daily|'
+        r'every\s+(\d+)\s*(day|week|month|year)s?|'
+        r'prior\s+to\s+(each|every)|'
+        r'before\s+(each|every)|'
+        r'upon\s+(completion|receipt|approval))',
+        all_text, re.IGNORECASE
+    )
+    if freq_match:
+        aspects["frequency"] = freq_match.group(0).strip()
+
+    # Time thresholds
+    time_match = re.search(
+        r'(within|before|after|not\s+exceed\w*\s+|maximum\s+|'
+        r'no\s+later\s+than\s+|by\s+)\s*'
+        r'(\d+)\s*(day|week|month|year|hour)s?',
+        all_text, re.IGNORECASE
+    )
+    if time_match:
+        aspects["time_threshold"] = f"{time_match.group(0).strip()}"
+
+    # Percentage targets
+    pct_match = re.search(r'(100\s*%|(\d+)\s*%\s*(compliance|complet|accuracy))', all_text, re.IGNORECASE)
+    if pct_match:
+        aspects["pct_target"] = pct_match.group(1).strip()
+
+    # Specific counts
+    count_match = re.search(
+        r'(all|every|each|zero|no|none)\s+(incident|accident|spill|leak|'
+        r'fatality|finding|non-compliance|failure|injury|defect)',
+        all_text, re.IGNORECASE
+    )
+    if count_match:
+        aspects["zero_target"] = count_match.group(2)
+
+    return aspects
+
+
+def generate_key_risk_indicator(control_name: str, statement: str, risk_addressed: str,
+                                 doc_content: str, csf_what: str = "",
+                                 csf_how: str = "", csf_why: str = "",
+                                 csf_when: str = "") -> str:
+    """Derive specific, measurable Key Risk Indicators from document context."""
     parts = []
-    all_text = f"{statement} {risk_addressed} {doc_content[:3000]}".lower()
+    all_text = f"{statement} {risk_addressed} {csf_what} {csf_how} {csf_why} {doc_content[:2500]}".lower()
+    statement_lower = (statement or "").lower()
 
-    # 1. Risk category
-    categories = []
-    for cat, keywords in RISK_CATEGORY_KEYWORDS.items():
-        if any(kw in all_text for kw in keywords):
-            categories.append(cat)
-    if categories:
-        parts.append(f"Risk Category: {', '.join(categories[:2]).title()}.")
+    # ── 1. Control Type & Lead Indicators ──────────────────────────
+    control_type = derive_control_type(control_name or "", statement or "", csf_what, csf_how)
+    templates = CONTROL_TYPE_KRIS.get(control_type, CONTROL_TYPE_KRIS["general"])
 
-    # 2. Metric / threshold from patterns
-    for pattern, template in RISK_METRIC_PATTERNS:
-        match = re.search(pattern, all_text, re.IGNORECASE)
-        if match:
-            parts.append(template)
-            break
+    # Pick the most relevant lead indicator based on statement content
+    lead_options = templates["lead"]
+    lead_scores = []
+    for option in lead_options:
+        # Score by keyword overlap with statement
+        option_words = set(option.lower().replace("%", " ").split())
+        stmt_words = set(statement_lower.split())
+        score = len(option_words & stmt_words)
+        lead_scores.append((score, option))
+    lead_scores.sort(reverse=True)
+    best_lead = lead_scores[0][1] if lead_scores else lead_options[0]
 
-    # 3. Leading indicator from risk statement
-    if risk_addressed and risk_addressed.strip() and risk_addressed.strip() != "None":
-        risk_clean = risk_addressed.strip().rstrip(".")
-        # Extract key measurable aspect
-        meas_match = re.search(
-            r'(ensure|prevent|detect|mitigate|control|monitor|reduce|eliminate)\s+(.+)',
-            risk_clean, re.IGNORECASE
-        )
-        if meas_match:
-            action = meas_match.group(2)[:150]
-            parts.append(f"Leading Indicator: {action.strip()}.")
+    # Customize the lead indicator with extracted subject
+    subject = extract_subject(statement or "", csf_what, csf_why)
+    if subject and len(subject) > 5 and subject.lower() not in ("none", "ensure proper execution"):
+        # Make it specific
+        parts.append(f"Lead: {best_lead} — applies to: {subject[:80]}.")
+    else:
+        parts.append(f"Lead: {best_lead}.")
 
-    # 4. Lagging indicator from keywords
-    lag_keywords = {
-        "incident": "Number of incidents reported",
-        "spill": "Number of spills / volume spilled",
-        "finding": "Number of audit findings",
-        "non-compliance": "Number of non-compliance events",
-        "failure": "Number of equipment failures",
-        "injury": "Number of injuries / LTI rate",
-        "fatality": "Fatalities (target: zero)",
-        "leak": "Number of leaks detected",
-        "backlog": "Maintenance/inspection backlog count",
-        "downtime": "Unplanned downtime hours",
+    # ── 2. Measurable Aspects ──────────────────────────────────────
+    aspects = extract_measurable_aspects(all_text)
+
+    if aspects.get("frequency"):
+        parts.append(f"Target Frequency: {aspects['frequency']}.")
+
+    if aspects.get("time_threshold"):
+        parts.append(f"Time Threshold: {aspects['time_threshold']}.")
+
+    if aspects.get("pct_target"):
+        parts.append(f"Compliance Target: {aspects['pct_target']}.")
+
+    if aspects.get("zero_target"):
+        parts.append(f"Zero-Tolerance Metric: {aspects['zero_target']}s — target zero.")
+
+    # ── 3. Lag Indicator (what happens when control fails) ─────────
+    # Pick most relevant lag indicator
+    lag_options = templates["lag"]
+    lag_scores = []
+    for option in lag_options:
+        option_words = set(option.lower().split())
+        stmt_words = set(statement_lower.split())
+        score = len(option_words & stmt_words)
+        lag_scores.append((score, option))
+    lag_scores.sort(reverse=True)
+    best_lag = lag_scores[0][1] if lag_scores else lag_options[0]
+
+    parts.append(f"Lag: {best_lag}.")
+
+    # ── 4. Control effectiveness metric ────────────────────────────
+    # Based on control type, define how to measure if the control works
+    effectiveness_metrics = {
+        "inspection": "Control is effective if: inspections completed on schedule AND findings closed within target timeframe.",
+        "approval": "Control is effective if: approvals completed within SLA AND no incidents from delayed/unapproved work.",
+        "verification": "Control is effective if: verifications completed per schedule AND verified records match actual conditions.",
+        "monitoring": "Control is effective if: monitoring coverage complete AND alerts acted upon within response time.",
+        "maintenance": "Control is effective if: PM compliance on schedule AND breakdown events decreasing quarter-over-quarter.",
+        "training": "Control is effective if: certification compliance at target % AND zero competency-related incidents.",
+        "documentation": "Control is effective if: documents current within review cycle AND no audit findings on document control.",
+        "testing": "Control is effective if: tests completed per schedule AND first-pass rate meets target AND no in-service failures of tested items.",
+        "general": "Control is effective if: implemented as designed, evidence of execution exists, and risk events do not occur despite control presence.",
     }
-    for kw, indicator in lag_keywords.items():
-        if kw in all_text:
-            parts.append(f"Lagging Indicator: {indicator}.")
-            break
-
-    if not parts:
-        parts.append("Review control objective and define measurable risk indicators based on consequence of failure.")
+    parts.append(effectiveness_metrics.get(control_type, effectiveness_metrics["general"]))
 
     return " ".join(parts)
+
+
+# Update the caller signature ─────────────────────────────────────────
+# The generate_testing_approach function stays the same, but we need to
+# update how generate_key_risk_indicator is called to pass extra fields.
 
 
 # ── Main ─────────────────────────────────────────────────────────────
@@ -226,6 +473,7 @@ def main():
     query = """
         SELECT cfd.id, cfd.name, cfd.statement,
                cfd."csfHow", cfd."csfEvidence", cfd."riskAddressed",
+               cfd."csfWhat", cfd."csfWhy", cfd."csfWhen",
                cfd."testingApproach", cfd."keyRiskIndicator",
                de.content as doc_content
         FROM "ControlFromDocument" cfd
@@ -246,26 +494,22 @@ def main():
 
     for i, row in enumerate(rows):
         cfd_id, name, statement, csf_how, csf_evidence, risk_addressed, \
+            csf_what, csf_why, csf_when, \
             existing_ta, existing_kri, doc_content = row
 
-        # Skip if both fields already have content
-        if existing_ta and existing_ta.strip() and existing_kri and existing_kri.strip():
-            skipped += 1
-            continue
-
-        # Generate
-        ta = existing_ta if (existing_ta and existing_ta.strip()) else \
-            generate_testing_approach(statement or "", csf_how or "",
-                                      csf_evidence or "", doc_content or "")
-        kri = existing_kri if (existing_kri and existing_kri.strip()) else \
-            generate_key_risk_indicator(statement or "", risk_addressed or "",
-                                        doc_content or "")
+        # Always regenerate KRI (improved algorithm)
+        ta = generate_testing_approach(statement or "", csf_how or "",
+                                       csf_evidence or "", doc_content or "")
+        kri = generate_key_risk_indicator(
+            name or "", statement or "", risk_addressed or "", doc_content or "",
+            csf_what or "", csf_how or "", csf_why or "", csf_when or ""
+        )
 
         if dry:
-            if (i < 3) or (i % 200 == 0):
+            if (i < 5) or (i % 300 == 0):
                 print(f"\n[{i+1}/{total}] {name[:80]}")
-                print(f"  TestingApproach: {ta[:150]}...")
-                print(f"  KeyRiskIndicator: {kri[:150]}...")
+                print(f"  TA: {ta[:120]}...")
+                print(f"  KRI: {kri[:200]}...")
         else:
             cur.execute("""
                 UPDATE "ControlFromDocument"
@@ -274,16 +518,16 @@ def main():
             """, (ta, kri, cfd_id))
             updated += 1
 
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 200 == 0:
             if not dry:
                 conn.commit()
             print(f"  ... {i+1}/{total} processed", flush=True)
 
     if not dry:
         conn.commit()
-        print(f"\n✓ Updated {updated} records (skipped {skipped} already populated)")
+        print(f"\n✓ Updated {updated} records")
     else:
-        print(f"\n[DRY RUN] Would update ~{total - skipped} records")
+        print(f"\n[DRY RUN] Would update ~{total} records")
 
     cur.close()
     conn.close()

@@ -36,6 +36,23 @@ async function main() {
   await prisma.$executeRawUnsafe(`ALTER TABLE "Control" DROP COLUMN IF EXISTS "subProcessId"`);
   console.log("✅ Dropped subProcessId column from Control");
 
+  // Create MRequirement table (SMDS ICOP Statutory Requirements)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "MRequirement" (
+      "rID" INTEGER PRIMARY KEY,
+      "standard" TEXT NOT NULL,
+      "pID" TEXT NOT NULL,
+      "requirementId" TEXT NOT NULL,
+      "clauseContent" TEXT NOT NULL,
+      "intentOutcome" TEXT NOT NULL,
+      "clauseApplicability" TEXT NOT NULL,
+      "references" TEXT,
+      "applicable" BOOLEAN NOT NULL DEFAULT true,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log("✅ Created MRequirement table");
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }
