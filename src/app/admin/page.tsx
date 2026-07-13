@@ -945,15 +945,45 @@ function RequirementManager() {
   const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || selPAId) : "";
 
   // ── Edit helpers ───────────────────────────────────────────────────
+  const hasUnsavedChanges = (): boolean => {
+    if (!expandedReqId) return false;
+    const original = requirements.find((r: any) => r.rId === expandedReqId);
+    if (!original) return false;
+    const fields = ["standard", "pId", "processAreaId", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable"];
+    return fields.some(f => (editForm[f] ?? "") !== (original[f] ?? ""));
+  };
+
   const toggleExpand = (rId: number) => {
+    // Collapsing the same row — just close
     if (expandedReqId === rId) {
-      setExpandedReqId(null); setEditForm({});
-    } else {
-      const req = requirements.find((r: any) => r.rId === rId);
-      setExpandedReqId(rId);
-      setEditForm(req ? { ...req } : {});
-      setMsg(null);
+      if (hasUnsavedChanges()) {
+        if (!confirm("You have unsaved changes. Click OK to discard, or Cancel to keep editing.")) return;
+      }
+      setExpandedReqId(null); setEditForm({}); setMsg(null);
+      return;
     }
+
+    // Switching to a different row
+    if (expandedReqId !== null && hasUnsavedChanges()) {
+      const choice = confirm("You have unsaved changes.\n\nClick OK to SAVE before switching.\nClick Cancel to DISCARD changes and switch.");
+      if (choice) {
+        // Save first, then switch (async handled inline)
+        handleSave().then(() => {
+          const req = requirements.find((r: any) => r.rId === rId);
+          setExpandedReqId(rId);
+          setEditForm(req ? { ...req } : {});
+          setMsg(null);
+        });
+        return;
+      }
+      // Cancel = discard and switch (fall through)
+    }
+
+    // Open new row
+    const req = requirements.find((r: any) => r.rId === rId);
+    setExpandedReqId(rId);
+    setEditForm(req ? { ...req } : {});
+    setMsg(null);
   };
 
   const handleSave = async () => {
@@ -1153,7 +1183,8 @@ function RequirementManager() {
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Process Area ID</span>
-                                  <input value={editForm.processAreaId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, processAreaId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" placeholder="Auto-backfilled from pID" />
+                                  <input value={editForm.processAreaId ?? ""} disabled
+                                    className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-mono text-slate-400" placeholder="Auto-backfilled from pID" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Requirement ID</span>
