@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { KnowledgebaseManager } from "./knowledgebase/page";
 import { DocumentControlsManager } from "./document-controls/page";
 
@@ -876,6 +876,35 @@ function RequirementManager() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
+  // ── Resizable columns ───────────────────────────────────────────────
+  const tableRef = useRef<HTMLTableElement>(null);
+  const [colWidths, setColWidths] = useState<Record<string, number>>({});
+
+  const startResize = (colKey: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const th = (e.target as HTMLElement).closest('th');
+    if (!th) return;
+    const startX = e.clientX;
+    const startWidth = th.getBoundingClientRect().width;
+
+    const onMove = (ev: MouseEvent) => {
+      const delta = ev.clientX - startX;
+      const newWidth = Math.max(40, startWidth + delta);
+      setColWidths(prev => ({ ...prev, [colKey]: newWidth }));
+    };
+    const onUp = () => {
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+  };
+
   // Load all data on mount
   useEffect(() => {
     setLoading(true);
@@ -1138,21 +1167,33 @@ function RequirementManager() {
 
           {/* Table */}
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-xs border-collapse table-fixed">
+            <table ref={tableRef} className="w-full text-xs border-collapse table-auto">
               <thead className="sticky top-0 bg-slate-100 z-10">
                 <tr>
                   <th className="w-8 px-2 py-1.5 text-left font-medium text-slate-600">#</th>
-                  <th className="w-32 px-2 py-1.5 text-left font-medium text-slate-600">Req ID</th>
-                  <th className="w-20 px-2 py-1.5 text-left font-medium text-slate-600">pID</th>
-                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">Clause Content</th>
-                  <th className="w-28 px-2 py-1.5 text-left font-medium text-slate-600 hidden lg:table-cell">Intent / Outcome</th>
-                  <th className="w-24 px-2 py-1.5 text-left font-medium text-slate-600 hidden xl:table-cell">Standard</th>
+                  {([
+                    { key: 'reqId', label: 'Req ID', min: 80 },
+                    { key: 'clause', label: 'Clause Content', min: 150 },
+                    { key: 'intent', label: 'Intent / Outcome', min: 120, cls: 'hidden lg:table-cell' },
+                    { key: 'standard', label: 'Standard', min: 100, cls: 'hidden xl:table-cell' },
+                  ] as const).map(col => (
+                    <th key={col.key}
+                      className={`px-2 py-1.5 text-left font-medium text-slate-600 relative select-none ${col.cls || ''}`}
+                      style={colWidths[col.key] ? { width: colWidths[col.key], minWidth: col.min } : { minWidth: col.min }}
+                    >
+                      {col.label}
+                      <div
+                        className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-blue-400/30 z-10"
+                        onMouseDown={(e) => startResize(col.key, e)}
+                      />
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {pagedReqs.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-3 py-10 text-center text-slate-400">
+                    <td colSpan={5} className="px-3 py-10 text-center text-slate-400">
                       {selStandard ? "No requirements match." : "← Expand a Standard in the tree to view requirements."}
                     </td>
                   </tr>
@@ -1163,25 +1204,24 @@ function RequirementManager() {
                     <React.Fragment key={rid}>
                       <tr
                         onClick={() => toggleExpand(rid)}
-                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${expandedReqId === rid ? "bg-blue-50" : ""}`}
+                        className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer align-top ${expandedReqId === rid ? "bg-blue-50" : ""}`}
                       >
-                        <td className="px-2 py-1 text-slate-400 text-2xs">{(page - 1) * perPage + i + 1}</td>
-                        <td className="px-2 py-1 font-mono text-2xs text-slate-700 whitespace-nowrap">{req.requirementId}</td>
-                        <td className="px-2 py-1 text-2xs text-blue-600 font-mono whitespace-nowrap" title={getPAName(req)}>{req.pId}</td>
-                        <td className="px-2 py-1 text-2xs text-slate-600 truncate" title={req.clauseContent}>
+                        <td className="px-2 py-1 text-slate-400 text-2xs align-top">{(page - 1) * perPage + i + 1}</td>
+                        <td className="px-2 py-1 font-mono text-2xs text-slate-700 break-words align-top">{req.requirementId}</td>
+                        <td className="px-2 py-1 text-2xs text-slate-600 break-words align-top" title={req.clauseContent}>
                           {req.clauseContent || ""}
                         </td>
-                        <td className="px-2 py-1 text-2xs text-slate-500 truncate hidden lg:table-cell" title={req.intentOutcome}>
+                        <td className="px-2 py-1 text-2xs text-slate-500 break-words align-top hidden lg:table-cell" title={req.intentOutcome}>
                           {req.intentOutcome || ""}
                         </td>
-                        <td className="px-2 py-1 text-2xs text-slate-400 truncate hidden xl:table-cell" title={req.standard}>
+                        <td className="px-2 py-1 text-2xs text-slate-400 break-words align-top hidden xl:table-cell" title={req.standard}>
                           {req.standard || ""}
                         </td>
                       </tr>
                       {/* Expanded full-form row */}
                       {expandedReqId === rid && (
                         <tr key={`exp-${rid}`}>
-                          <td colSpan={6} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
+                          <td colSpan={5} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
                             <div className="max-w-3xl">
                               <h3 className="text-sm font-semibold text-slate-900 mb-4">
                                 Edit Requirement — {req.requirementId}
