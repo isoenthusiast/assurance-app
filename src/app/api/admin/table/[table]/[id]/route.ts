@@ -4,6 +4,46 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 
 /**
+ * Get the primary key field name for a model.
+ * Most models use "id", but Requirement uses "rId".
+ */
+function getPkField(table: string): string {
+  if (table === "Requirement") return "rId";
+  return "id";
+}
+
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ table: string; id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user || session.user.role !== "Admin") {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
+    const { table, id } = await params;
+    const camelName = table.charAt(0).toLowerCase() + table.slice(1);
+    const model = (prisma as any)[camelName];
+    if (!model) {
+      return NextResponse.json({ error: `Table '${table}' not supported` }, { status: 400 });
+    }
+    const pkField = getPkField(table);
+    // For numeric PKs (Requirement.rId), parse the id
+    const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
+    const where: any = {};
+    where[pkField] = pkValue;
+    const record = await model.findUnique({ where });
+    if (!record) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    return NextResponse.json(record);
+  } catch (error: any) {
+    console.error(`Error fetching ${table}/${id}:`, error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+/**
  * Check for child records that would block deletion
  */
 async function checkForChildren(table: string, id: string): Promise<{ blocked: boolean; children: any[] }> {
@@ -222,7 +262,11 @@ export async function PUT(
           { status: 400 }
         );
       }
-      result = await model.update({ where: { id }, data: body });
+      const pkField = getPkField(table);
+      const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
+      const where: any = {};
+      where[pkField] = pkValue;
+      result = await model.update({ where, data: body });
     }
 
     return NextResponse.json({ success: true, updated: result });

@@ -969,7 +969,7 @@ function RequirementManager() {
     return fields.some(f => String(editForm[f] ?? "") !== String(orig[f] ?? ""));
   };
 
-  const toggleExpand = (rId: number) => {
+  const toggleExpand = async (rId: number) => {
     // Collapsing the same row — just close
     if (expandedReqId === rId) {
       if (hasUnsavedChanges()) {
@@ -983,21 +983,28 @@ function RequirementManager() {
     if (expandedReqId !== null && hasUnsavedChanges()) {
       const choice = confirm("You have unsaved changes.\n\nClick OK to SAVE before switching.\nClick Cancel to DISCARD changes and switch.");
       if (choice) {
-        handleSave().then(() => {
-          const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
-          if (req) setEditForm(normalizeReq(req));
-          setExpandedReqId(rId);
-          setMsg(null);
-        });
-        return;
+        await handleSave();
       }
     }
 
-    // Open new row
-    const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
+    // Fetch the single requirement by rID from the API (guarantees correct data)
     setExpandedReqId(rId);
-    setEditForm(req ? normalizeReq(req) : {});
+    setEditForm({});
     setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/table/Requirement/${rId}`);
+      if (res.ok) {
+        const req = await res.json();
+        setEditForm(normalizeReq(req));
+      } else {
+        // Fallback: try local array
+        const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
+        if (req) setEditForm(normalizeReq(req));
+      }
+    } catch {
+      const req = requirements.find((r: any) => (r.rId ?? r.rID) === rId);
+      if (req) setEditForm(normalizeReq(req));
+    }
   };
 
   const handleSave = async () => {
