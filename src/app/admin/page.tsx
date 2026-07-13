@@ -860,10 +860,18 @@ function RequirementManager() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Hierarchy selection state
-  const [selectedStandard, setSelectedStandard] = useState<string>("");
-  const [selectedPId, setSelectedPId] = useState<string>("");
-  const [selectedSubProcessId, setSelectedSubProcessId] = useState<string>("");
+  // Tree expand/collapse state
+  const [expandedStandards, setExpandedStandards] = useState<Set<string>>(new Set());
+  const [expandedPAIds, setExpandedPAIds] = useState<Set<string>>(new Set());
+
+  // Current selection (drives table filter + breadcrumb)
+  const [selStandard, setSelStandard] = useState<string>("");
+  const [selPAId, setSelPAId] = useState<string>("");       // ProcessArea.id
+  const [selSPId, setSelSPId] = useState<string>("");        // SubProcess.id
+
+  // Table pagination
+  const [page, setPage] = useState(1);
+  const perPage = 25;
 
   // Expanded requirement for full-form editing
   const [expandedReqId, setExpandedReqId] = useState<number | null>(null);
@@ -886,56 +894,90 @@ function RequirementManager() {
       .finally(() => setLoading(false));
   }, []);
 
-  // Derive unique standards from requirements
+  // ── Derived tree data ──────────────────────────────────────────────
   const standards = [...new Set(requirements.map((r: any) => r.standard).filter(Boolean))].sort();
 
-  // Process Areas filtered by selected standard
-  const filteredPAs = selectedStandard
-    ? processAreas.filter((pa: any) => pa.standard === selectedStandard || pa.pId && requirements.some((r: any) => r.standard === selectedStandard && r.pId === pa.pId))
-    : [];
+  // PAs for a given standard
+  const getPAsForStandard = (std: string) => {
+    const paIdsFromReqs = new Set(requirements.filter(r => r.standard === std).map(r => r.pId));
+    return processAreas.filter(pa => paIdsFromReqs.has(pa.pId) || pa.standard === std);
+  };
 
-  // SubProcesses filtered by selected process area
-  const filteredSPs = selectedPId
-    ? subProcesses.filter((sp: any) => {
-        const pa = processAreas.find((p: any) => p.pId === selectedPId || p.id === selectedPId);
-        return pa && sp.processAreaId === pa.id;
-      })
-    : [];
+  // SPs for a given PA
+  const getSPsForPA = (paId: string) =>
+    subProcesses.filter(sp => sp.processAreaId === paId);
 
-  // Requirements filtered by selection
+  // ── Toggle helpers ─────────────────────────────────────────────────
+  const toggleStandard = (std: string) => {
+    setExpandedStandards(prev => {
+      const next = new Set(prev);
+      if (next.has(std)) next.delete(std); else next.add(std);
+      return next;
+    });
+    setSelStandard(std);
+    setSelPAId("");
+    setSelSPId("");
+    setPage(1);
+  };
+
+  const togglePA = (paId: string, paStandard: string) => {
+    setExpandedPAIds(prev => {
+      const next = new Set(prev);
+      if (next.has(paId)) next.delete(paId); else next.add(paId);
+      return next;
+    });
+    setSelStandard(paStandard);
+    setSelPAId(paId);
+    setSelSPId("");
+    setPage(1);
+  };
+
+  const selectSP = (spId: string, paId: string, paStandard: string) => {
+    setSelStandard(paStandard);
+    setSelPAId(paId);
+    setSelSPId(spId);
+    setPage(1);
+  };
+
+  // ── Filtering ──────────────────────────────────────────────────────
   const filteredReqs = requirements.filter((r: any) => {
-    if (selectedSubProcessId) {
-      const sp = subProcesses.find((s: any) => s.id === selectedSubProcessId);
+    if (selSPId) {
+      const sp = subProcesses.find((s: any) => s.id === selSPId);
       if (!sp) return false;
       const pa = processAreas.find((p: any) => p.id === sp.processAreaId);
       return pa && r.pId === pa.pId && r.standard === pa.standard;
     }
-    if (selectedPId) {
-      return r.pId === selectedPId || processAreas.some((pa: any) => (pa.id === selectedPId || pa.pId === selectedPId) && r.pId === pa.pId && r.standard === pa.standard);
+    if (selPAId) {
+      const pa = processAreas.find((p: any) => p.id === selPAId);
+      if (!pa) return r.pId === selPAId || processAreas.some((x: any) => x.id === selPAId && x.pId === r.pId);
+      return r.pId === pa.pId && r.standard === (pa.standard || selStandard);
     }
-    if (selectedStandard) {
-      return r.standard === selectedStandard;
-    }
+    if (selStandard) return r.standard === selStandard;
     return true;
   });
 
-  // Get ProcessArea name by pId
+  // ── Pagination ─────────────────────────────────────────────────────
+  const totalPages = Math.max(1, Math.ceil(filteredReqs.length / perPage));
+  const pagedReqs = filteredReqs.slice((page - 1) * perPage, page * perPage);
+
+  // ── Name lookups ───────────────────────────────────────────────────
   const getPAName = (pId: string) => {
     const pa = processAreas.find((p: any) => p.pId === pId);
     return pa ? pa.name : pId;
   };
-
-  // Get SubProcess name by id
   const getSPName = (spId: string) => {
     const sp = subProcesses.find((s: any) => s.id === spId);
     return sp ? sp.name : spId;
   };
 
-  // Expand/collapse a requirement row
+  // ── Breadcrumb labels ──────────────────────────────────────────────
+  const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || getPAName(selPAId)) : "";
+  const selSPName = selSPId ? getSPName(selSPId) : "";
+
+  // ── Edit helpers ───────────────────────────────────────────────────
   const toggleExpand = (rId: number) => {
     if (expandedReqId === rId) {
-      setExpandedReqId(null);
-      setEditForm({});
+      setExpandedReqId(null); setEditForm({});
     } else {
       const req = requirements.find((r: any) => r.rId === rId);
       setExpandedReqId(rId);
@@ -944,166 +986,205 @@ function RequirementManager() {
     }
   };
 
-  // Save edited requirement
   const handleSave = async () => {
     if (!expandedReqId) return;
     setSaving(true); setMsg(null);
     try {
       const res = await fetch(`/api/admin/table/Requirement/${expandedReqId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify(editForm),
       });
       if (!res.ok) throw new Error((await res.json()).error || "Save failed");
       setMsg({ type: "ok", text: "Requirement updated." });
-      // Refresh data
       const r = await fetch("/api/admin/table/Requirement/data?perPage=2000");
-      const d = await r.json();
-      setRequirements(d.rows || []);
+      setRequirements((await r.json()).rows || []);
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
     finally { setSaving(false); }
   };
 
-  // Clear all selections
-  const clearSelection = () => {
-    setSelectedStandard("");
-    setSelectedPId("");
-    setSelectedSubProcessId("");
-    setExpandedReqId(null);
-    setEditForm({});
+  const clearAll = () => {
+    setSelStandard(""); setSelPAId(""); setSelSPId("");
+    setExpandedStandards(new Set()); setExpandedPAIds(new Set());
+    setExpandedReqId(null); setEditForm({}); setPage(1);
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-slate-400 text-sm">Loading requirements...</div>;
-  }
+  // ── Pagination nav ─────────────────────────────────────────────────
+  const goPage = (pg: number) => { if (pg >= 1 && pg <= totalPages) setPage(pg); };
 
-  if (error) {
-    return <div className="flex items-center justify-center h-full text-red-500 text-sm">Error: {error}</div>;
-  }
+  if (loading) return <div className="flex items-center justify-center h-full text-slate-400 text-sm">Loading requirements...</div>;
+  if (error) return <div className="flex items-center justify-center h-full text-red-500 text-sm">Error: {error}</div>;
 
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
+      <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
         <span className="font-semibold text-slate-900 text-sm">📋 Manage Requirements ({requirements.length} rows)</span>
-        <button onClick={clearSelection} className="text-xs text-blue-600 hover:underline">Clear Filters</button>
+        <button onClick={clearAll} className="text-xs text-blue-600 hover:underline">Clear All</button>
       </div>
       <div className="flex flex-1 overflow-hidden">
-        {/* ═════════ LEFT PANEL — Hierarchy Menu ═════════ */}
-        <div className="w-56 border-r border-slate-200 flex flex-col overflow-y-auto">
-          {/* Level 0: Standards */}
+        {/* ═════════ LEFT PANEL — Tree View ═════════ */}
+        <div className="w-60 border-r border-slate-200 flex flex-col overflow-y-auto bg-white">
           <div className="px-3 py-2 border-b border-slate-100">
-            <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Standard</div>
-            <div className="space-y-0.5 max-h-[30vh] overflow-y-auto">
-              <button onClick={() => { setSelectedStandard(""); setSelectedPId(""); setSelectedSubProcessId(""); }}
-                className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedStandard ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                📂 All Standards
-              </button>
-              {standards.map(std => (
-                <button key={std} onClick={() => { setSelectedStandard(std); setSelectedPId(""); setSelectedSubProcessId(""); }}
-                  className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${selectedStandard === std && !selectedPId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                  {std}
-                </button>
-              ))}
-            </div>
+            <span className="text-2xs font-semibold text-slate-400 uppercase tracking-wide">Standards</span>
           </div>
+          <div className="flex-1 overflow-y-auto">
+            {/* "All Standards" root */}
+            <button
+              onClick={clearAll}
+              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${!selStandard ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+            >
+              <span className="w-4 text-center text-2xs">📂</span>
+              <span className="truncate">All Standards</span>
+              <span className="ml-auto text-2xs text-slate-400">{requirements.length}</span>
+            </button>
 
-          {/* Level 1: Process Areas (shown when a standard is selected) */}
-          {selectedStandard && (
-            <div className="px-3 py-2 border-b border-slate-100">
-              <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">Process Area</div>
-              <div className="space-y-0.5 max-h-[25vh] overflow-y-auto">
-                <button onClick={() => { setSelectedPId(""); setSelectedSubProcessId(""); }}
-                  className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedPId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                  📁 All Process Areas
-                </button>
-                {filteredPAs.map(pa => (
-                  <button key={pa.id} onClick={() => { setSelectedPId(pa.pId || pa.id); setSelectedSubProcessId(""); }}
-                    className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${(selectedPId === pa.pId || selectedPId === pa.id) && !selectedSubProcessId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                    {pa.name}
+            {standards.map(std => {
+              const pas = getPAsForStandard(std);
+              const isExpanded = expandedStandards.has(std);
+              const isSelected = selStandard === std && !selPAId;
+              const reqCount = requirements.filter(r => r.standard === std).length;
+
+              return (
+                <div key={std}>
+                  {/* Standard row */}
+                  <button
+                    onClick={() => toggleStandard(std)}
+                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-700"}`}
+                  >
+                    <span className="w-4 text-center text-2xs">{isExpanded ? "▼" : "▶"}</span>
+                    <span className="truncate">{std}</span>
+                    <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{reqCount}</span>
                   </button>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {/* Level 2: SubProcesses (shown when a process area is selected) */}
-          {selectedPId && (
-            <div className="px-3 py-2 border-b border-slate-100">
-              <div className="text-2xs font-semibold text-slate-400 uppercase tracking-wide mb-1">SubProcess</div>
-              <div className="space-y-0.5 max-h-[25vh] overflow-y-auto">
-                <button onClick={() => setSelectedSubProcessId("")}
-                  className={`block w-full text-left px-2 py-1 text-xs rounded ${!selectedSubProcessId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                  📄 All SubProcesses
-                </button>
-                {filteredSPs.map(sp => (
-                  <button key={sp.id} onClick={() => setSelectedSubProcessId(sp.id)}
-                    className={`block w-full text-left px-2 py-1 text-xs rounded truncate ${selectedSubProcessId === sp.id ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600 hover:bg-slate-50"}`}>
-                    {sp.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+                  {/* Process Areas (children of standard) */}
+                  {isExpanded && pas.map(pa => {
+                    const sps = getSPsForPA(pa.id);
+                    const isPAExpanded = expandedPAIds.has(pa.id);
+                    const isPASelected = selPAId === pa.id && !selSPId;
 
-          {/* Breadcrumb / active filter summary */}
-          <div className="px-3 py-2 mt-auto border-t border-slate-200 bg-slate-50">
-            <div className="text-2xs text-slate-400">
-              {selectedStandard && <div>Standard: <span className="text-slate-600 font-medium">{selectedStandard}</span></div>}
-              {selectedPId && <div>PA: <span className="text-slate-600 font-medium">{getPAName(selectedPId)}</span></div>}
-              {selectedSubProcessId && <div>SP: <span className="text-slate-600 font-medium">{getSPName(selectedSubProcessId)}</span></div>}
-              {!selectedStandard && <div className="text-slate-400 italic">Select a Standard to begin</div>}
-            </div>
+                    return (
+                      <div key={pa.id}>
+                        <button
+                          onClick={() => togglePA(pa.id, std)}
+                          className={`w-full text-left pl-8 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+                        >
+                          <span className="w-3 text-center text-2xs">{sps.length > 0 ? (isPAExpanded ? "▾" : "▸") : "·"}</span>
+                          <span className="truncate">{pa.name}</span>
+                          <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{reqCount}</span>
+                        </button>
+
+                        {/* SubProcesses (children of PA) */}
+                        {isPAExpanded && sps.map(sp => {
+                          const isSPSelected = selSPId === sp.id;
+                          return (
+                            <button
+                              key={sp.id}
+                              onClick={() => selectSP(sp.id, pa.id, std)}
+                              className={`w-full text-left pl-14 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isSPSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-500"}`}
+                            >
+                              <span className="truncate">{sp.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* ═════════ RIGHT PANEL — Requirements Table ═════════ */}
+        {/* ═════════ RIGHT PANEL — Breadcrumb + Table ═════════ */}
         <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Breadcrumb */}
+          <div className="px-4 py-2 border-b border-slate-200 bg-slate-50/50 flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
+            <button onClick={clearAll} className="hover:text-blue-600 hover:underline">📋 All</button>
+            {selStandard && (
+              <>
+                <span className="text-slate-300">›</span>
+                <button onClick={() => { setSelStandard(selStandard); setSelPAId(""); setSelSPId(""); setPage(1); }}
+                  className={`hover:text-blue-600 hover:underline ${!selPAId ? "font-medium text-slate-700" : ""}`}>
+                  {selStandard.length > 40 ? selStandard.substring(0, 40) + "..." : selStandard}
+                </button>
+              </>
+            )}
+            {selPAId && (
+              <>
+                <span className="text-slate-300">›</span>
+                <button onClick={() => { setSelSPId(""); setPage(1); }}
+                  className={`hover:text-blue-600 hover:underline ${!selSPId ? "font-medium text-slate-700" : ""}`}>
+                  {selPAName}
+                </button>
+              </>
+            )}
+            {selSPId && (
+              <>
+                <span className="text-slate-300">›</span>
+                <span className="font-medium text-slate-700">{selSPName}</span>
+              </>
+            )}
+            <span className="ml-auto text-slate-400">{filteredReqs.length} req{filteredReqs.length !== 1 ? "s" : ""}</span>
+          </div>
+
+          {/* Pagination top */}
+          {totalPages > 1 && (
+            <div className="px-4 py-1.5 border-b border-slate-100 bg-slate-50 flex items-center justify-between text-xs flex-shrink-0">
+              <span className="text-slate-400">Page {page} of {totalPages}</span>
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => goPage(1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">«</button>
+                <button onClick={() => goPage(page - 1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">‹</button>
+                <span className="px-1 text-xs text-slate-500">{page}</span>
+                <button onClick={() => goPage(page + 1)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">›</button>
+                <button onClick={() => goPage(totalPages)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">»</button>
+              </div>
+            </div>
+          )}
+
           {/* Table */}
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-xs border-collapse">
+            <table className="w-full text-xs border-collapse table-fixed">
               <thead className="sticky top-0 bg-slate-100 z-10">
                 <tr>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600 w-8">#</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Process Area</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Requirement ID</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600">Clause Content</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-600 w-16">Standard</th>
+                  <th className="w-8 px-2 py-1.5 text-left font-medium text-slate-600">#</th>
+                  <th className="w-32 px-2 py-1.5 text-left font-medium text-slate-600">Req ID</th>
+                  <th className="w-20 px-2 py-1.5 text-left font-medium text-slate-600">pID</th>
+                  <th className="px-2 py-1.5 text-left font-medium text-slate-600">Clause Content</th>
+                  <th className="w-28 px-2 py-1.5 text-left font-medium text-slate-600 hidden lg:table-cell">Intent / Outcome</th>
+                  <th className="w-24 px-2 py-1.5 text-left font-medium text-slate-600 hidden xl:table-cell">Standard</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredReqs.length === 0 ? (
+                {pagedReqs.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-3 py-8 text-center text-slate-400">
-                      {selectedStandard ? "No requirements match the selected filters." : "← Select a Standard from the left panel to filter requirements."}
+                    <td colSpan={6} className="px-3 py-10 text-center text-slate-400">
+                      {selStandard ? "No requirements match." : "← Expand a Standard in the tree to view requirements."}
                     </td>
                   </tr>
                 ) : (
-                  filteredReqs.map((req: any, i: number) => (
+                  pagedReqs.map((req: any, i: number) => (
                     <React.Fragment key={req.rId}>
                       <tr
                         onClick={() => toggleExpand(req.rId)}
                         className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer ${expandedReqId === req.rId ? "bg-blue-50" : ""}`}
                       >
-                        <td className="px-3 py-1.5 text-slate-400">{i + 1}</td>
-                        <td className="px-3 py-1.5 text-slate-700">
-                          <span className="text-blue-600 hover:underline">{req.pId}</span>
-                          <div className="text-2xs text-slate-400">{getPAName(req.pId)}</div>
+                        <td className="px-2 py-1 text-slate-400 text-2xs">{(page - 1) * perPage + i + 1}</td>
+                        <td className="px-2 py-1 font-mono text-2xs text-slate-700 whitespace-nowrap">{req.requirementId}</td>
+                        <td className="px-2 py-1 text-2xs text-blue-600 font-mono whitespace-nowrap" title={getPAName(req.pId)}>{req.pId}</td>
+                        <td className="px-2 py-1 text-2xs text-slate-600 truncate" title={req.clauseContent}>
+                          {req.clauseContent || ""}
                         </td>
-                        <td className="px-3 py-1.5 font-mono text-slate-700">{req.requirementId}</td>
-                        <td className="px-3 py-1.5 text-slate-600 max-w-[400px]">
-                          <span className="line-clamp-2">
-                            {(req.clauseContent || "").length > 100
-                              ? (req.clauseContent || "").substring(0, 100) + "..."
-                              : req.clauseContent}
-                          </span>
+                        <td className="px-2 py-1 text-2xs text-slate-500 truncate hidden lg:table-cell" title={req.intentOutcome}>
+                          {req.intentOutcome || ""}
                         </td>
-                        <td className="px-3 py-1.5 text-slate-500 text-2xs">{req.standard}</td>
+                        <td className="px-2 py-1 text-2xs text-slate-400 truncate hidden xl:table-cell" title={req.standard}>
+                          {req.standard || ""}
+                        </td>
                       </tr>
                       {/* Expanded full-form row */}
                       {expandedReqId === req.rId && (
                         <tr key={`exp-${req.rId}`}>
-                          <td colSpan={5} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
+                          <td colSpan={6} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
                             <div className="max-w-3xl">
                               <h3 className="text-sm font-semibold text-slate-900 mb-4">
                                 Edit Requirement — {req.requirementId}
@@ -1115,65 +1196,50 @@ function RequirementManager() {
                               )}
                               <div className="grid grid-cols-2 gap-3">
                                 <label className="block">
-                                  <span className="text-xs text-slate-500">rID (Primary Key)</span>
-                                  <input value={editForm.rId ?? ""} disabled
-                                    className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
+                                  <span className="text-xs text-slate-500">rID (PK)</span>
+                                  <input value={editForm.rId ?? ""} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Standard</span>
-                                  <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
                                 </label>
                                 <label className="block">
-                                  <span className="text-xs text-slate-500">Process Area ID (pID)</span>
-                                  <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                  <span className="text-xs text-slate-500">pID</span>
+                                  <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Requirement ID</span>
-                                  <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                  <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
                                 </label>
                                 <label className="block col-span-2">
                                   <span className="text-xs text-slate-500">Clause Content</span>
-                                  <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))}
-                                    rows={3}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))} rows={3} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
                                 </label>
                                 <label className="block col-span-2">
                                   <span className="text-xs text-slate-500">Intent / Outcome</span>
-                                  <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))}
-                                    rows={2}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))} rows={2} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
                                 </label>
                                 <label className="block col-span-2">
                                   <span className="text-xs text-slate-500">Clause Applicability</span>
-                                  <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">References</span>
-                                  <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
                                 </label>
                                 <label className="block">
                                   <span className="text-xs text-slate-500">Applicable</span>
-                                  <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))}
-                                    className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
+                                  <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
                                     <option value="true">Yes</option>
                                     <option value="false">No</option>
                                   </select>
                                 </label>
                               </div>
                               <div className="flex gap-2 mt-4">
-                                <button onClick={handleSave} disabled={saving}
-                                  className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                                <button onClick={handleSave} disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
                                   {saving ? "Saving..." : "Save Changes"}
                                 </button>
-                                <button onClick={() => toggleExpand(req.rId)}
-                                  className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">
-                                  Cancel
-                                </button>
+                                <button onClick={() => toggleExpand(req.rId)} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
                               </div>
                             </div>
                           </td>
@@ -1185,11 +1251,20 @@ function RequirementManager() {
               </tbody>
             </table>
           </div>
-          {/* Footer summary */}
-          <div className="px-4 py-2 border-t border-slate-200 bg-slate-50 text-xs text-slate-400 flex justify-between">
-            <span>{filteredReqs.length} requirement{filteredReqs.length !== 1 ? "s" : ""} shown</span>
-            {expandedReqId && <span>Editing rID: {expandedReqId}</span>}
-          </div>
+
+          {/* Pagination bottom */}
+          {totalPages > 1 && (
+            <div className="px-4 py-1.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs flex-shrink-0">
+              <span className="text-slate-400">{(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredReqs.length)} of {filteredReqs.length}</span>
+              <div className="flex items-center gap-0.5">
+                <button onClick={() => goPage(1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">«</button>
+                <button onClick={() => goPage(page - 1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">‹</button>
+                <span className="px-1 text-xs text-slate-500">{page}/{totalPages}</span>
+                <button onClick={() => goPage(page + 1)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">›</button>
+                <button onClick={() => goPage(totalPages)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">»</button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
