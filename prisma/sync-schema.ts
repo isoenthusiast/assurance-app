@@ -73,6 +73,40 @@ async function main() {
   `);
   console.log(`✅ Added processAreaId column, backfilled ${backfillResult} rows`);
 
+  // Create MapControl2Requirement junction table (M2M: Control ⟷ Requirement)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "MapControl2Requirement" (
+      "id" TEXT PRIMARY KEY,
+      "controlId" TEXT NOT NULL REFERENCES "Control"("id") ON DELETE CASCADE,
+      "requirementRId" INTEGER NOT NULL REFERENCES "Requirement"("rID") ON DELETE CASCADE,
+      "processAreaId" TEXT,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("controlId", "requirementRId")
+    )
+  `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MapControl2Requirement_controlId_idx" ON "MapControl2Requirement"("controlId")`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MapControl2Requirement_requirementRId_idx" ON "MapControl2Requirement"("requirementRId")`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MapControl2Requirement_processAreaId_idx" ON "MapControl2Requirement"("processAreaId")`);
+  console.log("✅ Created MapControl2Requirement table");
+
+  // Backfill MapControl2Requirement: link Controls to Requirements via shared ProcessArea
+  const mapBackfill = await prisma.$executeRawUnsafe(`
+    INSERT INTO "MapControl2Requirement" ("id", "controlId", "requirementRId", "processAreaId")
+    SELECT DISTINCT
+      gen_random_uuid()::text,
+      c.id,
+      r."rID",
+      pa.id
+    FROM "Control" c
+    JOIN "ProcessArea" pa ON c."processAreaId" = pa.id
+    JOIN "Requirement" r ON r."processAreaId" = pa.id
+    WHERE NOT EXISTS (
+      SELECT 1 FROM "MapControl2Requirement" m
+      WHERE m."controlId" = c.id AND m."requirementRId" = r."rID"
+    )
+  `);
+  console.log(`✅ Backfilled MapControl2Requirement: ${mapBackfill} mappings`);
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }

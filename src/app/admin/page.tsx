@@ -905,6 +905,60 @@ function RequirementManager() {
     document.addEventListener('mouseup', onUp);
   };
 
+  // ── Markdown renderer for clause content ───────────────────────────
+  const renderClause = (text: string) => {
+    if (!text) return null;
+    // Split [BM] and [EN] sections
+    const parts: React.ReactNode[] = [];
+    let remaining = text;
+    let key = 0;
+
+    // Process [BM] blocks
+    const bmRegex = /\[BM\]\s*([\s\S]*?)(?=\[EN\]|$)/g;
+    const enRegex = /\[EN\]\s*([\s\S]*?)(?=\[BM\]|$)/g;
+
+    // Simple approach: render line by line
+    const lines = text.split('\n');
+    return (
+      <span className="text-2xs leading-relaxed">
+        {lines.map((line, i) => {
+          if (!line.trim()) return <br key={i} />;
+          let formatted: React.ReactNode = line;
+
+          // Strip [BM] / [EN] labels and apply styling
+          if (line.startsWith('[BM]')) {
+            formatted = <span key={i} className="italic text-slate-500">{line.replace('[BM] ', '')}</span>;
+          } else if (line.startsWith('[EN]')) {
+            formatted = <span key={i} className="text-slate-700">{line.replace('[EN] ', '')}</span>;
+          } else if (line.startsWith('•') || line.startsWith('*')) {
+            formatted = <span key={i} className="text-slate-500">{line}</span>;
+          }
+
+          // Bold markers
+          if (typeof formatted === 'string' && formatted.includes('**')) {
+            const segments = formatted.split(/(\*\*.*?\*\*)/g);
+            formatted = (
+              <span key={i}>
+                {segments.map((seg, j) =>
+                  seg.startsWith('**') && seg.endsWith('**')
+                    ? <strong key={j} className="font-semibold">{seg.slice(2, -2)}</strong>
+                    : seg
+                )}
+              </span>
+            );
+          }
+
+          return (
+            <React.Fragment key={i}>
+              {i > 0 && <br />}
+              {formatted}
+            </React.Fragment>
+          );
+        })}
+      </span>
+    );
+  };
+
   // Load all data on mount
   useEffect(() => {
     setLoading(true);
@@ -1207,12 +1261,12 @@ function RequirementManager() {
                         className={`border-b border-slate-100 hover:bg-slate-50 cursor-pointer align-top ${expandedReqId === rid ? "bg-blue-50" : ""}`}
                       >
                         <td className="px-2 py-1 text-slate-400 text-2xs align-top">{(page - 1) * perPage + i + 1}</td>
-                        <td className="px-2 py-1 font-mono text-2xs text-slate-700 break-words align-top">{req.requirementId}</td>
-                        <td className="px-2 py-1 text-2xs text-slate-600 break-words align-top" title={req.clauseContent}>
-                          {req.clauseContent || ""}
+                        <td className="px-2 py-1 text-2xs text-slate-700 break-words align-top">{req.requirementId}</td>
+                        <td className="px-2 py-1 align-top" title={req.clauseContent}>
+                          {renderClause(req.clauseContent || "")}
                         </td>
-                        <td className="px-2 py-1 text-2xs text-slate-500 break-words align-top hidden lg:table-cell" title={req.intentOutcome}>
-                          {req.intentOutcome || ""}
+                        <td className="px-2 py-1 align-top hidden lg:table-cell" title={req.intentOutcome}>
+                          {renderClause(req.intentOutcome || "")}
                         </td>
                         <td className="px-2 py-1 text-2xs text-slate-400 break-words align-top hidden xl:table-cell" title={req.standard}>
                           {req.standard || ""}

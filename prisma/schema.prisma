@@ -157,6 +157,7 @@ model Control {
   controlAssignments ControlAssignment[]
   controlSubProcesses ControlSubProcess[]
   templateLinkages   AssessmentTemplateControlLinkage[]
+  requirementMappings MapControl2Requirement[]
   processArea        ProcessArea                        @relation(fields: [processAreaId], references: [id])
 
   @@index([controlRef])
@@ -682,9 +683,29 @@ model Requirement {
   applicable          Boolean      @default(true)
   createdAt           DateTime     @default(now())
   processArea         ProcessArea? @relation(fields: [processAreaId], references: [id])
+  controlMappings     MapControl2Requirement[]
 
   @@map("Requirement")
   @@index([processAreaId])
+}
+
+// ── MapControl2Requirement — M2M: Control ⟷ Requirement ──────────────
+// One requirement can map to many controls; one control to many requirements.
+// processAreaId provides the initial mapping anchor (same PA = potential link).
+model MapControl2Requirement {
+  id             String      @id @default(cuid())
+  controlId      String
+  requirementRId Int
+  processAreaId  String?
+  createdAt      DateTime    @default(now())
+  control        Control     @relation(fields: [controlId], references: [id], onDelete: Cascade)
+  requirement    Requirement @relation(fields: [requirementRId], references: [rId], onDelete: Cascade)
+
+  @@unique([controlId, requirementRId])
+  @@index([controlId])
+  @@index([requirementRId])
+  @@index([processAreaId])
+  @@map("MapControl2Requirement")
 }
 
 enum LOA {
