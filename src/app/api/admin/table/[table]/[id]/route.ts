@@ -24,15 +24,23 @@ export async function GET(
     const { table, id } = await params;
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
     const model = (prisma as any)[camelName];
-    if (!model) {
-      return NextResponse.json({ error: `Table '${table}' not supported` }, { status: 400 });
-    }
     const pkField = getPkField(table);
-    // For numeric PKs (Requirement.rId), parse the id
     const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
-    const where: any = {};
-    where[pkField] = pkValue;
-    const record = await model.findUnique({ where });
+
+    let record: any = null;
+    if (model) {
+      const where: any = {};
+      where[pkField] = pkValue;
+      record = await model.findUnique({ where });
+    } else {
+      // Raw SQL fallback for models not accessible via Proxy
+      const rows = await (prisma as any).$queryRawUnsafe(
+        `SELECT * FROM "${table}" WHERE "${pkField}" = $1 LIMIT 1`,
+        pkValue
+      );
+      record = Array.isArray(rows) ? rows[0] : null;
+    }
+
     if (!record) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
@@ -257,16 +265,32 @@ export async function PUT(
       const camelName = table.charAt(0).toLowerCase() + table.slice(1);
       const model = (prisma as any)[camelName];
       if (!model) {
-        return NextResponse.json(
-          { error: `Table '${table}' not supported` },
-          { status: 400 }
-        );
+        // Raw SQL fallback for models not accessible via Proxy (e.g. Requirement)
+        const pkField = getPkField(table);
+        const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
+        const setClauses: string[] = [];
+        const values: any[] = [];
+        let paramIdx = 1;
+        for (const [key, val] of Object.entries(body)) {
+          if (key === "rId" || key === "rID" || key === "id" || key === "createdAt") continue;
+          setClauses.push(`"${key}" = $${paramIdx}`);
+          values.push(val);
+          paramIdx++;
+        }
+        values.push(pkValue);
+        if (setClauses.length === 0) {
+          return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+        }
+        const sql = `UPDATE "${table}" SET ${setClauses.join(", ")} WHERE "${pkField}" = $${paramIdx} RETURNING *`;
+        const rows = await (prisma as any).$queryRawUnsafe(sql, ...values);
+        result = Array.isArray(rows) ? rows[0] : rows;
+      } else {
+        const pkField = getPkField(table);
+        const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
+        const where: any = {};
+        where[pkField] = pkValue;
+        result = await model.update({ where, data: body });
       }
-      const pkField = getPkField(table);
-      const pkValue = pkField === "rId" ? parseInt(id, 10) : id;
-      const where: any = {};
-      where[pkField] = pkValue;
-      result = await model.update({ where, data: body });
     }
 
     return NextResponse.json({ success: true, updated: result });
