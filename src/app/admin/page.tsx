@@ -21,6 +21,14 @@ export default function AdminDashboard() {
   const [tab, setTab] = useState<"data" | "columns">("data");
   const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements">("tables");
 
+  // Generic table edit state
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editRow, setEditRow] = useState<Record<string, any> | null>(null);
+  const [addingRow, setAddingRow] = useState(false);
+  const [newRow, setNewRow] = useState<Record<string, any> | null>(null);
+  const [savingRow, setSavingRow] = useState(false);
+  const [rowMsg, setRowMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
     if (res.ok) { const d = await res.json(); setTables(d.tables || []); }
@@ -46,6 +54,87 @@ export default function AdminDashboard() {
     if (!confirm(`Drop "${name}"? This cannot be undone.`)) return;
     const res = await fetch("/api/admin/tables", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ table: name, action: "drop" }) });
     if (res.ok) { setSelectedTable(null); loadTables(); } else { const e = await res.json(); alert(e.error); }
+  };
+
+  // ── Generic row CRUD ──────────────────────────────────────────────
+  const getPkField = (table: string) => table === "Requirement" ? "rId" : "id";
+  const getPkValue = (row: any, table: string) => {
+    const pk = getPkField(table);
+    return row[pk] ?? row[pk === "rId" ? "rID" : ""];
+  };
+
+  const startEditRow = (idx: number) => {
+    setEditingIdx(idx);
+    setEditRow({ ...rows[idx] });
+    setAddingRow(false);
+    setRowMsg(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingIdx(null); setEditRow(null); setAddingRow(false); setNewRow(null); setRowMsg(null);
+  };
+
+  const saveEditRow = async () => {
+    if (!selectedTable || editingIdx === null || !editRow) return;
+    setSavingRow(true); setRowMsg(null);
+    try {
+      const pk = getPkField(selectedTable);
+      const pkVal = editRow[pk] ?? editRow[pk === "rId" ? "rID" : ""];
+      const res = await fetch(`/api/admin/table/${selectedTable}/${pkVal}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editRow),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setRowMsg({ type: "ok", text: "Saved." });
+      setEditingIdx(null); setEditRow(null);
+      if (selectedTable) loadData(selectedTable, page, perPage);
+    } catch (e: any) { setRowMsg({ type: "err", text: e.message }); }
+    finally { setSavingRow(false); }
+  };
+
+  const deleteRow = async (idx: number) => {
+    if (!selectedTable) return;
+    const row = rows[idx];
+    const pk = getPkField(selectedTable);
+    const pkVal = row[pk] ?? row[pk === "rId" ? "rID" : ""];
+    if (!confirm(`Delete row with ${pk}=${pkVal}?`)) return;
+    try {
+      const res = await fetch(`/api/admin/table/${selectedTable}/${pkVal}`, { method: "DELETE" });
+      if (!res.ok) { const e = await res.json(); alert(e.error || "Delete failed"); return; }
+      if (selectedTable) loadData(selectedTable, page, perPage);
+    } catch (e: any) { alert(e.message); }
+  };
+
+  const startAddRow = () => {
+    const empty: Record<string, any> = {};
+    columns.forEach(c => {
+      if (c.name === "createdAt") empty[c.name] = new Date().toISOString();
+      else if (c.type === "Boolean") empty[c.name] = true;
+      else if (c.type === "Int" || c.type === "Float") empty[c.name] = 0;
+      else empty[c.name] = "";
+    });
+    setNewRow(empty);
+    setAddingRow(true);
+    setEditingIdx(null);
+    setRowMsg(null);
+  };
+
+  const saveAddRow = async () => {
+    if (!selectedTable || !newRow) return;
+    setSavingRow(true); setRowMsg(null);
+    try {
+      const body = { ...newRow };
+      if (!body.id && getPkField(selectedTable) === "id") body.id = `id_${Date.now()}`;
+      const res = await fetch(`/api/admin/table/${selectedTable}`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Add failed");
+      setRowMsg({ type: "ok", text: "Row added." });
+      setAddingRow(false); setNewRow(null);
+      if (selectedTable) loadData(selectedTable, page, perPage);
+    } catch (e: any) { setRowMsg({ type: "err", text: e.message }); }
+    finally { setSavingRow(false); }
   };
 
   return (
@@ -104,7 +193,10 @@ export default function AdminDashboard() {
                 <span className="font-semibold text-slate-900 text-sm">{selectedTable}</span>
                 <span className="text-xs text-slate-400 ml-3">{totalRows} rows · {columns.length} cols</span>
               </div>
-              <button onClick={() => dropTable(selectedTable)} className="rounded border border-red-200 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50">Drop</button>
+              <div className="flex items-center gap-2">
+                <button onClick={startAddRow} className="rounded bg-green-600 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-green-700">＋ Add Row</button>
+                <button onClick={() => dropTable(selectedTable!)} className="rounded border border-red-200 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50">Drop</button>
+              </div>
             </div>
             <div className="flex border-b border-slate-200 px-4">
               {(["data","columns"] as const).map((t) => (
@@ -136,23 +228,87 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     <div className="flex-1 overflow-auto">
+                      {rowMsg && (
+                        <div className={`mx-3 mt-2 rounded px-3 py-1.5 text-xs ${rowMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{rowMsg.text}</div>
+                      )}
+                      {/* Add new row form */}
+                      {addingRow && newRow && (
+                        <div className="mx-3 mt-2 mb-2 rounded border border-blue-200 bg-blue-50/30 p-2">
+                          <div className="text-xs font-medium text-blue-700 mb-2">New Row — {selectedTable}</div>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
+                            {columns.filter(c => c.name !== "createdAt").slice(0, 8).map(c => (
+                              <label key={c.name} className="block">
+                                <span className="text-2xs text-slate-500">{c.name}</span>
+                                {c.type === "Boolean" ? (
+                                  <select value={newRow[c.name] ? "true" : "false"} onChange={e => setNewRow(r => ({ ...r!, [c.name]: e.target.value === "true" }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1.5 py-0.5 text-2xs bg-white">
+                                    <option value="true">✓ true</option><option value="false">✗ false</option>
+                                  </select>
+                                ) : (
+                                  <input value={String(newRow[c.name] ?? "")} onChange={e => setNewRow(r => ({ ...r!, [c.name]: e.target.value }))}
+                                    className="mt-0.5 w-full rounded border border-slate-300 px-1.5 py-0.5 text-2xs font-mono" />
+                                )}
+                              </label>
+                            ))}
+                          </div>
+                          <div className="flex gap-2 mt-2">
+                            <button onClick={saveAddRow} disabled={savingRow} className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">{savingRow ? "Saving..." : "Save"}</button>
+                            <button onClick={cancelEdit} className="rounded border px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+                          </div>
+                        </div>
+                      )}
                       <table className="w-full text-2xs border-collapse">
                         <thead className="sticky top-0 bg-slate-100 z-10">
-                          <tr>{columns.map(c => <th key={c.name} className="px-2 py-1.5 text-left font-medium text-slate-600 whitespace-nowrap border-b border-slate-200">{c.name}<span className="ml-1 text-slate-400 font-normal text-2xs">{c.type}</span></th>)}</tr>
+                          <tr>
+                            {columns.map(c => <th key={c.name} className="px-2 py-1.5 text-left font-medium text-slate-600 whitespace-nowrap border-b border-slate-200">{c.name}<span className="ml-1 text-slate-400 font-normal text-2xs">{c.type}</span></th>)}
+                            <th className="px-2 py-1.5 text-left font-medium text-slate-600 whitespace-nowrap border-b border-slate-200 w-16">Actions</th>
+                          </tr>
                         </thead>
                         <tbody>
-                          {rows.map((row, i) => (
-                            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50">
-                              {columns.map(c => (
-                                <td key={c.name} className="px-2 py-1 whitespace-nowrap max-w-[200px] truncate text-slate-700 text-2xs">
-                                  {row[c.name] === null ? <span className="text-slate-300 italic">null</span>
-                                    : typeof row[c.name] === "boolean" ? (row[c.name] ? "✓" : "✗")
-                                    : typeof row[c.name] === "object" ? JSON.stringify(row[c.name]).slice(0,60)
-                                    : String(row[c.name])}
-                                </td>
-                              ))}
+                          {rows.map((row, i) => {
+                            const isEditing = editingIdx === i;
+                            return (
+                            <tr key={i} className={`border-b border-slate-100 ${isEditing ? "bg-yellow-50" : "hover:bg-slate-50"}`}>
+                              {isEditing && editRow ? (
+                                <>
+                                  {columns.map(c => (
+                                    <td key={c.name} className="px-1 py-0.5">
+                                      {c.type === "Boolean" ? (
+                                        <select value={editRow[c.name] ? "true" : "false"} onChange={e => setEditRow(r => ({ ...r!, [c.name]: e.target.value === "true" }))}
+                                          className="w-full rounded border border-blue-300 px-1 py-0.5 text-2xs bg-white">
+                                          <option value="true">✓</option><option value="false">✗</option>
+                                        </select>
+                                      ) : c.name === "id" || c.name === "rId" || c.name === "rID" || c.name === "createdAt" ? (
+                                        <span className="px-1 text-slate-400">{String(row[c.name] ?? "")}</span>
+                                      ) : (
+                                        <input value={String(editRow[c.name] ?? "")} onChange={e => setEditRow(r => ({ ...r!, [c.name]: e.target.value }))}
+                                          className="w-full rounded border border-blue-300 px-1 py-0.5 text-2xs font-mono" />
+                                      )}
+                                    </td>
+                                  ))}
+                                  <td className="px-1 py-0.5 whitespace-nowrap">
+                                    <button onClick={saveEditRow} disabled={savingRow} className="text-green-600 hover:underline text-2xs mr-1">✓</button>
+                                    <button onClick={cancelEdit} className="text-red-500 hover:underline text-2xs">✗</button>
+                                  </td>
+                                </>
+                              ) : (
+                                <>
+                                  {columns.map(c => (
+                                    <td key={c.name} className="px-2 py-1 whitespace-nowrap max-w-[200px] truncate text-slate-700 text-2xs">
+                                      {row[c.name] === null ? <span className="text-slate-300 italic">null</span>
+                                        : typeof row[c.name] === "boolean" ? (row[c.name] ? "✓" : "✗")
+                                        : typeof row[c.name] === "object" ? JSON.stringify(row[c.name]).slice(0, 60)
+                                        : String(row[c.name])}
+                                    </td>
+                                  ))}
+                                  <td className="px-1 py-0.5 whitespace-nowrap">
+                                    <button onClick={() => startEditRow(i)} className="text-blue-600 hover:underline text-2xs mr-1.5">Edit</button>
+                                    <button onClick={() => deleteRow(i)} className="text-red-500 hover:underline text-2xs">Del</button>
+                                  </td>
+                                </>
+                              )}
                             </tr>
-                          ))}
+                          );})}
                         </tbody>
                       </table>
                     </div>
