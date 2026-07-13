@@ -107,6 +107,33 @@ async function main() {
   `);
   console.log(`✅ Backfilled MapControl2Requirement: ${mapBackfill} mappings`);
 
+  // Create Standard table
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "Standard" (
+      "id" TEXT PRIMARY KEY,
+      "standard" TEXT NOT NULL UNIQUE,
+      "standardDescription" TEXT,
+      "sequenceNo" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+  console.log("✅ Created Standard table");
+
+  // Backfill Standard from Requirement.standard distinct values
+  const stdBackfill = await prisma.$executeRawUnsafe(`
+    INSERT INTO "Standard" ("id", "standard", "sequenceNo")
+    SELECT DISTINCT
+      gen_random_uuid()::text,
+      r.standard,
+      ROW_NUMBER() OVER (ORDER BY MIN(r."rID"))
+    FROM "Requirement" r
+    WHERE r.standard IS NOT NULL AND r.standard != ''
+      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = r.standard)
+    GROUP BY r.standard
+    ON CONFLICT ("standard") DO NOTHING
+  `);
+  console.log(`✅ Backfilled Standard table: ${stdBackfill} standards`);
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }
