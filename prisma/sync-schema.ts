@@ -134,6 +134,16 @@ async function main() {
   `);
   console.log(`✅ Backfilled Standard table: ${stdBackfill} standards`);
 
+  // Add standardId to ProcessArea, backfill from Standard.standard match
+  await prisma.$executeRawUnsafe(`ALTER TABLE "ProcessArea" ADD COLUMN IF NOT EXISTS "standardId" TEXT`);
+  const paStdBackfill = await prisma.$executeRawUnsafe(`
+    UPDATE "ProcessArea" pa
+    SET "standardId" = s.id
+    FROM "Standard" s
+    WHERE pa.standard = s.standard AND pa."standardId" IS NULL
+  `);
+  console.log(`✅ Backfilled ProcessArea.standardId: ${paStdBackfill} rows`);
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }

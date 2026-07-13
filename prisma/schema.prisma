@@ -67,11 +67,12 @@ model AssuranceActivityType {
 
 // ── Standard — Management system standards (ISO, ICOP, etc.) ─────────
 model Standard {
-  id                  String   @id @default(cuid())
-  standard            String   @unique
+  id                  String         @id @default(cuid())
+  standard            String         @unique
   standardDescription String?
-  sequenceNo          Int      @default(0)
-  createdAt           DateTime @default(now())
+  sequenceNo          Int            @default(0)
+  createdAt           DateTime       @default(now())
+  processAreas        ProcessArea[]
 
   @@map("Standard")
 }
@@ -83,10 +84,14 @@ model ProcessArea {
   createdAt    DateTime           @default(now())
   pId          String?
   standard     String?
+  standardId   String?
+  standardRef  Standard?          @relation(fields: [standardId], references: [id])
   controls     Control[]
   subProcesses SubProcess[]
   badges       AchievementBadge[]
   requirements Requirement[]
+
+  @@index([standardId])
 }
 
 model SubProcess {
