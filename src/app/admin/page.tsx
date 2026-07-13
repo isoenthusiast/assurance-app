@@ -966,7 +966,7 @@ function RequirementManager() {
     if (!original) return false;
     const orig = normalizeReq(original);
     const fields = ["standard", "pId", "processAreaId", "requirementId", "clauseContent", "intentOutcome", "clauseApplicability", "references", "applicable"];
-    return fields.some(f => String(editForm[f] ?? "") !== String(orig[f] ?? ""));
+    return fields.some(f => String((editForm as any)[f] ?? "") !== String((orig as any)[f] ?? ""));
   };
 
   const toggleExpand = async (rId: number) => {
