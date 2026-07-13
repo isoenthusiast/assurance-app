@@ -119,17 +119,17 @@ async function main() {
   `);
   console.log("✅ Created Standard table");
 
-  // Backfill Standard from Requirement.standard distinct values
+  // Backfill Standard from ProcessArea.standard only
   const stdBackfill = await prisma.$executeRawUnsafe(`
     INSERT INTO "Standard" ("id", "standard", "sequenceNo")
     SELECT DISTINCT
       gen_random_uuid()::text,
-      r.standard,
-      ROW_NUMBER() OVER (ORDER BY MIN(r."rID"))
-    FROM "Requirement" r
-    WHERE r.standard IS NOT NULL AND r.standard != ''
-      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = r.standard)
-    GROUP BY r.standard
+      pa.standard,
+      ROW_NUMBER() OVER (ORDER BY MIN(pa."createdAt"))
+    FROM "ProcessArea" pa
+    WHERE pa.standard IS NOT NULL AND pa.standard != ''
+      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = pa.standard)
+    GROUP BY pa.standard
     ON CONFLICT ("standard") DO NOTHING
   `);
   console.log(`✅ Backfilled Standard table: ${stdBackfill} standards`);

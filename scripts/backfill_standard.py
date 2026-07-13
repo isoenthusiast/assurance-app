@@ -1,6 +1,6 @@
 """
-Backfill Standard table from distinct Requirement.standard values.
-Populates standard, standardDescription, and sequenceNo.
+Backfill Standard table from ProcessArea.standard values ONLY.
+Maps each unique standard name from the ProcessArea table.
 """
 import psycopg2
 import os
@@ -44,43 +44,29 @@ def main():
     """)
     print("Table ready.")
 
-    # Step 2: Backfill from Requirement.standard distinct values
-    print("Backfilling from Requirement.standard...")
-    cur.execute("""
-        INSERT INTO "Standard" ("id", "standard", "sequenceNo")
-        SELECT DISTINCT
-            gen_random_uuid()::text,
-            r.standard,
-            ROW_NUMBER() OVER (ORDER BY MIN(r."rID"))
-        FROM "Requirement" r
-        WHERE r.standard IS NOT NULL AND r.standard != ''
-          AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = r.standard)
-        GROUP BY r.standard
-        ON CONFLICT ("standard") DO NOTHING
-    """)
-    print(f"Backfilled: {cur.rowcount} standards")
-
-    # Step 3: Also pull from ProcessArea.standard
+    # Step 2: Clear old data and backfill from ProcessArea ONLY
+    cur.execute('DELETE FROM "Standard"')
+    print(f"Cleared existing standards. Backfilling from ProcessArea...")
     cur.execute("""
         INSERT INTO "Standard" ("id", "standard", "sequenceNo")
         SELECT DISTINCT
             gen_random_uuid()::text,
             pa.standard,
-            900 + ROW_NUMBER() OVER (ORDER BY pa.standard)
+            ROW_NUMBER() OVER (ORDER BY MIN(pa."createdAt"))
         FROM "ProcessArea" pa
         WHERE pa.standard IS NOT NULL AND pa.standard != ''
-          AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = pa.standard)
+        GROUP BY pa.standard
         ON CONFLICT ("standard") DO NOTHING
     """)
-    print(f"From ProcessArea: {cur.rowcount} additional")
+    print(f"Backfilled: {cur.rowcount} standards from ProcessArea")
 
-    # Step 4: List all standards
+    # Step 3: List all standards
     cur.execute('SELECT "id", "standard", "sequenceNo" FROM "Standard" ORDER BY "sequenceNo"')
     rows = cur.fetchall()
     print(f"\nTotal standards: {len(rows)}")
     for r in rows:
-        desc = r[1][:60] if r[1] else "(empty)"
-        print(f"  seq={r[2]}  id={r[0][:20]}...  {desc}")
+        desc = r[1][:70] if r[1] else "(empty)"
+        print(f"  seq={r[2]}  {desc}")
 
     cur.close()
     conn.close()
