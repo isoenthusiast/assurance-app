@@ -88,6 +88,33 @@
       "isId": false
     }
   },
+  "Standard": {
+    "id": {
+      "type": "String",
+      "required": true,
+      "isId": true
+    },
+    "standard": {
+      "type": "String",
+      "required": true,
+      "isId": false
+    },
+    "standardDescription": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "sequenceNo": {
+      "type": "Int",
+      "required": true,
+      "isId": false
+    },
+    "createdAt": {
+      "type": "DateTime",
+      "required": true,
+      "isId": false
+    }
+  },
   "ProcessArea": {
     "id": {
       "type": "String",
@@ -115,6 +142,11 @@
       "isId": false
     },
     "standard": {
+      "type": "String",
+      "required": false,
+      "isId": false
+    },
+    "standardId": {
       "type": "String",
       "required": false,
       "isId": false
