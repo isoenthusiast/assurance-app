@@ -875,6 +875,7 @@ function RequirementManager() {
   const [editForm, setEditForm] = useState<any>({});
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
 
   // ── Resizable columns ───────────────────────────────────────────────
   const tableRef = useRef<HTMLTableElement>(null);
@@ -1091,15 +1092,38 @@ function RequirementManager() {
   };
 
   const handleSave = async () => {
-    if (!expandedReqId) return;
     setSaving(true); setMsg(null);
     try {
-      const res = await fetch(`/api/admin/table/Requirement/${expandedReqId}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
-      });
-      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
-      setMsg({ type: "ok", text: "Requirement updated." });
+      if (isAdding) {
+        // Generate next rID
+        const maxRId = Math.max(...requirements.map((r: any) => r.rId ?? r.rID ?? 0), 0);
+        const newRId = maxRId + 1;
+        const body = { ...editForm, rId: newRId, rID: newRId, createdAt: new Date().toISOString() };
+        const res = await fetch("/api/admin/table/Requirement", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          // Fallback: raw SQL insert if generic API fails
+          if (err.error && err.error.includes("not supported")) {
+            // Try alternative — reload and let sync-schema handle it
+            throw new Error("Add not supported via API. Use import script or sync-schema.");
+          }
+          throw new Error(err.error || "Failed to add");
+        }
+        setMsg({ type: "ok", text: `Requirement added (rID=${newRId}).` });
+        setIsAdding(false);
+        setExpandedReqId(null);
+      } else {
+        if (!expandedReqId) return;
+        const res = await fetch(`/api/admin/table/Requirement/${expandedReqId}`, {
+          method: "PUT", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editForm),
+        });
+        if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+        setMsg({ type: "ok", text: "Requirement updated." });
+      }
       const r = await fetch("/api/admin/table/Requirement/data?perPage=2000");
       setRequirements((await r.json()).rows || []);
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
@@ -1109,7 +1133,30 @@ function RequirementManager() {
   const clearAll = () => {
     setSelStandard(""); setSelPAId("");
     setExpandedStandards(new Set());
-    setExpandedReqId(null); setEditForm({}); setPage(1);
+    setExpandedReqId(null); setEditForm({}); setIsAdding(false); setPage(1);
+  };
+
+  const addNew = () => {
+    if (!selPAId) {
+      alert("Please select a Process Area in the tree first.\n\nNavigate: Standard ▶ ProcessArea, then click a Process Area to select it.");
+      return;
+    }
+    const pa = processAreas.find((p: any) => p.id === selPAId);
+    setIsAdding(true);
+    setExpandedReqId(null);
+    setEditForm({
+      rId: "",
+      standard: selStandard,
+      pId: pa?.pId || "",
+      processAreaId: selPAId,
+      requirementId: "",
+      clauseContent: "",
+      intentOutcome: "",
+      clauseApplicability: "",
+      references: "",
+      applicable: true,
+    });
+    setMsg(null);
   };
 
   // ── Pagination nav ─────────────────────────────────────────────────
@@ -1122,7 +1169,13 @@ function RequirementManager() {
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-4 py-2 border-b border-slate-200 flex items-center justify-between">
-        <span className="font-semibold text-slate-900 text-sm">📋 Manage Requirements ({requirements.length} rows)</span>
+        <div className="flex items-center gap-3">
+          <span className="font-semibold text-slate-900 text-sm">📋 Manage Requirements ({requirements.length} rows)</span>
+          <button onClick={addNew}
+            className="rounded bg-green-600 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-green-700">
+            ＋ Add Requirement
+          </button>
+        </div>
         <button onClick={clearAll} className="text-xs text-blue-600 hover:underline">Clear All</button>
       </div>
       <div className="flex flex-1 overflow-hidden">
@@ -1215,6 +1268,73 @@ function RequirementManager() {
                 <span className="px-1 text-xs text-slate-500">{page}</span>
                 <button onClick={() => goPage(page + 1)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">›</button>
                 <button onClick={() => goPage(totalPages)} disabled={page >= totalPages} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">»</button>
+              </div>
+            </div>
+          )}
+
+          {/* Add Requirement form (shown when isAdding) */}
+          {isAdding && (
+            <div className="px-4 py-4 border-b border-blue-200 bg-blue-50/30 flex-shrink-0">
+              <div className="max-w-3xl">
+                <h3 className="text-sm font-semibold text-slate-900 mb-4">
+                  Add New Requirement — {selPAName || "Selected Process Area"}
+                </h3>
+                {msg && (
+                  <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                    {msg.text}
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs text-slate-500">rID (auto-assigned on save)</span>
+                    <input value={editForm.rId || "(auto)"} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Standard</span>
+                    <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">pID</span>
+                    <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Process Area ID</span>
+                    <input value={editForm.processAreaId ?? ""} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-mono text-slate-400" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Requirement ID</span>
+                    <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                  </label>
+                  <label className="block col-span-2">
+                    <span className="text-xs text-slate-500">Clause Content</span>
+                    <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))} rows={3} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                  </label>
+                  <label className="block col-span-2">
+                    <span className="text-xs text-slate-500">Intent / Outcome</span>
+                    <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))} rows={2} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                  </label>
+                  <label className="block col-span-2">
+                    <span className="text-xs text-slate-500">Clause Applicability</span>
+                    <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">References</span>
+                    <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs text-slate-500">Applicable</span>
+                    <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </label>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button onClick={handleSave} disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                    {saving ? "Saving..." : "Add Requirement"}
+                  </button>
+                  <button onClick={() => { setIsAdding(false); setEditForm({}); setMsg(null); }} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+                </div>
               </div>
             </div>
           )}
