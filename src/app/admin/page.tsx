@@ -893,7 +893,7 @@ function ManageCompany({ users }: { users: any[] }) {
     if (!confirm("Remove this user from the company?")) return;
     try {
       await fetch(`/api/admin/table/UserCompany/${assignmentId}`, { method: "DELETE" });
-      setAssignments(prev => prev.filter(a => a.id !== assignmentId));
+      loadAssignments();
       setMsg({ type: "ok", text: "Assignment removed." });
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
   };
@@ -1059,7 +1059,11 @@ function ManageCompany({ users }: { users: any[] }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {assignments.map((a: any) => {
+                    {[...assignments].sort((a: any, b: any) => {
+                      const nameA = users.find((x: any) => x.id === a.userId)?.name || "";
+                      const nameB = users.find((x: any) => x.id === b.userId)?.name || "";
+                      return nameA.localeCompare(nameB);
+                    }).map((a: any) => {
                       const u = Array.isArray(users) ? users.find((x: any) => x.id === a.userId) : null;
                       const c = Array.isArray(companies) ? companies.find((x: any) => x.id === a.companyId) : null;
                       return (
