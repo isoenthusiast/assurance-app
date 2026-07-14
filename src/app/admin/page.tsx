@@ -1111,6 +1111,43 @@ function ManageCompany({ users }: { users: any[] }) {
         </div>
       </div>
     </div>
+
+      {/* ─── Assessment Delete Confirmation Modal ──────────────────────── */}
+      {deleteAssessmentTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60">
+          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Assessment</h3>
+            <p className="text-sm text-slate-600 mb-1">
+              Are you sure you want to delete <strong>&quot;{deleteAssessmentTarget.name}&quot;</strong>?
+            </p>
+            <p className="text-sm text-red-600 font-medium mb-4">
+              This will permanently delete ALL related data:
+            </p>
+            <div className="mb-4 space-y-1 text-sm">
+              <div className="flex justify-between border-b border-slate-100 py-1">
+                <span className="text-slate-700">Cascade-deleted (automatic):</span>
+              </div>
+              {["Control Assignments","Samples","Findings → Actions","Assessment Activities (Aact) → AActControls, AActUsers, AActDetails"].map(t => (
+                <div key={t} className="flex items-center gap-2 pl-4 text-slate-500"><span className="text-red-400">✕</span> {t}</div>
+              ))}
+              <div className="flex justify-between border-b border-slate-100 pt-2 py-1">
+                <span className="text-slate-700">Also cleaned up:</span>
+              </div>
+              {["Attachments (linked to this assessment & children)","Knowledge Base mappings"].map(t => (
+                <div key={t} className="flex items-center gap-2 pl-4 text-slate-500"><span className="text-amber-400">✕</span> {t}</div>
+              ))}
+            </div>
+            <p className="text-xs text-green-600 mb-4">✅ No master data will be affected (Users, Controls, Standards, Process Areas, etc.)</p>
+            {deleteAssessmentError && (
+              <p className="text-sm text-red-600 mb-3 bg-red-50 px-3 py-2 rounded">{deleteAssessmentError}</p>
+            )}
+            <div className="flex items-center justify-end gap-3">
+              <button type="button" onClick={() => { setDeleteAssessmentTarget(null); setDeleteAssessmentError(null); }} disabled={deleteAssessmentDeleting} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50">Cancel</button>
+              <button type="button" onClick={confirmDeleteAssessment} disabled={deleteAssessmentDeleting} className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50">{deleteAssessmentDeleting ? "Deleting…" : "Delete Assessment & All Related Data"}</button>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }
 
@@ -1829,72 +1866,6 @@ function RequirementManager() {
           )}
         </div>
       </div>
-
-      {/* ─── Assessment Delete Confirmation Modal ──────────────────────── */}
-      {deleteAssessmentTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60">
-          <div className="w-full max-w-lg rounded-xl border border-slate-200 bg-white p-6 shadow-2xl">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Assessment</h3>
-            <p className="text-sm text-slate-600 mb-1">
-              Are you sure you want to delete <strong>"{deleteAssessmentTarget.name}"</strong>?
-            </p>
-            <p className="text-sm text-red-600 font-medium mb-4">
-              This will permanently delete ALL related data:
-            </p>
-
-            <div className="mb-4 space-y-1 text-sm">
-              <div className="flex justify-between border-b border-slate-100 py-1">
-                <span className="text-slate-700">Cascade-deleted (automatic):</span>
-              </div>
-              {[
-                "Control Assignments",
-                "Samples",
-                "Findings → Actions",
-                "Assessment Activities (Aact) → AActControls, AActUsers, AActDetails",
-              ].map(t => (
-                <div key={t} className="flex items-center gap-2 pl-4 text-slate-500">
-                  <span className="text-red-400">✕</span> {t}
-                </div>
-              ))}
-              <div className="flex justify-between border-b border-slate-100 pt-2 py-1">
-                <span className="text-slate-700">Also cleaned up:</span>
-              </div>
-              {["Attachments (linked to this assessment & children)", "Knowledge Base mappings"].map(t => (
-                <div key={t} className="flex items-center gap-2 pl-4 text-slate-500">
-                  <span className="text-amber-400">✕</span> {t}
-                </div>
-              ))}
-            </div>
-
-            <p className="text-xs text-green-600 mb-4">
-              ✅ No master data will be affected (Users, Controls, Standards, Process Areas, etc.)
-            </p>
-
-            {deleteAssessmentError && (
-              <p className="text-sm text-red-600 mb-3 bg-red-50 px-3 py-2 rounded">{deleteAssessmentError}</p>
-            )}
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => { setDeleteAssessmentTarget(null); setDeleteAssessmentError(null); }}
-                disabled={deleteAssessmentDeleting}
-                className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmDeleteAssessment}
-                disabled={deleteAssessmentDeleting}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleteAssessmentDeleting ? "Deleting…" : "Delete Assessment & All Related Data"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
