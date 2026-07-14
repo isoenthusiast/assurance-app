@@ -26,6 +26,7 @@ model User {
   points               PointTransaction[]
   achievements         UserAchievement[]
   roleMappings         UserRoleMapping[]
+  userCompanies        UserCompany[]
 }
 
 model ActivityLog {
@@ -85,6 +86,7 @@ model ProcessArea {
   pId          String?
   standard     String?
   standardId   String?            @map("StandardID")
+  companyId    String?
   standardRef  Standard?          @relation(fields: [standardId], references: [id])
   controls     Control[]
   subProcesses SubProcess[]
@@ -100,6 +102,7 @@ model SubProcess {
   description            String?
   processAreaId          String
   createdAt              DateTime                @default(now())
+  companyId              String?
   processArea            ProcessArea             @relation(fields: [processAreaId], references: [id])
   controlSubProcesses    ControlSubProcess[]
   controlFDSubProcesses  ControlFDSubProcess[]
@@ -170,6 +173,7 @@ model Control {
   standard           String?
   pId                String?
   Requirements       String?
+  companyId          String?
   controlAssignments ControlAssignment[]
   controlSubProcesses ControlSubProcess[]
   templateLinkages   AssessmentTemplateControlLinkage[]
@@ -185,6 +189,7 @@ model AssessmentTemplate {
   description     String?
   createdAt       DateTime                           @default(now())
   updatedAt       DateTime                           @updatedAt
+  companyId       String?
   activityTypes   AssessmentTemplateActivityType[]
   controlLinkages AssessmentTemplateControlLinkage[]
 }
@@ -224,6 +229,7 @@ model Assessment {
   endDate            DateTime?
   loa                LOA
   status             AssessmentStatus      @default(Planned)
+  companyId          String?
   createdAt          DateTime              @default(now())
   assessor           User                  @relation("AssessmentAssessor", fields: [assessorId], references: [id])
   activityType       AssuranceActivityType @relation(fields: [activityTypeId], references: [id])
@@ -341,6 +347,7 @@ model Attachment {
   fileSize    Int?
   uploadedBy  String
   uploadDate  DateTime @default(now())
+  companyId   String?
   mappings    AttachmentMapping[]
 }
 
@@ -498,6 +505,7 @@ model UserRole {
   uRoleDescription   String?
   uRolePositions     String?
   uRoleReportingLine String?
+  companyId          String?
   createdAt          DateTime @default(now())
   userMappings       UserRoleMapping[]
 }
@@ -523,6 +531,21 @@ model Company {
   referenceID  String?
   shortName    String?
   createdAt    DateTime @default(now())
+  userCompanies UserCompany[]
+}
+
+model UserCompany {
+  id        String   @id @default(cuid())
+  userId    String
+  companyId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, companyId])
+  @@index([userId])
+  @@index([companyId])
+  @@map("UserCompany")
 }
 
 model UserFavorite {
@@ -698,6 +721,7 @@ model Requirement {
   references          String?
   applicable          Boolean      @default(true)
   createdAt           DateTime     @default(now())
+  companyId           String?
   processArea         ProcessArea? @relation(fields: [processAreaId], references: [id])
   controlMappings     MapControl2Requirement[]
 

@@ -33,6 +33,34 @@ type SubProcess = {
   assessments: AssessmentSummary[];
 };
 
+type ControlSummary = {
+  id: string;
+  name: string;
+  controlType: string;
+  controlRef: string | null;
+  isHsseCritical: boolean;
+  ramRating: string | null;
+  rawHealthScore: number;
+  lastTestedDate: string | Date | null;
+  lastTestResult: string | null;
+  _count: { controlAssignments: number };
+};
+
+type Requirement = {
+  rId: number;
+  requirementId: string;
+  clauseContent: string;
+  intentOutcome: string;
+  clauseApplicability: string;
+  references: string | null;
+  applicable: boolean;
+  standard: string;
+  pId: string;
+  processAreaId: string | null;
+  _count: { controlMappings: number };
+  controlMappings: { control: ControlSummary }[];
+};
+
 type Editing = {
   id: string;
   name: string;
@@ -46,6 +74,7 @@ export default function ProcessAreasClient({
   standards,
   deleteAction,
   subProcesses,
+  requirements,
   deleteSubProcessAction,
   editing,
 }: {
@@ -53,6 +82,7 @@ export default function ProcessAreasClient({
   standards: string[];
   deleteAction: (id: string) => Promise<void>;
   subProcesses: SubProcess[];
+  requirements: Requirement[];
   deleteSubProcessAction: (id: string) => Promise<void>;
   editing: Editing;
 }) {
@@ -69,6 +99,7 @@ export default function ProcessAreasClient({
         standards={standards}
         deleteAction={deleteAction}
         subProcesses={subProcesses}
+        requirements={requirements}
         deleteSubProcessAction={deleteSubProcessAction}
         onAddClick={(defaultStandard) => {
           setAddDefaultStandard(defaultStandard);

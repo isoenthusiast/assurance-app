@@ -35,7 +35,7 @@ export default async function ProcessAreasPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
-  const [areas, editing, allAreas, subProcesses, testedAssignments] = await Promise.all([
+  const [areas, editing, allAreas, subProcesses, requirements, testedAssignments] = await Promise.all([
     prisma.processArea.findMany({
       orderBy: { pId: "asc" },
       select: {
@@ -44,7 +44,7 @@ export default async function ProcessAreasPage({
         description: true,
         pId: true,
         standard: true,
-        _count: { select: { subProcesses: true, controls: true } },
+        _count: { select: { subProcesses: true, controls: true, requirements: true } },
       },
     }),
     edit ? prisma.processArea.findUnique({ where: { id: edit } }) : Promise.resolve(null),
@@ -64,6 +64,41 @@ export default async function ProcessAreasPage({
         description: true,
         processAreaId: true,
         _count: { select: { controlSubProcesses: true } },
+      },
+    }),
+    // Requirements with linked controls (via MapControl2Requirement)
+    prisma.requirement.findMany({
+      orderBy: { requirementId: "asc" },
+      select: {
+        rId: true,
+        requirementId: true,
+        clauseContent: true,
+        intentOutcome: true,
+        clauseApplicability: true,
+        references: true,
+        applicable: true,
+        standard: true,
+        pId: true,
+        processAreaId: true,
+        _count: { select: { controlMappings: true } },
+        controlMappings: {
+          select: {
+            control: {
+              select: {
+                id: true,
+                name: true,
+                controlType: true,
+                controlRef: true,
+                isHsseCritical: true,
+                ramRating: true,
+                rawHealthScore: true,
+                lastTestedDate: true,
+                lastTestResult: true,
+                _count: { select: { controlAssignments: true } },
+              },
+            },
+          },
+        },
       },
     }),
     // Every control assignment belonging to a *completed* assessment (i.e.
@@ -144,7 +179,7 @@ export default async function ProcessAreasPage({
     <div className="mx-auto max-w-5xl px-6 py-8">
       <h1 className="text-2xl font-semibold text-slate-900">Process Areas</h1>
       <p className="mt-1 text-sm text-slate-500">
-        The work processes (Abilities) that Sub-Processes and Controls roll up under — e.g. ESP, AIPSM, MAC.
+        The work processes (Abilities) that Requirements and Controls roll up under — e.g. ESP, AIPSM, MAC.
       </p>
 
       {/* Keyed on the editing target so the add/edit form modal fully
@@ -157,6 +192,7 @@ export default async function ProcessAreasPage({
         standards={uniqueStandards}
         deleteAction={deleteProcessArea}
         subProcesses={subProcessesWithAssessmentCounts}
+        requirements={requirements}
         deleteSubProcessAction={deleteSubProcess}
         editing={editing}
       />

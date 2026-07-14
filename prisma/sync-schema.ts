@@ -36,6 +36,30 @@ async function main() {
   await prisma.$executeRawUnsafe(`ALTER TABLE "Control" DROP COLUMN IF EXISTS "subProcessId"`);
   console.log("✅ Dropped subProcessId column from Control");
 
+  // Add companyId column to Control
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Control" ADD COLUMN IF NOT EXISTS "companyId" TEXT`);
+  console.log("✅ Added companyId column to Control");
+
+  // Add companyId to scoped tables
+  for (const t of ["ProcessArea", "SubProcess", "Requirement", "Assessment", "Attachment", "AssessmentTemplate", "UserRole"]) {
+    await prisma.$executeRawUnsafe(`ALTER TABLE "${t}" ADD COLUMN IF NOT EXISTS "companyId" TEXT`);
+  }
+  console.log("✅ Added companyId column to ProcessArea, SubProcess, Requirement, Assessment, Attachment, AssessmentTemplate, UserRole");
+
+  // Create UserCompany junction table (M2M: User ⟷ Company access control)
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "UserCompany" (
+      "id" TEXT PRIMARY KEY,
+      "userId" TEXT NOT NULL REFERENCES "User"("id") ON DELETE CASCADE,
+      "companyId" TEXT NOT NULL REFERENCES "Company"("id") ON DELETE CASCADE,
+      "createdAt" TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE("userId", "companyId")
+    )
+  `);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "UserCompany_userId_idx" ON "UserCompany"("userId")`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "UserCompany_companyId_idx" ON "UserCompany"("companyId")`);
+  console.log("✅ Created UserCompany table");
+
   // Rename MRequirement → Requirement (if old table exists)
   const oldTable = await prisma.$queryRawUnsafe<Array<{exists: boolean}>>(
     `SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'MRequirement')`

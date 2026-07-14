@@ -1,16 +1,20 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 13, 2026 (v2.4.5)  
+**Last Updated:** July 14, 2026 (v2.5.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.4.5 — Requirement Admin UI:** Renamed `MRequirement` → `Requirement` (model + DB table). Added Manage Requirements admin panel with 2-panel layout: left panel has hierarchical filter (Standard → Process Area → SubProcess), right panel lists requirements in a table (Process Area, Requirement ID, clauseContent truncated to 100 chars). Click any row to expand an inline full-form editor for all columns. Uses generic `/api/admin/table/Requirement` endpoints.
+> **v2.5.0 — Multi-Company Architecture:** Restructured app for multi-company support. Added `companyId` to 8 core tables (Control, ProcessArea, SubProcess, Requirement, Assessment, Attachment, AssessmentTemplate, UserRole). Created `UserCompany` junction table for user↔company access control. Company-scoped assurance model: each company owns its controls, process areas, sub-processes, requirements, assessments, templates, and attachments. Template company "SAMS001" serves as master blueprint (admin-only, invisible to other users). Company selector combobox in header filters all views by selected company. Intelligent control↔requirement mapping via `MapControl2Requirement` with drag-and-drop re-assignment. Process Areas page restructured: Sub-Processes column replaced with Requirements; expandable requirement rows show linked controls with drag-and-drop. Schema change checklist documented to prevent stale admin column views.
 >
-> **v2.4.4 — Requirement Table:** Added `Requirement` model (696 rows) from `frontline library/mRequirement.csv` — SMDS ICOP statutory requirements with rID as primary key. Includes standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, and applicable fields. Import script at `scripts/import_mrequirements.py`.
+> **v2.4.6 — Standard Table & Requirement-Control Mapping:** Added `Standard` model (6 rows) as canonical standards registry with sequenceNo ordering. Added `MapControl2Requirement` junction table (1,048 mappings) linking Control ⟷ Requirement. `ProcessArea.standardId` (StandardID) FK replaces free-text standard field. Admin Requirements tree derives hierarchy from Standard → ProcessArea tables. Requirements table default-sorted by Req ID ascending (natural sort). Expanded row shows Associated Controls panel.
+>
+> **v2.4.5 — Requirement Admin UI:** Renamed `MRequirement` → `Requirement` (model + DB table). Added Manage Requirements admin panel with 2-panel layout: left panel has hierarchical filter (Standard → Process Area), right panel lists requirements in sortable table. Click any row to expand an inline full-form editor for all columns.
+>
+> **v2.4.4 — Requirement Table:** Added `Requirement` model (803 rows) from SMDS ICOP statutory requirements plus 65 "Unmapped Controls" catch-all requirements (one per ProcessArea). rID as primary key. Includes standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable, processAreaId.
 >
 > **v2.4.3 — Schema Audit:** Verified 41 models / 10 enums in sync between Prisma schema and live DB. Fixed model count (was 37). Added missing Document Ingestion models: `DocumentExtract`, `ControlFromDocument`, `ControlFDSubProcess`. Documented manual `sync-schema.ts` sync mechanism (no Prisma Migrate).
 >
-> **v2.4.2 — Design Doc Audit & Cleanup:** Fixed stale document-conversion tech description (Python→mammoth/pdfjs-dist/tesseract.js). Added Known Architectural Debt section (§11) documenting three parallel assessment surfaces, `/api/admin/execute-sql` blast-radius risk, `/api/admin/check` inconsistent authorization, and `generate_testing_kri.py` rule-based heuristic engine.
+> **v2.4.2 — Design Doc Audit & Cleanup:** Fixed stale document-conversion tech description (Python→mammoth/pdfjs-dist/tesseract.js). Added Known Architectural Debt section (§12) documenting three parallel assessment surfaces, `/api/admin/execute-sql` blast-radius risk, `/api/admin/check` inconsistent authorization, and `generate_testing_kri.py` rule-based heuristic engine.
 >
 > **v2.4.0 — Process Health & Control Scoring:** Added Process Health Dashboard on `/fla` main panel showing average control health scores per process area, grouped by Standard with collapsible sections and traffic-light indicators (🟢>80 Healthy, 🟡50-80 Tolerable, 🔴<50 Not Tolerable). `Control.rawHealthScore` now auto-recalculates on every effectiveness change or unassign via 90-day window (`Effective/Total × 100`). Batch script `scripts/recalc_control_health.py` for bulk recalculation. Leaderboard excludes only username "admin", shows top-3 + user's own position with gaps.
 >
@@ -22,8 +26,10 @@
 
 ## 1. Executive Summary
 
-The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control testing platform for oil & gas operations. It enables:
+The **SEAM Assurance App** ("CONAN PROJECT") is a **multi-company** gamified internal control testing platform for oil & gas operations. It enables:
 
+- **Multi-Company Isolation** — Controls, ProcessAreas, SubProcesses, Requirements, Assessments, Templates, and Attachments are company-scoped via `companyId`
+- **Template Company** — "SAMS001" serves as the master blueprint; admin-only, invisible to other users
 - Manage Controls, Plan Assessments, Execute Tests via samples/findings/actions
 - Gamification with 8 emotional drives, badges, and points-based leaderboard
 - Activity Logging with 31 event types across all user actions
@@ -43,10 +49,28 @@ The **SEAM Assurance App** ("CONAN PROJECT") is a gamified internal control test
 | UI | React + Tailwind CSS | 19.2.4 / 4.x |
 | Deployment | Railway | Docker + PG Plugin |
 
-## 3. Database Schema (42 Models, 10 Enums)
+## 3. Database Schema (45 Models, 10 Enums)
 
 ### Enums
 Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 types), AssessmentStatus (Planned/InProgress/Completed/Cancelled), SampleStatus/Conclusion, Effectiveness, FindingSeverity, EmotionalDrive (8 drives), BadgeRarity
+
+### Multi-Company Architecture (§3A)
+- **Company** — company definitions (companyID unique, companyName, referenceID, shortName)
+- **UserCompany** — M2M junction: User ⟷ Company access control
+  - `userId` (FK→User), `companyId` (FK→Company.id)
+  - Controls which companies appear in the header company selector combobox
+  - Users are mapped to their parent company by default
+- **Company-scoped tables** (have `companyId` FK):
+  - Control, ProcessArea, SubProcess, Requirement
+  - Assessment, AssessmentTemplate, Attachment
+  - UserRole (role definitions can be company-specific)
+- **Template Company "SAMS001"** — master blueprint with all baseline controls, process areas, sub-processes, requirements, templates
+  - Only visible to Admin users
+  - Immutable by non-admin users
+  - New companies start by cloning from SAMS001
+- **Company Selector** — combobox in header (between "CONAN PROJECT" title and "Dashboard" nav)
+  - Shows `companyID` values the user has access to (via UserCompany)
+  - Selection filters all views to the chosen company's data
 
 ### Core Models
 - **User** — accounts with gamification stats (totalPoints, dailyPointStreak, position, companyId)
@@ -62,8 +86,11 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
   - entityType: "ProcessArea" | "SubProcess" | "Control"
   - Unique per (userId, entityType, entityId)
 
-### Setup Models
-- **ProcessArea** — name (unique), pId, standard
+### Standards & Hierarchy
+- **Standard** — canonical standards registry (standard name unique, standardDescription, sequenceNo for display order)
+  - 6 standards: Carbon/Environment/Social, HSSE & SP Foundations, Process Safety & Asset Management, Transport Safety, Workplace Health/Safety/Security, International Standards (ISO)
+  - ProcessArea.standardId (StandardID) FK links to Standard.id
+- **ProcessArea** — name (unique), pId, standard (legacy free-text), standardId (FK→Standard via StandardID column)
 - **SubProcess** — name, processAreaId
 - **Control** — 28 fields (CSF framework, risk, testing approach, rawHealthScore auto-calculated)
 - **ControlSubProcess** — M2M: Control ⟷ SubProcess
@@ -115,9 +142,19 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
   - Unique on (controlFromDocumentId, subProcessId) with isPrimary flag
 
 ### SMDS ICOP Statutory Requirements
-- **Requirement** — 696 statutory/regulatory requirements from SMDS ICOP framework (rID as PK, standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable)
+- **Requirement** — 738 statutory/regulatory requirements from SMDS ICOP framework (rID as PK, standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable)
+  - `processAreaId` FK → ProcessArea (backfilled via pID matching)
+  - `controlMappings` → MapControl2Requirement[] (M2M to Control)
   - Imported from `frontline library/mRequirement.csv` via `scripts/import_mrequirements.py`
-  - Admin UI at `/admin` → "📋 Requirements" with hierarchical filter (Standard → Process Area → SubProcess) and inline full-form editor
+  - Admin UI at `/admin` → "📋 Requirements" with:
+    - **Tree view:** Standard → ProcessArea hierarchy derived from Standard + ProcessArea tables (standardId FK)
+    - **Table:** default-sorted by Req ID ascending (natural sort: "QMS-6.1" before "QMS-10.1")
+    - **Inline editor:** full-form edit on row expand
+    - **Associated Controls panel:** lists controls mapped via MapControl2Requirement, with links to `/setup/controls?edit={id}` for full Edit Control form
+- **MapControl2Requirement** — M2M junction: Control ⟷ Requirement
+  - `controlId` (FK→Control), `requirementRId` (FK→Requirement.rId), `processAreaId`
+  - Unique on (controlId, requirementRId)
+  - Backfilled via shared ProcessArea (control.processAreaId = requirement.processAreaId → mapping)
 
 ### Template Models
 - **AssessmentTemplate** — reusable templates
@@ -140,6 +177,13 @@ Role (Admin/Assessor), LOA (FirstLine/SecondLine/ThirdLine), ControlType (6 type
 
 ### Key Relationships
 ```
+Company ──< UserCompany >── User (access control)
+Company ──< Control, ProcessArea, SubProcess, Requirement (companyId FK)
+Company ──< Assessment, AssessmentTemplate, Attachment (companyId FK)
+Standard ──< ProcessArea (standardId)
+ProcessArea ──< Requirement (processAreaId)
+ProcessArea ──< Control (processAreaId)
+Requirement ──< MapControl2Requirement >── Control
 User ──< Assessment (assessor)
 User ──< UserRoleMapping >── UserRole
 User ──< UserFavorite (entityType + entityId)
@@ -148,6 +192,7 @@ Assessment ──< ControlAssignment >── Control
 Assessment ──< Sample, Finding ──< Action
 Control ──< ControlSubProcess >── SubProcess
 Control ──< AActControls >── Aact
+Control ──< MapControl2Requirement >── Requirement
 Attachment ──< AttachmentMapping >── (Action | Finding | Sample)
 Knowledgebase ──< MapArt2Know (artifact mapping)
 DocumentExtract ──< ControlFromDocument ──< ControlFDSubProcess >── SubProcess
@@ -206,7 +251,7 @@ GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
 POST `/api/gamification/award`, GET `/stats/[userId]`, GET `/leaderboard` — leaderboard excludes username "admin", uses cumulative `SUM(PointTransaction.points)`
 
 ### Admin Utilities
-CSV validate/import, generic table CRUD (all 42 models), column management, SQL executor (`/api/admin/execute-sql` — Admin-only, small blocklist: DROP DATABASE, DELETE FROM information_schema, PRAGMA database_list; see §11 for blast-radius notes), database management, export, diagnostics, information_schema column discovery
+CSV validate/import, generic table CRUD (all 45 models), column management, SQL executor (`/api/admin/execute-sql` — Admin-only, small blocklist: DROP DATABASE, DELETE FROM information_schema, PRAGMA database_list; see §12 for blast-radius notes), database management, export, diagnostics, information_schema column discovery
 
 ## 7. Frontend Pages
 
@@ -216,11 +261,11 @@ CSV validate/import, generic table CRUD (all 42 models), column management, SQL 
 | `/fla` | **Assurance Management Dashboard** — Process Health Dashboard (collapsible by standard, traffic-light indicators) + Gamification sidebar (points, earned badges, leaderboard top-3) |
 | `/fla/new` | Create assessment with cascading control picker |
 | `/fla/[id]` | **2-panel tabbed assessment**: Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities (activity CRUD with User assignment, Details form with checklists/notes/attachments, Controls mapping) |
-| `/admin` | Admin dashboard with 37 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), Knowledgebase |
+| `/admin` | Admin dashboard with 45 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), **Requirements** (tree: Standard→ProcessArea, sorted table, inline editor, Associated Controls), Knowledgebase |
 | `/admin/templates` | Template list + editor |
 | `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
 | `/admin/table/[table]` | Generic table editor (auto-discovers columns via information_schema) |
-| `/setup/process-areas` | Process areas with standard filter |
+| `/setup/process-areas` | Process areas with standard filter; expandable rows show Requirements (not Sub-Processes); requirement rows expand to linked controls with drag-and-drop re-mapping |
 | `/setup/processdetails/[id]` | 3-tab drill-down (Overview, Controls, Assessments) |
 | `/setup/controls` | 28-field control form |
 | `/setup/badges` | Badge generation and management |
@@ -263,7 +308,7 @@ startCommand = "npm run start"
 - Internal: `postgres.railway.internal:5432`, Public: `hayabusa.proxy.rlwy.net:54471`
 - Schema sync via direct SQL (ALTER/CREATE IF NOT EXISTS) in `prisma/sync-schema.ts` — **not** Prisma Migrate (no `_prisma_migrations` table). Dev schema changes must be added to `sync-schema.ts` to propagate to production.
 
-## 11. Known Architectural Debt & Risks
+## 12. Known Architectural Debt & Risks
 
 ### Three Parallel Assessment Surfaces
 Three route trees serve assessment workflows with overlapping functionality:
@@ -286,12 +331,14 @@ This script generates TestingApproach and KeyRiskIndicator for `ControlFromDocum
 
 Flagged as a candidate for future LLM-assisted enhancement.
 
-## 12. Changelog
+## 13. Changelog
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v2.4.4 | 2026-07-13 | Added Requirement table (696 statutory requirements from SMDS ICOP). Import script at scripts/import_mrequirements.py. |
+| v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
+| v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |
 | v2.4.5 | 2026-07-13 | Renamed MRequirement → Requirement. Added Manage Requirements admin panel with hierarchical filter and inline editor. |
+| v2.4.4 | 2026-07-13 | Added Requirement table (738 statutory requirements from SMDS ICOP). Import script at scripts/import_mrequirements.py. |
 | v2.4.3 | 2026-07-13 | Schema audit: verified 41 models/10 enums in sync. Added DocumentExtract, ControlFromDocument, ControlFDSubProcess to schema docs. |
 | v2.4.2 | 2026-07-13 | Design doc audit: fix stale conversion tech, add Known Architectural Debt (§11), document execute-sql risk & admin/check inconsistency |
 | v2.0.0 | 2026-07-07 | PostgreSQL migration, Railway deployment, ActivityLogType, force-dynamic, trustHost |

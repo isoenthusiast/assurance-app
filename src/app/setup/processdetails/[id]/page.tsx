@@ -47,11 +47,25 @@ export default async function ProcessDetailsPage({
     };
   });
 
-  // --- Assessments that use controls from this process area ---
-  const controlIds = mergedSubProcesses.flatMap((sp) => sp.controls.map((c) => c.id));
+  // --- Requirements linked to this process area (fetch first to get their control IDs) ---
+  const requirements = await prisma.requirement.findMany({
+    where: { processAreaId: id },
+    orderBy: { requirementId: "asc" },
+    include: {
+      controlMappings: {
+        select: { controlId: true },
+      },
+    },
+  });
 
+  // Collect ALL control IDs: from subprocesses AND from requirement mappings
+  const spControlIds = mergedSubProcesses.flatMap((sp) => sp.controls.map((c) => c.id));
+  const reqControlIds = requirements.flatMap((r) => r.controlMappings.map((m) => m.controlId));
+  const allControlIds = [...new Set([...spControlIds, ...reqControlIds])];
+
+  // --- Assessments that use controls from this process area ---
   const controlAssignments = await prisma.controlAssignment.findMany({
-    where: { controlId: { in: controlIds } },
+    where: { controlId: { in: allControlIds } },
     select: { assessmentId: true, effective: true, controlId: true },
   });
 
@@ -82,7 +96,7 @@ export default async function ProcessDetailsPage({
   }
 
   // --- Stats for overview ---
-  const totalControls = controlIds.length;
+  const totalControls = spControlIds.length;
   const totalAssessments = assessments.length;
   const completedAssessments = assessments.filter((a) => a.status === "Completed").length;
   const totalFindings = assessments.reduce((sum, a) => sum + a.findings.length, 0);
@@ -101,10 +115,57 @@ export default async function ProcessDetailsPage({
   const testedSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.status === "Tested").length, 0);
   const effectiveSamples = assessments.reduce((sum, a) => sum + a.samples.filter((s) => s.status === "Tested" && s.controlEffective).length, 0);
 
-  // Effectiveness stats — "never tested" controls are not effective
-  const effectiveCount = controlAssignments.filter((ca) => ca.effective === "Effective").length;
-  const notEffectiveCount = controlAssignments.filter((ca) => ca.effective === "NotEffective").length;
-  const neverTestedCount = totalControls - (effectiveCount + notEffectiveCount); // controls never assigned
+  // Calculate health per requirement: % of linked controls that are effective
+  // (requirements already fetched above with controlMappings; controlAssignments now covers all their control IDs)
+  const requirementStats = requirements.map((req) => {
+    const linkedControlIds = req.controlMappings.map((m) => m.controlId);
+    const linkedAssignments = controlAssignments.filter((ca) =>
+      linkedControlIds.includes(ca.controlId)
+    );
+    const effectiveLinked = linkedAssignments.filter((ca) => ca.effective === "Effective").length;
+    const totalLinked = linkedControlIds.length;
+    const healthPct = totalLinked > 0 ? Math.round((effectiveLinked / totalLinked) * 100) : 0;
+    return {
+      rId: req.rId,
+      requirementId: req.requirementId,
+      clauseContent: req.clauseContent,
+      totalLinkedControls: totalLinked,
+      effectiveControls: effectiveLinked,
+      healthPct,
+    };
+  });
+
+  // --- Requirements with full control data (for Tab 2: Requirements & Controls) ---
+  const requirementsWithControls = await prisma.requirement.findMany({
+    where: { processAreaId: id },
+    orderBy: { requirementId: "asc" },
+    include: {
+      controlMappings: {
+        include: {
+          control: {
+            include: {
+              _count: { select: { controlAssignments: true } },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  const reqWithControls = requirementsWithControls.map((req) => ({
+    rId: req.rId,
+    requirementId: req.requirementId,
+    clauseContent: req.clauseContent,
+    controls: req.controlMappings
+      .map((m) => m.control)
+      .sort((a, b) => a.name.localeCompare(b.name)),
+  }));
+
+  // Effectiveness stats — based on subprocess-linked controls (the PA's control set)
+  const spAssignments = controlAssignments.filter((ca) => spControlIds.includes(ca.controlId));
+  const effectiveCount = spAssignments.filter((ca) => ca.effective === "Effective").length;
+  const notEffectiveCount = spAssignments.filter((ca) => ca.effective === "NotEffective").length;
+  const neverTestedCount = totalControls - (effectiveCount + notEffectiveCount);
 
   const overviewStats = {
     totalControls,
@@ -130,6 +191,8 @@ export default async function ProcessDetailsPage({
       controlsByAssessment={controlsByAssessment}
       overviewStats={overviewStats}
       allControls={mergedSubProcesses.flatMap((sp) => sp.controls)}
+      requirementStats={requirementStats}
+      reqWithControls={reqWithControls}
     />
   );
 }

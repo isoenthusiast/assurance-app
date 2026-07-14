@@ -87,6 +87,22 @@ type OverviewStats = {
   effectiveSamples: number;
 };
 
+type RequirementStat = {
+  rId: number;
+  requirementId: string;
+  clauseContent: string;
+  totalLinkedControls: number;
+  effectiveControls: number;
+  healthPct: number;
+};
+
+type ReqWithControl = {
+  rId: number;
+  requirementId: string;
+  clauseContent: string;
+  controls: ControlSummary[];
+};
+
 type Props = {
   processArea: ProcessArea;
   subProcesses: SubProcess[];
@@ -94,6 +110,8 @@ type Props = {
   controlsByAssessment: Map<string, { controlId: string; effective: string | null }[]>;
   overviewStats: OverviewStats;
   allControls: ControlSummary[];
+  requirementStats: RequirementStat[];
+  reqWithControls: ReqWithControl[];
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -126,6 +144,8 @@ export default function ProcessDetailsClient({
   controlsByAssessment,
   overviewStats,
   allControls,
+  requirementStats,
+  reqWithControls,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "subprocesses" | "assessments">("overview");
   const router = useRouter();
@@ -152,6 +172,7 @@ export default function ProcessDetailsClient({
 
   // ── Tab 2: Add Control modal state ──
   const [addControlSubProcessId, setAddControlSubProcessId] = useState<string | null>(null);
+  const [addControlReqRId, setAddControlReqRId] = useState<number | null>(null);
   const [addControlName, setAddControlName] = useState("");
   const [addControlStatement, setAddControlStatement] = useState("");
   const [addControlType, setAddControlType] = useState("Procedural");
@@ -345,6 +366,61 @@ export default function ProcessDetailsClient({
     }
   };
 
+  const handleAddControlToRequirement = async () => {
+    if (addControlReqRId === null) return;
+    if (!addControlName.trim()) {
+      setAddControlError("Control name is required");
+      return;
+    }
+    if (!addControlStatement.trim()) {
+      setAddControlError("Control statement is required");
+      return;
+    }
+
+    setAddControlSaving(true);
+    setAddControlError(null);
+
+    try {
+      const res = await fetch("/api/admin/table/Control/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: addControlName.trim(),
+          statement: addControlStatement.trim(),
+          controlType: addControlType,
+          processAreaId: processArea.id,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Failed to create control");
+      }
+
+      const created = await res.json();
+      // Create MapControl2Requirement junction linking control to requirement
+      await fetch("/api/admin/table/MapControl2Requirement/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          controlId: created.id,
+          requirementRId: addControlReqRId,
+          processAreaId: processArea.id,
+        }),
+      });
+
+      setAddControlReqRId(null);
+      setAddControlName("");
+      setAddControlStatement("");
+      setAddControlType("Procedural");
+      router.refresh();
+    } catch (err) {
+      setAddControlError(err instanceof Error ? err.message : "Failed to create control");
+    } finally {
+      setAddControlSaving(false);
+    }
+  };
+
   const handleDeleteControl = async () => {
     if (!deleteControlTarget) return;
 
@@ -449,7 +525,7 @@ export default function ProcessDetailsClient({
           Process Overview
         </button>
         <button onClick={() => setActiveTab("subprocesses")} className={tabStyles(activeTab === "subprocesses")}>
-          Sub-process & Controls
+          Requirements & Controls
         </button>
         <button onClick={() => setActiveTab("assessments")} className={tabStyles(activeTab === "assessments")}>
           Assessments
@@ -604,26 +680,51 @@ export default function ProcessDetailsClient({
             )}
           </div>
 
-          {/* Sub-Process Summary */}
+          {/* Requirements Summary */}
           <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">📂 Sub-Processes</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {subProcesses.map((sp) => (
-                <div key={sp.id} className="rounded border border-slate-200 bg-slate-50 p-3">
-                  <div className="font-medium text-sm text-slate-900">{sp.name}</div>
-                  <div className="mt-1 text-xs text-slate-500">{sp.controls.length} control(s)</div>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">📋 Requirements</h2>
+            {requirementStats.length === 0 ? (
+              <p className="text-sm text-slate-400">No requirements linked to this process area.</p>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                {requirementStats.map((req) => (
+                  <div key={req.rId} className="rounded border border-slate-200 bg-slate-50 p-3">
+                    <div className="font-medium text-sm text-slate-900">{req.requirementId}</div>
+                    <div className="mt-1 text-xs text-slate-500">
+                      {req.clauseContent.length > 50
+                        ? req.clauseContent.substring(0, 50) + "..."
+                        : req.clauseContent}
+                    </div>
+                    <div className="mt-2 flex items-center gap-2">
+                      <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full transition-all ${
+                            req.healthPct > 80 ? "bg-green-500" : req.healthPct > 50 ? "bg-yellow-500" : "bg-red-500"
+                          }`}
+                          style={{ width: `${req.healthPct}%` }}
+                        />
+                      </div>
+                      <span className="text-2xs font-medium text-slate-500 whitespace-nowrap">
+                        {req.healthPct}% ({req.effectiveControls}/{req.totalLinkedControls})
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* ─── TAB 2: Sub-process & Controls ─────────────────────────────── */}
+      {/* ─── TAB 2: Requirements & Controls ──────────────────────────────── */}
 
       {activeTab === "subprocesses" && (
         <div className="mt-6 space-y-6">
-          <div className="flex items-center justify-end">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">
+              {reqWithControls.length} requirement(s) ·{" "}
+              {reqWithControls.reduce((sum, r) => sum + r.controls.length, 0)} linked control(s)
+            </p>
             <button
               onClick={() => setShowAddSubProcess(true)}
               className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
@@ -631,127 +732,135 @@ export default function ProcessDetailsClient({
               + Add SubProcess
             </button>
           </div>
-          {subProcesses.map((sp) => (
-            <div key={sp.id} className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
-                <h2 className="font-semibold text-slate-900">{sp.name}</h2>
-                {sp.description && (
-                  <p className="text-xs text-slate-500 mt-0.5">{sp.description}</p>
-                )}
-              </div>
+          {reqWithControls.length === 0 ? (
+            <p className="text-sm text-slate-400 py-8 text-center">
+              No requirements linked to this process area.
+            </p>
+          ) : (
+            reqWithControls.map((req) => (
+              <div key={req.rId} className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
+                  <h2 className="font-semibold text-slate-900">
+                    {req.requirementId}
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                    {req.clauseContent}
+                  </p>
+                </div>
 
-              {sp.controls.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead className="bg-slate-100">
-                      <tr>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Control</th>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Health</th>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Risk</th>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Last Tested</th>
-                        <th className="px-4 py-2 text-left font-medium text-slate-600">Result</th>
-                        <th className="px-4 py-2 text-center font-medium text-slate-600">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setAddControlSubProcessId(sp.id);
-                              setAddControlName("");
-                              setAddControlStatement("");
-                              setAddControlType("Procedural");
-                              setAddControlError(null);
-                            }}
-                            className="text-blue-600 hover:underline font-medium"
-                          >
-                            +Add Control
-                          </button>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {sp.controls.map((c) => (
-                        <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50">
-                          <td className="px-4 py-2">
+                {req.controls.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-slate-100">
+                        <tr>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Control</th>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Health</th>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Risk</th>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Last Tested</th>
+                          <th className="px-4 py-2 text-left font-medium text-slate-600">Result</th>
+                          <th className="px-4 py-2 text-center font-medium text-slate-600">
                             <button
-                              onClick={() => openEditControl(c)}
-                              className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left"
+                              type="button"
+                              onClick={() => {
+                                setAddControlReqRId(req.rId);
+                                setAddControlName("");
+                                setAddControlStatement("");
+                                setAddControlType("Procedural");
+                                setAddControlError(null);
+                              }}
+                              className="text-blue-600 hover:underline font-medium"
                             >
-                              {c.name}
+                              +Add Control
                             </button>
-                          </td>
-                          <td className="px-4 py-2 text-slate-600">{c.controlType}</td>
-                          <td className="px-4 py-2">
-                            {c._count.controlAssignments === 0 ? (
-                              <HealthBadge score={0} />
-                            ) : (
-                              <HealthBadge score={c.rawHealthScore} />
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            <span className={`text-xs font-medium ${c.isHsseCritical ? "text-red-600" : "text-slate-600"}`}>
-                              {c.isHsseCritical ? "HSSE Critical" : c.ramRating || "—"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2 text-slate-600">
-                            {c._count.controlAssignments === 0 ? (
-                              <span className="text-slate-400 italic">Never Tested</span>
-                            ) : c.lastTestedDate ? (
-                              new Date(c.lastTestedDate).toLocaleDateString()
-                            ) : (
-                              "—"
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            {c._count.controlAssignments === 0 ? (
-                              <span className="text-xs text-slate-400 italic">—</span>
-                            ) : (
-                              <span className={`text-xs font-medium ${c.lastTestResult === "Pass" ? "text-green-600" : c.lastTestResult === "Fail" ? "text-red-600" : "text-slate-400"}`}>
-                                {c.lastTestResult || "—"}
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2 text-center">
-                            <div className="flex items-center justify-center gap-2">
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {req.controls.map((c) => (
+                          <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50">
+                            <td className="px-4 py-2">
                               <button
                                 onClick={() => openEditControl(c)}
-                                className="text-xs text-blue-600 hover:underline font-medium"
+                                className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left"
                               >
-                                Edit
+                                {c.name}
                               </button>
-                              <span className="text-slate-300">|</span>
-                              <button
-                                onClick={() => setDeleteControlTarget({ id: c.id, name: c.name })}
-                                className="text-xs text-red-600 hover:underline font-medium"
-                              >
-                                Delete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="px-4 py-6 text-center text-sm text-slate-400">
-                  No controls in this sub-process yet.
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAddControlSubProcessId(sp.id);
-                      setAddControlName("");
-                      setAddControlStatement("");
-                      setAddControlType("Procedural");
-                      setAddControlError(null);
-                    }}
-                    className="ml-1 text-blue-600 hover:underline"
-                  >
-                    +Add Control
-                  </button>
-                </div>
-              )}
-            </div>
-          ))}
+                            </td>
+                            <td className="px-4 py-2 text-slate-600">{c.controlType}</td>
+                            <td className="px-4 py-2">
+                              {c._count.controlAssignments === 0 ? (
+                                <HealthBadge score={0} />
+                              ) : (
+                                <HealthBadge score={c.rawHealthScore} />
+                              )}
+                            </td>
+                            <td className="px-4 py-2">
+                              <span className={`text-xs font-medium ${c.isHsseCritical ? "text-red-600" : "text-slate-600"}`}>
+                                {c.isHsseCritical ? "HSSE Critical" : c.ramRating || "—"}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-slate-600">
+                              {c._count.controlAssignments === 0 ? (
+                                <span className="text-slate-400 italic">Never Tested</span>
+                              ) : c.lastTestedDate ? (
+                                new Date(c.lastTestedDate).toLocaleDateString()
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="px-4 py-2">
+                              {c._count.controlAssignments === 0 ? (
+                                <span className="text-xs text-slate-400 italic">—</span>
+                              ) : (
+                                <span className={`text-xs font-medium ${c.lastTestResult === "Pass" ? "text-green-600" : c.lastTestResult === "Fail" ? "text-red-600" : "text-slate-400"}`}>
+                                  {c.lastTestResult || "—"}
+                                </span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2 text-center">
+                              <div className="flex items-center justify-center gap-2">
+                                <button
+                                  onClick={() => openEditControl(c)}
+                                  className="text-xs text-blue-600 hover:underline font-medium"
+                                >
+                                  Edit
+                                </button>
+                                <span className="text-slate-300">|</span>
+                                <button
+                                  onClick={() => setDeleteControlTarget({ id: c.id, name: c.name })}
+                                  className="text-xs text-red-600 hover:underline font-medium"
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="px-4 py-6 text-center text-sm text-slate-400">
+                    No controls linked to this requirement yet.
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddControlReqRId(req.rId);
+                        setAddControlName("");
+                        setAddControlStatement("");
+                        setAddControlType("Procedural");
+                        setAddControlError(null);
+                      }}
+                      className="ml-1 text-blue-600 hover:underline"
+                    >
+                      +Add Control
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
         </div>
       )}
 
@@ -1117,10 +1226,12 @@ export default function ProcessDetailsClient({
 
       {/* ─── ADD CONTROL MODAL ─────────────────────────────────────────── */}
 
-      {addControlSubProcessId && (
+      {(addControlSubProcessId || addControlReqRId !== null) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900 mb-4">Add Control</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-4">
+              Add Control{addControlReqRId !== null ? " to Requirement" : ""}
+            </h3>
 
             {addControlError && (
               <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -1164,13 +1275,16 @@ export default function ProcessDetailsClient({
 
             <div className="mt-6 flex items-center justify-end gap-3">
               <button
-                onClick={() => setAddControlSubProcessId(null)}
+                onClick={() => { setAddControlSubProcessId(null); setAddControlReqRId(null); }}
                 className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleAddControl}
+                onClick={() => {
+                  if (addControlReqRId !== null) handleAddControlToRequirement();
+                  else handleAddControl();
+                }}
                 disabled={addControlSaving}
                 className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
               >

@@ -1012,6 +1012,7 @@ function ManageCompany({ users }: { users: any[] }) {
 function RequirementManager() {
   const [requirements, setRequirements] = useState<any[]>([]);
   const [processAreas, setProcessAreas] = useState<any[]>([]);
+  const [standards, setStandards] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -1019,8 +1020,8 @@ function RequirementManager() {
   const [expandedStandards, setExpandedStandards] = useState<Set<string>>(new Set());
 
   // Current selection (drives table filter + breadcrumb)
-  const [selStandard, setSelStandard] = useState<string>("");
-  const [selPAId, setSelPAId] = useState<string>("");       // ProcessArea.id
+  const [selStandardId, setSelStandardId] = useState<string>("");  // Standard.id
+  const [selPAId, setSelPAId] = useState<string>("");              // ProcessArea.id
 
   // Table pagination
   const [page, setPage] = useState(1);
@@ -1032,6 +1033,11 @@ function RequirementManager() {
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+
+  // Associated controls for expanded requirement
+  const [allControls, setAllControls] = useState<any[]>([]);
+  const [allMappings, setAllMappings] = useState<any[]>([]);
+  const controlsLoadedRef = useRef(false);
 
   // ── Resizable columns ───────────────────────────────────────────────
   const tableRef = useRef<HTMLTableElement>(null);
@@ -1122,40 +1128,62 @@ function RequirementManager() {
     Promise.all([
       fetch("/api/admin/table/Requirement/data?perPage=2000").then(r => r.json()),
       fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
-    ]).then(([reqData, paData]) => {
+      fetch("/api/admin/table/Standard/data?perPage=50").then(r => r.json()),
+    ]).then(([reqData, paData, stdData]) => {
       setRequirements(reqData.rows || []);
       setProcessAreas(paData.rows || []);
+      setStandards((stdData.rows || []).sort((a: any, b: any) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)));
     }).catch(e => setError(e.message))
       .finally(() => setLoading(false));
   }, []);
 
-  // ── Derived tree data ──────────────────────────────────────────────
-  const standards = [...new Set(requirements.map((r: any) => r.standard).filter(Boolean))].sort();
+  // Lazy-load controls & mappings when first expanding a requirement
+  useEffect(() => {
+    if (expandedReqId === null || controlsLoadedRef.current) return;
+    controlsLoadedRef.current = true;
+    Promise.all([
+      fetch("/api/admin/table/Control/data?perPage=10000").then(r => r.json()),
+      fetch("/api/admin/table/MapControl2Requirement/data?perPage=20000").then(r => r.json()),
+    ]).then(([ctrlData, mapData]) => {
+      setAllControls(ctrlData.rows || []);
+      setAllMappings(mapData.rows || []);
+    }).catch(() => { controlsLoadedRef.current = false; });
+  }, [expandedReqId]);
 
-  // PAs for a given standard — use both processAreaId lookup AND ProcessArea.standard
-  const getPAsForStandard = (std: string) => {
-    const paIdsFromReqs = new Set(
-      requirements.filter(r => r.standard === std && r.processAreaId).map(r => r.processAreaId)
+  // Derived: controls associated with the currently expanded requirement
+  const associatedControls = (() => {
+    if (expandedReqId === null) return [];
+    const mappingCtlIds = new Set(
+      allMappings.filter((m: any) => m.requirementRId === expandedReqId).map((m: any) => m.controlId)
     );
-    return processAreas.filter(pa =>
-      paIdsFromReqs.has(pa.id) || pa.standard === std
-    );
+    return allControls.filter((c: any) => mappingCtlIds.has(c.id));
+  })();
+
+  // ── Derived tree data ──────────────────────────────────────────────
+  // PAs for a given Standard (by Standard.id → ProcessArea.standardId)
+  const getPAsForStandard = (stdId: string) =>
+    processAreas.filter(pa => pa.standardId === stdId || pa.StandardID === stdId);
+
+  // Get Standard name by id
+  const getStdName = (stdId: string) => {
+    const s = standards.find((x: any) => x.id === stdId);
+    return s ? s.standard : stdId;
   };
 
   // ── Toggle helpers ─────────────────────────────────────────────────
-  const toggleStandard = (std: string) => {
+  const toggleStandard = (stdId: string) => {
     setExpandedStandards(prev => {
       const next = new Set(prev);
-      if (next.has(std)) next.delete(std); else next.add(std);
+      if (next.has(stdId)) next.delete(stdId); else next.add(stdId);
       return next;
     });
-    setSelStandard(std);
+    setSelStandardId(stdId);
     setSelPAId("");
     setPage(1);
   };
 
-  const selectPA = (paId: string, paStandard: string) => {
-    setSelStandard(paStandard);
+  const selectPA = (paId: string, stdId: string) => {
+    setSelStandardId(stdId);
     setSelPAId(paId);
     setPage(1);
   };
@@ -1163,13 +1191,24 @@ function RequirementManager() {
   // ── Filtering ──────────────────────────────────────────────────────
   const filteredReqs = requirements.filter((r: any) => {
     if (selPAId) return r.processAreaId === selPAId;
-    if (selStandard) return r.standard === selStandard;
+    if (selStandardId) {
+      // Filter by ProcessArea.standardId matching selected Standard
+      const paIds = new Set(getPAsForStandard(selStandardId).map(pa => pa.id));
+      return r.processAreaId && paIds.has(r.processAreaId);
+    }
     return true;
   });
 
+  // Default sort: by Req ID ascending (natural sort handles "QMS-6.1" etc.)
+  const sortedReqs = [...filteredReqs].sort((a: any, b: any) => {
+    const idA = a.requirementId || "";
+    const idB = b.requirementId || "";
+    return idA.localeCompare(idB, undefined, { numeric: true });
+  });
+
   // ── Pagination ─────────────────────────────────────────────────────
-  const totalPages = Math.max(1, Math.ceil(filteredReqs.length / perPage));
-  const pagedReqs = filteredReqs.slice((page - 1) * perPage, page * perPage);
+  const totalPages = Math.max(1, Math.ceil(sortedReqs.length / perPage));
+  const pagedReqs = sortedReqs.slice((page - 1) * perPage, page * perPage);
 
   // ── Name lookups ───────────────────────────────────────────────────
   const getPAName = (req: any) => {
@@ -1287,7 +1326,7 @@ function RequirementManager() {
   };
 
   const clearAll = () => {
-    setSelStandard(""); setSelPAId("");
+    setSelStandardId(""); setSelPAId("");
     setExpandedStandards(new Set());
     setExpandedReqId(null); setEditForm({}); setIsAdding(false); setPage(1);
   };
@@ -1302,7 +1341,7 @@ function RequirementManager() {
     setExpandedReqId(null);
     setEditForm({
       rId: "",
-      standard: selStandard,
+      standard: getStdName(selStandardId),
       pId: pa?.pId || "",
       processAreaId: selPAId,
       requirementId: "",
@@ -1344,7 +1383,7 @@ function RequirementManager() {
             {/* "All Standards" root */}
             <button
               onClick={clearAll}
-              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${!selStandard ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${!selStandardId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
             >
               <span className="w-4 text-center text-2xs">📂</span>
               <span className="truncate">All Standards</span>
@@ -1352,32 +1391,34 @@ function RequirementManager() {
             </button>
 
             {standards.map(std => {
-              const pas = getPAsForStandard(std);
-              const isExpanded = expandedStandards.has(std);
-              const isSelected = selStandard === std && !selPAId;
-              const reqCount = requirements.filter(r => r.standard === std).length;
+              const pas = getPAsForStandard(std.id);
+              const isExpanded = expandedStandards.has(std.id);
+              const isSelected = selStandardId === std.id && !selPAId;
+              // Count requirements under this standard via its PAs
+              const pasUnderStd = new Set(pas.map(pa => pa.id));
+              const reqCount = requirements.filter((r: any) => r.processAreaId && pasUnderStd.has(r.processAreaId)).length;
 
               return (
-                <div key={std}>
+                <div key={std.id}>
                   {/* Standard row */}
                   <button
-                    onClick={() => toggleStandard(std)}
+                    onClick={() => toggleStandard(std.id)}
                     className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-700"}`}
                   >
                     <span className="w-4 text-center text-2xs">{isExpanded ? "▼" : "▶"}</span>
-                    <span className="truncate">{std}</span>
+                    <span className="truncate">{std.standard}</span>
                     <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{reqCount}</span>
                   </button>
 
                   {/* Process Areas (children of standard) */}
                   {isExpanded && pas.map(pa => {
                     const isPASelected = selPAId === pa.id;
-                    const paReqCount = requirements.filter(r => r.processAreaId === pa.id).length;
+                    const paReqCount = requirements.filter((r: any) => r.processAreaId === pa.id).length;
 
                     return (
                       <button
                         key={pa.id}
-                        onClick={() => selectPA(pa.id, std)}
+                        onClick={() => selectPA(pa.id, std.id)}
                         className={`w-full text-left pl-8 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
                       >
                         <span className="truncate">{pa.name}</span>
@@ -1396,22 +1437,22 @@ function RequirementManager() {
           {/* Breadcrumb */}
           <div className="px-4 py-2 border-b border-slate-200 bg-slate-50/50 flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
             <button onClick={clearAll} className="hover:text-blue-600 hover:underline">📋 All</button>
-            {selStandard && (
+            {selStandardId && (
               <>
                 <span className="text-slate-300">›</span>
                 <button onClick={() => { setSelPAId(""); setPage(1); }}
                   className={`hover:text-blue-600 hover:underline ${!selPAId ? "font-medium text-slate-700" : ""}`}>
-                  {selStandard.length > 40 ? selStandard.substring(0, 40) + "..." : selStandard}
+                  {(() => { const n = getStdName(selStandardId); return n.length > 40 ? n.substring(0, 40) + "..." : n; })()}
                 </button>
               </>
             )}
             {selPAId && (
               <>
                 <span className="text-slate-300">›</span>
-                <span className="font-medium text-slate-700">{selPAName}</span>
+                <span className="font-medium text-slate-700">{processAreas.find(pa => pa.id === selPAId)?.name || selPAId}</span>
               </>
             )}
-            <span className="ml-auto text-slate-400">{filteredReqs.length} req{filteredReqs.length !== 1 ? "s" : ""}</span>
+            <span className="ml-auto text-slate-400">{sortedReqs.length} req{sortedReqs.length !== 1 ? "s" : ""}</span>
           </div>
 
           {/* Pagination top */}
@@ -1524,7 +1565,7 @@ function RequirementManager() {
                 {pagedReqs.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-3 py-10 text-center text-slate-400">
-                      {selStandard ? "No requirements match." : "← Expand a Standard in the tree to view requirements."}
+                      {selStandardId ? "No requirements match." : "← Expand a Standard in the tree to view requirements."}
                     </td>
                   </tr>
                 ) : (
@@ -1552,66 +1593,108 @@ function RequirementManager() {
                       {expandedReqId === rid && (
                         <tr key={`exp-${rid}`}>
                           <td colSpan={5} className="px-4 py-4 bg-blue-50/30 border-b border-blue-100">
-                            <div className="max-w-3xl">
-                              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                                Edit Requirement — {req.requirementId}
-                              </h3>
-                              {msg && (
-                                <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
-                                  {msg.text}
+                            <div className="flex gap-6">
+                              {/* ── Left: Edit Form ── */}
+                              <div className="flex-1 max-w-3xl">
+                                <h3 className="text-sm font-semibold text-slate-900 mb-4">
+                                  Edit Requirement — {req.requirementId}
+                                </h3>
+                                {msg && (
+                                  <div className={`mb-4 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                                    {msg.text}
+                                  </div>
+                                )}
+                                <div className="grid grid-cols-2 gap-3">
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">rID (PK)</span>
+                                    <input value={editForm.rId ?? ""} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">Standard</span>
+                                    <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">pID</span>
+                                    <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">Process Area ID</span>
+                                    <input value={editForm.processAreaId ?? ""} disabled
+                                      className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-mono text-slate-400" placeholder="Auto-backfilled from pID" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">Requirement ID</span>
+                                    <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
+                                  </label>
+                                  <label className="block col-span-2">
+                                    <span className="text-xs text-slate-500">Clause Content</span>
+                                    <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))} rows={3} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  </label>
+                                  <label className="block col-span-2">
+                                    <span className="text-xs text-slate-500">Intent / Outcome</span>
+                                    <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))} rows={2} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  </label>
+                                  <label className="block col-span-2">
+                                    <span className="text-xs text-slate-500">Clause Applicability</span>
+                                    <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">References</span>
+                                    <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
+                                  </label>
+                                  <label className="block">
+                                    <span className="text-xs text-slate-500">Applicable</span>
+                                    <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
+                                      <option value="true">Yes</option>
+                                      <option value="false">No</option>
+                                    </select>
+                                  </label>
                                 </div>
-                              )}
-                              <div className="grid grid-cols-2 gap-3">
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">rID (PK)</span>
-                                  <input value={editForm.rId ?? ""} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm text-slate-400" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">Standard</span>
-                                  <input value={editForm.standard ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, standard: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">pID</span>
-                                  <input value={editForm.pId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, pId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">Process Area ID</span>
-                                  <input value={editForm.processAreaId ?? ""} disabled
-                                    className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-mono text-slate-400" placeholder="Auto-backfilled from pID" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">Requirement ID</span>
-                                  <input value={editForm.requirementId ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, requirementId: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono" />
-                                </label>
-                                <label className="block col-span-2">
-                                  <span className="text-xs text-slate-500">Clause Content</span>
-                                  <textarea value={editForm.clauseContent ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseContent: e.target.value }))} rows={3} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
-                                </label>
-                                <label className="block col-span-2">
-                                  <span className="text-xs text-slate-500">Intent / Outcome</span>
-                                  <textarea value={editForm.intentOutcome ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, intentOutcome: e.target.value }))} rows={2} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
-                                </label>
-                                <label className="block col-span-2">
-                                  <span className="text-xs text-slate-500">Clause Applicability</span>
-                                  <input value={editForm.clauseApplicability ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">References</span>
-                                  <input value={editForm.references ?? ""} onChange={e => setEditForm((f: any) => ({ ...f, references: e.target.value }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm" />
-                                </label>
-                                <label className="block">
-                                  <span className="text-xs text-slate-500">Applicable</span>
-                                  <select value={editForm.applicable ? "true" : "false"} onChange={e => setEditForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))} className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white">
-                                    <option value="true">Yes</option>
-                                    <option value="false">No</option>
-                                  </select>
-                                </label>
+                                <div className="flex gap-2 mt-4">
+                                  <button onClick={handleSave} disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
+                                    {saving ? "Saving..." : "Save Changes"}
+                                  </button>
+                                  <button onClick={() => toggleExpand(rid)} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+                                </div>
                               </div>
-                              <div className="flex gap-2 mt-4">
-                                <button onClick={handleSave} disabled={saving} className="rounded bg-blue-600 px-4 py-2 text-xs font-medium text-white hover:bg-blue-700 disabled:bg-slate-400">
-                                  {saving ? "Saving..." : "Save Changes"}
-                                </button>
-                                <button onClick={() => toggleExpand(rid)} className="rounded border px-4 py-2 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
+
+                              {/* ── Right: Associated Controls ── */}
+                              <div className="w-80 shrink-0 border-l border-blue-200 pl-4">
+                                <h4 className="text-xs font-semibold text-slate-700 mb-2">
+                                  Associated Controls ({associatedControls.length})
+                                </h4>
+                                {associatedControls.length === 0 ? (
+                                  <p className="text-2xs text-slate-400 italic">No controls mapped to this requirement.</p>
+                                ) : (
+                                  <div className="max-h-[500px] overflow-y-auto border border-slate-200 rounded">
+                                    <table className="w-full text-2xs">
+                                      <thead className="sticky top-0 bg-slate-100">
+                                        <tr>
+                                          <th className="px-2 py-1.5 text-left font-medium text-slate-500 border-b">Type</th>
+                                          <th className="px-2 py-1.5 text-left font-medium text-slate-500 border-b">Ref</th>
+                                          <th className="px-2 py-1.5 text-left font-medium text-slate-500 border-b">Name</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {associatedControls.map((ctrl: any) => (
+                                          <tr key={ctrl.id} className="border-b border-slate-100 hover:bg-white">
+                                            <td className="px-2 py-1 text-slate-600">{ctrl.controlType ?? ""}</td>
+                                            <td className="px-2 py-1 text-slate-600 font-mono">{ctrl.controlRef ?? ""}</td>
+                                            <td className="px-2 py-1">
+                                              <a
+                                                href={`/setup/controls?edit=${ctrl.id}`}
+                                                className="text-blue-600 hover:underline text-2xs"
+                                                title="Edit control"
+                                              >
+                                                {ctrl.name ?? "(unnamed)"}
+                                              </a>
+                                            </td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -1627,7 +1710,7 @@ function RequirementManager() {
           {/* Pagination bottom */}
           {totalPages > 1 && (
             <div className="px-4 py-1.5 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs flex-shrink-0">
-              <span className="text-slate-400">{(page - 1) * perPage + 1}–{Math.min(page * perPage, filteredReqs.length)} of {filteredReqs.length}</span>
+              <span className="text-slate-400">{(page - 1) * perPage + 1}–{Math.min(page * perPage, sortedReqs.length)} of {sortedReqs.length}</span>
               <div className="flex items-center gap-0.5">
                 <button onClick={() => goPage(1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">«</button>
                 <button onClick={() => goPage(page - 1)} disabled={page <= 1} className="px-1.5 py-0.5 border rounded disabled:opacity-30 text-xs">‹</button>
