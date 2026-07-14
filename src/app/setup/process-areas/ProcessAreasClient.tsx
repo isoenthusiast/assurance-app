@@ -11,7 +11,7 @@ type ProcessArea = {
   description: string | null;
   pId?: string | null;
   standard?: string | null;
-  _count: { subProcesses: number; controls: number };
+  _count: { subProcesses: number; controls: number; requirements: number };
 };
 
 type AssessmentSummary = {
