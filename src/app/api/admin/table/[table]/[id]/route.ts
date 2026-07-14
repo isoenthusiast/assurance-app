@@ -16,12 +16,12 @@ export async function GET(
   request: Request,
   { params }: { params: Promise<{ table: string; id: string }> }
 ) {
+  const { table, id } = await params;
   try {
     const session = await auth();
     if (!session?.user || session.user.role !== "Admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
-    const { table, id } = await params;
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
     const model = (prisma as any)[camelName];
     const pkField = getPkField(table);
