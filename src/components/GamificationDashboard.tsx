@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
+import { formatDate } from '@/lib/formatDate';
 
 interface GamificationStats {
   user: any;

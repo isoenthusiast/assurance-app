@@ -4,6 +4,7 @@ import { useState, Fragment, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import DeleteButton from '@/components/DeleteButton';
+import { formatDate } from '@/lib/formatDate';
 
 type ProcessArea = {
   id: string;

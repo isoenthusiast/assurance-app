@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { formatDate } from "@/lib/formatDate";
 
 interface Attachment {
   id: string;

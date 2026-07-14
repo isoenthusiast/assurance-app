@@ -678,7 +678,7 @@ model ControlFromDocument {
   documentExtractId  String
   name               String
   statement          String
-  controlType        ControlType
+  controlType        String
   processAreaId      String
   isHsseCritical     Boolean       @default(false)
   ramRating          String?

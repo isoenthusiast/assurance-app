@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef } from "react";
+import { formatDate } from "@/lib/formatDate";
 
 interface KBRecord {
   kID: string;

@@ -111,6 +111,60 @@ try:
 
     print("\n✅ Schema sync complete!")
 
+    # 5. Add cascade FK constraints (Assessment → Aact → children)
+    print("\n5. Cleaning orphans & adding cascade foreign keys...")
+    
+    # First clean orphan records in child tables referencing non-existent Aact.aaID
+    orphan_cleanups = [
+        ('DELETE FROM "AActControls" WHERE "aaId" NOT IN (SELECT "aaID" FROM "Aact")', 'AActControls'),
+        ('DELETE FROM "AActUsers" WHERE "aaId" NOT IN (SELECT "aaID" FROM "Aact")', 'AActUsers'),
+        ('DELETE FROM "AActDetails" WHERE "aaId" NOT IN (SELECT "aaID" FROM "Aact")', 'AActDetails'),
+    ]
+    for sql, label in orphan_cleanups:
+        try:
+            cur.execute(sql)
+            if cur.rowcount > 0:
+                print(f"   🧹 Removed {cur.rowcount} orphan {label} record(s).")
+        except Exception as e:
+            print(f"   ⚠ Cleanup {label}: {str(e)[:100]}")
+
+    # Also create indexes for FK columns
+    fk_indexes = [
+        'CREATE INDEX IF NOT EXISTS "idx_Aact_assuranceID" ON "Aact" ("assuranceID")',
+        'CREATE INDEX IF NOT EXISTS "idx_AActControls_aaId" ON "AActControls" ("aaId")',
+        'CREATE INDEX IF NOT EXISTS "idx_AActUsers_aaId" ON "AActUsers" ("aaId")',
+        'CREATE INDEX IF NOT EXISTS "idx_AActDetails_aaId" ON "AActDetails" ("aaId")',
+    ]
+    for idx_sql in fk_indexes:
+        try:
+            cur.execute(idx_sql)
+        except Exception:
+            pass
+
+    fk_statements = [
+        # Assessment → Aact (cascade delete)
+        ('ALTER TABLE "Aact" DROP CONSTRAINT IF EXISTS "Aact_assuranceID_fkey"',
+         'ALTER TABLE "Aact" ADD CONSTRAINT "Aact_assuranceID_fkey" FOREIGN KEY ("assuranceID") REFERENCES "Assessment"("id") ON DELETE CASCADE'),
+        # Aact → AActControls (cascade delete, references unique aaID)
+        ('ALTER TABLE "AActControls" DROP CONSTRAINT IF EXISTS "AActControls_aaId_fkey"',
+         'ALTER TABLE "AActControls" ADD CONSTRAINT "AActControls_aaId_fkey" FOREIGN KEY ("aaId") REFERENCES "Aact"("aaID") ON DELETE CASCADE'),
+        # Aact → AActUsers (cascade delete)
+        ('ALTER TABLE "AActUsers" DROP CONSTRAINT IF EXISTS "AActUsers_aaId_fkey"',
+         'ALTER TABLE "AActUsers" ADD CONSTRAINT "AActUsers_aaId_fkey" FOREIGN KEY ("aaId") REFERENCES "Aact"("aaID") ON DELETE CASCADE'),
+        # Aact → AActDetails (cascade delete)
+        ('ALTER TABLE "AActDetails" DROP CONSTRAINT IF EXISTS "AActDetails_aaId_fkey"',
+         'ALTER TABLE "AActDetails" ADD CONSTRAINT "AActDetails_aaId_fkey" FOREIGN KEY ("aaId") REFERENCES "Aact"("aaID") ON DELETE CASCADE'),
+    ]
+    for drop_sql, add_sql in fk_statements:
+        try:
+            cur.execute(drop_sql)
+            cur.execute(add_sql)
+            print(f"   ✓ {add_sql.split('ADD CONSTRAINT')[1].split('FOREIGN KEY')[0].strip()} cascade ready.")
+        except Exception as e:
+            print(f"   ⚠ Could not add FK: {str(e)[:120]}")
+
+    print("\n✅ Schema sync complete!")
+
     cur.close()
     conn.close()
 

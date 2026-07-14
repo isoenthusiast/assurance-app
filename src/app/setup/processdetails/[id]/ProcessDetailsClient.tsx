@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ControlForm from "../../controls/ControlForm";
+import { formatDate } from "@/lib/formatDate";
 // Sub-process creation uses fetch API directly (avoid server action host validation)
 
 // ─── Types ───────────────────────────────────────────────────────────────────
