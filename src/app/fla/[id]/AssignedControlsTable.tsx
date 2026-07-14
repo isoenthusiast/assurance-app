@@ -10,6 +10,7 @@ interface Assignment {
   effective: Effectiveness;
   effectiveUpdatedAt: string | Date | null;
   control: {
+    id: string;
     name: string;
     processArea?: { name: string } | null;
     controlSubProcesses?: { subProcess: { name: string } }[];
