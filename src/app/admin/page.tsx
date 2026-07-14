@@ -802,6 +802,9 @@ function ManageCompany({ users }: { users: any[] }) {
   const [form, setForm] = useState({ companyID: "", companyName: "", referenceID: "", shortName: "" });
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [submode, setSubmode] = useState<"select" | "add">("select");
+  // UserCompany assignments for selected company
+  const [assignments, setAssignments] = useState<any[]>([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
 
   const loadCompanies = useCallback(async (pg = 1, pp = 5) => {
     setLoading(true);
@@ -846,17 +849,52 @@ function ManageCompany({ users }: { users: any[] }) {
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
   };
 
+  // Load ALL UserCompany assignments on mount + refresh
+  const loadAssignments = useCallback(async () => {
+    setAssignmentsLoading(true);
+    try {
+      const res = await fetch("/api/admin/table/UserCompany/data?perPage=500");
+      const d = await res.json();
+      setAssignments(d.rows || []);
+    } catch { setAssignments([]); }
+    finally { setAssignmentsLoading(false); }
+  }, []);
+
+  useEffect(() => { loadAssignments(); }, [loadAssignments]);
+
   const assignUserToCompany = async () => {
     if (!selectedUserId || !selectedCompanyId) { setMsg({ type: "err", text: "Select both a user and a company." }); return; }
     setMsg(null);
     try {
-      const res = await fetch(`/api/admin/table/User/${selectedUserId}`, {
-        method: "PUT",
+      // Insert into UserCompany junction table
+      const body = { id: `uc_${Date.now()}`, userId: selectedUserId, companyId: selectedCompanyId };
+      const res = await fetch("/api/admin/table/UserCompany", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyId: selectedCompanyId }),
+        body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error((await res.json()).error || "Failed");
-      setMsg({ type: "ok", text: "User assigned to company." });
+      if (!res.ok) {
+        const err = await res.json();
+        // If duplicate (already assigned), that's ok
+        if (err.error?.includes("duplicate") || err.error?.includes("unique")) {
+          setMsg({ type: "ok", text: "User already assigned to this company." });
+        } else {
+          throw new Error(err.error || "Failed");
+        }
+      } else {
+        setMsg({ type: "ok", text: "User assigned to company." });
+      }
+      // Refresh assignments list
+      loadAssignments();
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+  };
+
+  const removeAssignment = async (assignmentId: string) => {
+    if (!confirm("Remove this user from the company?")) return;
+    try {
+      await fetch(`/api/admin/table/UserCompany/${assignmentId}`, { method: "DELETE" });
+      setAssignments(prev => prev.filter(a => a.id !== assignmentId));
+      setMsg({ type: "ok", text: "Assignment removed." });
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
   };
 
@@ -978,7 +1016,7 @@ function ManageCompany({ users }: { users: any[] }) {
         {/* ─── User-Company Assignment ─── */}
         <div className="rounded border border-slate-200">
           <div className="px-3 py-2 bg-slate-50 border-b border-slate-200">
-            <span className="text-xs font-semibold text-slate-700">User ↔ Company Assignment</span>
+            <span className="text-xs font-semibold text-slate-700">User ↔ Company Assignment (UserCompany)</span>
           </div>
           <div className="p-3">
             <div className="flex items-end gap-2 flex-wrap">
@@ -987,7 +1025,7 @@ function ManageCompany({ users }: { users: any[] }) {
                 <select value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)}
                   className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm bg-white">
                   <option value="">— Select User —</option>
-                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name || u.username} {u.companyId ? `(${u.companyId})` : "(no company)"}</option>)}
+                  {users.map((u: any) => <option key={u.id} value={u.id}>{u.name || u.username}</option>)}
                 </select>
               </label>
               <label className="block flex-1 min-w-[180px]">
@@ -999,6 +1037,45 @@ function ManageCompany({ users }: { users: any[] }) {
                 </select>
               </label>
               <button onClick={assignUserToCompany} className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700 h-[30px]">＋ Assign</button>
+            </div>
+
+            {/* All assignments table */}
+            <div className="mt-3 border-t border-slate-100 pt-3">
+              <div className="text-xs font-medium text-slate-600 mb-2">
+                All Assignments ({assignments.length})
+              </div>
+              {assignmentsLoading ? (
+                <div className="text-xs text-slate-400">Loading...</div>
+              ) : assignments.length === 0 ? (
+                <div className="text-xs text-slate-400">No user-company assignments yet.</div>
+              ) : (
+                <table className="w-full text-xs">
+                  <thead className="bg-slate-50">
+                    <tr>
+                      <th className="px-2 py-1 text-left font-medium text-slate-600">User</th>
+                      <th className="px-2 py-1 text-left font-medium text-slate-600">Username</th>
+                      <th className="px-2 py-1 text-left font-medium text-slate-600">Company</th>
+                      <th className="px-2 py-1 text-left font-medium text-slate-600 w-16">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assignments.map((a: any) => {
+                      const u = Array.isArray(users) ? users.find((x: any) => x.id === a.userId) : null;
+                      const c = Array.isArray(companies) ? companies.find((x: any) => x.id === a.companyId) : null;
+                      return (
+                        <tr key={a.id} className="border-t border-slate-100">
+                          <td className="px-2 py-1 text-slate-700">{u?.name || a.userId}</td>
+                          <td className="px-2 py-1 text-slate-500">{u?.username || "—"}</td>
+                          <td className="px-2 py-1 text-slate-700">{c?.companyName || c?.companyID || a.companyId}</td>
+                          <td className="px-2 py-1">
+                            <button onClick={() => removeAssignment(a.id)} className="text-red-500 hover:underline text-2xs">Remove</button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
             </div>
           </div>
         </div>
