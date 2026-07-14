@@ -70,6 +70,7 @@ export default function ProcessAreasTable({
   deleteSubProcessAction,
   onAddClick,
   onAddSubProcessClick,
+  isAdmin,
 }: {
   areas: ProcessArea[];
   standards: string[];
@@ -79,6 +80,7 @@ export default function ProcessAreasTable({
   deleteSubProcessAction: (id: string) => Promise<void>;
   onAddClick: (defaultStandard: string) => void;
   onAddSubProcessClick: (processAreaId: string, processAreaName: string) => void;
+  isAdmin: boolean;
 }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageInput, setPageInput] = useState('1');
@@ -303,6 +305,8 @@ export default function ProcessAreasTable({
                   <Link
                     href={`/setup/processdetails/${area.id}`}
                     className="font-medium text-blue-600 hover:underline"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     {area.name}
                   </Link>
@@ -350,19 +354,19 @@ export default function ProcessAreasTable({
                                 dragOverReqId === req.rId ? 'bg-blue-100 border-blue-400 border-2' : 'hover:bg-white'
                               }`}
                               onClick={() => toggleReqExpanded(req.rId)}
-                              onDragOver={(e) => {
+                              onDragOver={isAdmin ? (e) => {
                                 e.preventDefault();
                                 e.dataTransfer.dropEffect = 'move';
                                 setDragOverReqId(req.rId);
-                              }}
-                              onDragLeave={() => setDragOverReqId(null)}
-                              onDrop={(e) => {
+                              } : undefined}
+                              onDragLeave={isAdmin ? () => setDragOverReqId(null) : undefined}
+                              onDrop={isAdmin ? (e) => {
                                 e.preventDefault();
                                 setDragOverReqId(null);
                                 if (dragCtrlId && dragCtrlId !== req.rId.toString()) {
                                   handleDropControl(dragCtrlId, req.rId);
                                 }
-                              }}
+                              } : undefined}
                             >
                               <div className="px-2 py-2 text-center text-slate-400">
                                 {isReqExpanded ? '▾' : '▸'}
@@ -376,13 +380,16 @@ export default function ProcessAreasTable({
                                   {req.requirementId}
                                 </button>
                               </div>
-                              <div className="px-4 py-2 text-slate-600 text-xs">
+                              <div className="px-4 py-2 text-slate-600 text-xs leading-relaxed">
                                 {dragOverReqId === req.rId ? (
                                   <span className="text-blue-600 font-medium animate-pulse">Drop control here...</span>
                                 ) : (
-                                  req.clauseContent.length > 100
-                                    ? req.clauseContent.substring(0, 100) + "..."
-                                    : req.clauseContent
+                                  <span dangerouslySetInnerHTML={{
+                                    __html: (req.clauseContent || "")
+                                      .replace(/\n/g, " ")
+                                      .replace(/\s+/g, " ")
+                                      .replace(/\bshall\b/gi, "<strong class=\"font-bold text-slate-900\">shall</strong>")
+                                  }} />
                                 )}
                               </div>
                               <div></div>
@@ -399,7 +406,7 @@ export default function ProcessAreasTable({
                                     <table className="w-full text-xs">
                                       <thead className="bg-slate-200">
                                         <tr>
-                                          <th className="px-1 py-1.5 w-5"></th>
+                                          <th className="px-1 py-1.5 w-5">{isAdmin ? '' : ''}</th>
                                           <th className="px-4 py-1.5 text-left font-medium text-slate-600">Control</th>
                                           <th className="px-4 py-1.5 text-left font-medium text-slate-600">Type</th>
                                           <th className="px-4 py-1.5 text-left font-medium text-slate-600">Ref</th>
@@ -413,18 +420,20 @@ export default function ProcessAreasTable({
                                         {controls.map((c) => (
                                           <tr
                                             key={c.id}
-                                            draggable
-                                            onDragStart={(e) => {
+                                            draggable={isAdmin}
+                                            onDragStart={isAdmin ? (e) => {
                                               setDragCtrlId(c.id);
                                               e.dataTransfer.effectAllowed = 'move';
                                               e.dataTransfer.setData('text/plain', c.id);
-                                            }}
-                                            onDragEnd={() => { setDragCtrlId(null); setDragOverReqId(null); }}
-                                            className={`border-t border-slate-100 transition-colors cursor-grab active:cursor-grabbing ${
+                                            } : undefined}
+                                            onDragEnd={isAdmin ? () => { setDragCtrlId(null); setDragOverReqId(null); } : undefined}
+                                            className={`border-t border-slate-100 transition-colors ${
+                                              isAdmin ? 'cursor-grab active:cursor-grabbing' : ''
+                                            } ${
                                               dragCtrlId === c.id ? 'opacity-40 bg-blue-50' : 'hover:bg-white'
                                             }`}
                                           >
-                                            <td className="px-1 py-1.5 text-slate-300 text-center select-none" title="Drag to move to another requirement">⋮⋮</td>
+                                            {isAdmin && <td className="px-1 py-1.5 text-slate-300 text-center select-none" title="Drag to move to another requirement">⋮⋮</td>}
                                             <td className="px-4 py-1.5 font-medium text-slate-900">{c.name}</td>
                                             <td className="px-4 py-1.5 text-slate-600">{c.controlType}</td>
                                             <td className="px-4 py-1.5 text-slate-500 font-mono">{c.controlRef || '—'}</td>
@@ -446,7 +455,7 @@ export default function ProcessAreasTable({
                                               {c._count.controlAssignments === 0 ? (
                                                 <span className="text-slate-400 italic">Never Tested</span>
                                               ) : c.lastTestedDate ? (
-                                                new Date(c.lastTestedDate).toLocaleDateString()
+                                                formatDate(c.lastTestedDate)
                                               ) : ('—')}
                                             </td>
                                             <td className="px-4 py-1.5">

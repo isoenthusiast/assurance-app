@@ -377,7 +377,7 @@ function BadgeGallery({ achievements, allBadges }: { achievements: any[]; allBad
               )}
               {b.earnedAt && (
                 <p className="text-xs text-slate-400 mt-0.5">
-                  {new Date(b.earnedAt).toLocaleDateString()}
+                  {formatDate(b.earnedAt)}
                 </p>
               )}
             </div>

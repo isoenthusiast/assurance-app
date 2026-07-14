@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import AssessmentInfoForm from './AssessmentInfoForm';
 import ControlsSelectorWrapper from './ControlsSelectorWrapper';
 import AssignedControlsTable from './AssignedControlsTable';
 import SamplesTable from './SamplesTable';
 import FindingsTable, { Finding, FindingsTableHandle } from './FindingsTable';
 import AssessmentActivitiesPanel from './AssessmentActivitiesPanel';
-import { useRef } from 'react';
 
 const TABS = [
   { id: 'overview', label: 'Overview', icon: '📋' },
@@ -31,6 +30,7 @@ interface Props {
   assignedControls: { id: string; name: string }[];
   samples: any[];
   findings: any[];
+  reqGroups?: { rId: number; requirementId: string; clauseContent: string; controlIds: string[] }[];
 }
 
 export default function AssessmentTabs({
@@ -45,8 +45,11 @@ export default function AssessmentTabs({
   assignedControls,
   samples,
   findings,
+  reqGroups,
 }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('overview');
+  const [selectorOpen, setSelectorOpen] = useState(false);
+  const [assignedOpen, setAssignedOpen] = useState(true);
   const findingsRef = useRef<FindingsTableHandle>(null);
 
   return (
@@ -99,14 +102,46 @@ export default function AssessmentTabs({
               <span className="font-semibold text-slate-900 text-sm">⚙️ Control Assignment</span>
             </div>
             <div className="p-4 space-y-4">
-              <ControlsSelectorWrapper
-                assessmentId={assessment.id}
-                initialSelectedIds={Array.from(assignedControlIds)}
-              />
-              <AssignedControlsTable
-                key={assignmentsKey}
-                initialAssignments={assessment.controlAssignments}
-              />
+              {/* ── Collapsible: Select Controls ── */}
+              <div className="rounded border border-slate-200 overflow-hidden">
+                <button
+                  onClick={() => setSelectorOpen(prev => !prev)}
+                  className="w-full px-4 py-2 bg-slate-50 hover:bg-slate-100 flex items-center justify-between"
+                >
+                  <span className="text-sm font-medium text-slate-700">🔍 Select Controls</span>
+                  <span className="text-xs text-slate-400">{selectorOpen ? '▼ Collapse' : '▶ Expand'}</span>
+                </button>
+                {selectorOpen && (
+                  <div className="p-4 border-t border-slate-200">
+                    <ControlsSelectorWrapper
+                      assessmentId={assessment.id}
+                      initialSelectedIds={Array.from(assignedControlIds)}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ── Collapsible: Assigned Controls ── */}
+              <div className="rounded border border-slate-200 overflow-hidden">
+                <button
+                  onClick={() => setAssignedOpen(prev => !prev)}
+                  className="w-full px-4 py-2 bg-slate-50 hover:bg-slate-100 flex items-center justify-between"
+                >
+                  <span className="text-sm font-medium text-slate-700">
+                    📋 Assigned Controls ({assessment.controlAssignments?.length || 0})
+                  </span>
+                  <span className="text-xs text-slate-400">{assignedOpen ? '▼ Collapse' : '▶ Expand'}</span>
+                </button>
+                {assignedOpen && (
+                  <div className="border-t border-slate-200">
+                    <AssignedControlsTable
+                      key={assignmentsKey}
+                      initialAssignments={assessment.controlAssignments}
+                      reqGroups={reqGroups}
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

@@ -41,10 +41,7 @@ const statusStyles: Record<string, string> = {
   Cancelled: "bg-red-100 text-red-700",
 };
 
-function formatDate(value: string | null) {
-  if (!value) return "";
-  return new Date(value).toLocaleDateString();
-}
+import { formatDate } from '@/lib/formatDate';
 
 // ── Component ──────────────────────────────────────────────────────────────
 

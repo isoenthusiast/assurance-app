@@ -13,6 +13,18 @@ interface SubProcess {
   processAreaId: string;
 }
 
+interface Requirement {
+  rId: number;
+  requirementId: string;
+  clauseContent: string;
+  processAreaId: string;
+}
+
+interface ControlRequirement {
+  controlId: string;
+  requirementRId: number;
+}
+
 interface Control {
   id: string;
   name: string;
@@ -33,11 +45,12 @@ export default function ControlsSelector({
   onSelectionChange,
 }: ControlsSelectorProps) {
   const [processAreas, setProcessAreas] = useState<ProcessArea[]>([]);
-  const [subProcesses, setSubProcesses] = useState<SubProcess[]>([]);
+  const [requirements, setRequirements] = useState<Requirement[]>([]);
+  const [controlRequirements, setControlRequirements] = useState<ControlRequirement[]>([]);
   const [allControls, setAllControls] = useState<Control[]>([]);
 
   const [selectedPA, setSelectedPA] = useState('');
-  const [selectedSP, setSelectedSP] = useState('');
+  const [selectedReqRId, setSelectedReqRId] = useState<number | ''>('');
   const [searchFilter, setSearchFilter] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set(selectedControlIds));
 
@@ -49,8 +62,9 @@ export default function ControlsSelector({
 
         if (res.ok) {
           const data = await res.json();
-          setProcessAreas([...(data.processAreas || [])].sort((a, b) => a.name.localeCompare(b.name)));
-          setSubProcesses([...(data.subProcesses || [])].sort((a, b) => a.name.localeCompare(b.name)));
+          setProcessAreas([...(data.processAreas || [])].sort((a: ProcessArea, b: ProcessArea) => a.name.localeCompare(b.name)));
+          setRequirements([...(data.requirements || [])].sort((a: Requirement, b: Requirement) => a.requirementId.localeCompare(b.requirementId)));
+          setControlRequirements(data.controlRequirements || []);
           setAllControls(data.controls || []);
         }
       } catch (err) {
@@ -61,22 +75,35 @@ export default function ControlsSelector({
     fetchData();
   }, []);
 
-  // Filter subprocesses based on selected PA
-  const filteredSubProcesses = selectedPA
-    ? subProcesses.filter((sp) => sp.processAreaId === selectedPA)
+  // Filter requirements based on selected PA
+  const filteredRequirements = selectedPA
+    ? requirements.filter((r) => r.processAreaId === selectedPA)
     : [];
 
-  // Filter controls based on PA, SP, and search
+  // Build a map: controlId → Set of requirementRIds for quick lookup
+  const ctrlReqMap = new Map<string, Set<number>>();
+  for (const cr of controlRequirements) {
+    if (!ctrlReqMap.has(cr.controlId)) ctrlReqMap.set(cr.controlId, new Set());
+    ctrlReqMap.get(cr.controlId)!.add(cr.requirementRId);
+  }
+
+  // Filter controls based on PA, Requirement, and search
   const filteredControls = allControls.filter((control) => {
     if (selectedPA && control.processAreaId !== selectedPA) return false;
-    if (selectedSP) {
-      const linkedIds = (control.controlSubProcesses || []).map((csp: any) => csp.subProcess?.id || csp.subProcessId);
-      if (!linkedIds.includes(selectedSP)) return false;
+    if (selectedReqRId !== '') {
+      const linkedReqs = ctrlReqMap.get(control.id);
+      if (!linkedReqs || !linkedReqs.has(selectedReqRId as number)) return false;
     }
     if (searchFilter) {
       const searchLower = searchFilter.toLowerCase();
       const nameMatch = control.name.toLowerCase().includes(searchLower);
       const statementMatch = control.statement.toLowerCase().includes(searchLower);
+      // Support wildcard * → .* in regex
+      try {
+        const pattern = searchFilter.replace(/\*/g, '.*');
+        const regex = new RegExp(pattern, 'i');
+        if (regex.test(control.name) || regex.test(control.statement)) return true;
+      } catch {}
       return nameMatch || statementMatch;
     }
     return true;
@@ -119,7 +146,7 @@ export default function ControlsSelector({
             value={selectedPA}
             onChange={(e) => {
               setSelectedPA(e.target.value);
-              setSelectedSP('');
+              setSelectedReqRId('');
             }}
             className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
           >
@@ -134,18 +161,18 @@ export default function ControlsSelector({
 
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">
-            Sub-Process
+            Requirement
           </label>
           <select
-            value={selectedSP}
-            onChange={(e) => setSelectedSP(e.target.value)}
+            value={selectedReqRId}
+            onChange={(e) => setSelectedReqRId(e.target.value ? Number(e.target.value) : '')}
             disabled={!selectedPA}
             className="w-full rounded border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-100 disabled:text-slate-400"
           >
-            <option value="">All Sub-Processes</option>
-            {filteredSubProcesses.map((sp) => (
-              <option key={sp.id} value={sp.id}>
-                {sp.name}
+            <option value="">All Requirements</option>
+            {filteredRequirements.map((r) => (
+              <option key={r.rId} value={r.rId}>
+                {r.requirementId} — {r.clauseContent.slice(0, 60)}{r.clauseContent.length > 60 ? '…' : ''}
               </option>
             ))}
           </select>
@@ -153,13 +180,13 @@ export default function ControlsSelector({
 
         <div>
           <label className="block text-xs font-medium text-slate-700 mb-1">
-            Search Controls (wildcard: use * for any characters)
+            Search Controls (use * as wildcard)
           </label>
           <input
             type="text"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
-            placeholder="e.g., *test* or audit*"
+            placeholder="e.g., *audit* or HAZOP*"
             className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
           />
         </div>
@@ -208,7 +235,15 @@ export default function ControlsSelector({
               >
                 <div className="font-medium text-slate-900">{control.name}</div>
                 <div className="text-slate-600 text-xs">
-                  {control.processArea?.name || processAreas.find(pa => pa.id === control.processAreaId)?.name || 'Unknown'} / {(control.controlSubProcesses && control.controlSubProcesses[0]?.subProcess?.name) || '—'}
+                  {control.processArea?.name || processAreas.find(pa => pa.id === control.processAreaId)?.name || 'Unknown'}
+                  {(() => {
+                    const reqIds = ctrlReqMap.get(control.id);
+                    if (reqIds && reqIds.size > 0) {
+                      const reqNames = [...reqIds].map(rid => requirements.find(r => r.rId === rid)?.requirementId).filter(Boolean);
+                      return reqNames.length > 0 ? ` / ${reqNames.join(', ')}` : '';
+                    }
+                    return '';
+                  })()}
                 </div>
                 <div className="text-slate-500 text-xs mt-1 line-clamp-2">
                   {control.statement}

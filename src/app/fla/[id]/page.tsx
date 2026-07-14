@@ -65,6 +65,29 @@ export default async function AssessmentDetailPage({
     .sort()
     .join(',');
 
+  // Fetch requirement mappings for assigned controls
+  const controlRequirementMappings = await prisma.mapControl2Requirement.findMany({
+    where: { controlId: { in: Array.from(assignedControlIds) } },
+    include: {
+      requirement: { select: { rId: true, requirementId: true, clauseContent: true } },
+    },
+  });
+
+  // Group by requirement: { requirementId → controlIds }
+  const reqGroups: Record<string, { rId: number; requirementId: string; clauseContent: string; controlIds: string[] }> = {};
+  for (const m of controlRequirementMappings) {
+    const rid = m.requirement.rId;
+    if (!reqGroups[rid]) {
+      reqGroups[rid] = {
+        rId: m.requirement.rId,
+        requirementId: m.requirement.requirementId,
+        clauseContent: m.requirement.clauseContent,
+        controlIds: [],
+      };
+    }
+    reqGroups[rid].controlIds.push(m.controlId);
+  }
+
   const total = assessment.samples.length;
   const tested = assessment.samples.filter((s) => s.status === "Tested").length;
   const failed = assessment.samples.filter((s) => s.conclusion === "Fail").length;
@@ -94,6 +117,7 @@ export default async function AssessmentDetailPage({
         assignmentsKey={assignmentsKey}
         availableControls={availableControls}
         assignedControls={assignedControls}
+        reqGroups={Object.values(reqGroups)}
         samples={assessment.samples}
         findings={assessment.findings}
       />

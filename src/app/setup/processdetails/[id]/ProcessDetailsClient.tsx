@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ControlForm from "../../controls/ControlForm";
 // Sub-process creation uses fetch API directly (avoid server action host validation)
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -21,6 +22,7 @@ type ControlSummary = {
   name: string;
   statement: string;
   controlType: string;
+  processAreaId?: string;
   isHsseCritical: boolean;
   ramRating: string | null;
   riskWeight: number;
@@ -176,6 +178,10 @@ export default function ProcessDetailsClient({
   const [addControlName, setAddControlName] = useState("");
   const [addControlStatement, setAddControlStatement] = useState("");
   const [addControlType, setAddControlType] = useState("Procedural");
+  const [addControlRef, setAddControlRef] = useState("");
+  const [addControlTypeDetail, setAddControlTypeDetail] = useState("");
+  const [addControlSourceFile, setAddControlSourceFile] = useState("");
+  const [addControlPracticeDoc, setAddControlPracticeDoc] = useState("");
   const [addControlError, setAddControlError] = useState<string | null>(null);
   const [addControlSaving, setAddControlSaving] = useState(false);
 
@@ -183,6 +189,7 @@ export default function ProcessDetailsClient({
   const [deleteControlTarget, setDeleteControlTarget] = useState<{ id: string; name: string } | null>(null);
   const [deleteControlError, setDeleteControlError] = useState<string | null>(null);
   const [deleteControlSaving, setDeleteControlSaving] = useState(false);
+  const [unassignControlTarget, setUnassignControlTarget] = useState<{ id: string; name: string } | null>(null);
 
   // ── Tab 2: Add SubProcess modal state ──
   const [showAddSubProcess, setShowAddSubProcess] = useState(false);
@@ -193,6 +200,191 @@ export default function ProcessDetailsClient({
   const [filterStandard, setFilterStandard] = useState("");
   const [filterPA, setFilterPA] = useState("");
   const [showLinkedList, setShowLinkedList] = useState(false);
+
+  // ── ControlForm (full control add/edit from /setup/controls) ──
+  const [cfProcessAreas, setCfProcessAreas] = useState<{ id: string; name: string }[]>([]);
+  const [cfSubProcesses, setCfSubProcesses] = useState<{ id: string; name: string; processAreaId: string }[]>([]);
+  const [cfEditing, setCfEditing] = useState<any>(null);
+
+  // ── Bulk Map Controls to Requirements ──
+  const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
+  const [bulkMapPA, setBulkMapPA] = useState(processArea.id);
+  const [bulkMapSP, setBulkMapSP] = useState("");
+  const [bulkMapCheckedControls, setBulkMapCheckedControls] = useState<Set<string>>(new Set());
+  const [bulkMapTargetReqId, setBulkMapTargetReqId] = useState<number | null>(null);
+  const [bulkMapControls, setBulkMapControls] = useState<ControlSummary[]>([]);
+  const [bulkMapSaving, setBulkMapSaving] = useState(false);
+  const [bulkMapError, setBulkMapError] = useState<string | null>(null);
+  const [bulkMapSuccess, setBulkMapSuccess] = useState<string | null>(null);
+
+  // Fetch controls when SP changes (via ControlSubProcess junction → Control)
+  useEffect(() => {
+    if (!bulkMapSP) { setBulkMapControls([]); return; }
+    // Step 1: Get ControlSubProcess links for this sub-process
+    fetch(`/api/admin/table/ControlSubProcess/data?perPage=5000&subProcessId=${bulkMapSP}`)
+      .then(r => r.json())
+      .then(async (data) => {
+        const cspRows: any[] = data.rows || [];
+        const linkedCtrlIds: string[] = cspRows.map((r: any) => r.controlId).filter(Boolean);
+        if (linkedCtrlIds.length === 0) { setBulkMapControls([]); return; }
+        // Step 2: Fetch each control individually by ID
+        const controls = await Promise.all(
+          linkedCtrlIds.map(async (ctrlId) => {
+            try {
+              const res = await fetch(`/api/admin/table/Control/${ctrlId}`);
+              if (!res.ok) return null;
+              return await res.json();
+            } catch { return null; }
+          })
+        );
+        // Filter to selected PA
+        setBulkMapControls(
+          controls.filter((c: any) => c && c.processAreaId === bulkMapPA) as ControlSummary[]
+        );
+        setBulkMapCheckedControls(new Set());
+        setBulkMapTargetReqId(null);
+      })
+      .catch(() => setBulkMapControls([]));
+  }, [bulkMapSP, bulkMapPA]);
+
+  // Load process areas & sub-processes for ControlForm
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
+      fetch("/api/admin/table/SubProcess/data?perPage=5000").then(r => r.json()),
+    ]).then(([paData, spData]) => {
+      setCfProcessAreas((paData.rows || []).map((r: any) => ({ id: r.id, name: r.name })));
+      const seen = new Set<string>();
+      setCfSubProcesses((spData.rows || []).filter((r: any) => seen.has(r.id) ? false : seen.add(r.id)).map((r: any) => ({ id: r.id, name: r.name, processAreaId: r.processAreaId })));
+    }).catch(() => {});
+  }, []);
+
+  const openFullEditControl = async (control: ControlSummary) => {
+    try {
+      // Fetch full control with controlSubProcesses for ControlForm
+      const res = await fetch(`/api/admin/table/Control/${control.id}`);
+      if (res.ok) {
+        const full = await res.json();
+        setCfEditing({
+          id: full.id,
+          name: full.name || "",
+          statement: full.statement || "",
+          controlType: full.controlType || "Procedural",
+          processAreaId: full.processAreaId || processArea.id,
+          isHsseCritical: full.isHsseCritical ?? false,
+          ramRating: full.ramRating || null,
+          riskWeight: full.riskWeight ?? 1,
+          sourceFile: full.sourceFile || null,
+          controlRef: full.controlRef || null,
+          practiceDocument: full.practiceDocument || null,
+          controlTypeDetail: full.controlTypeDetail || null,
+          csfWho: full.csfWho || null,
+          csfWhat: full.csfWhat || null,
+          csfWhen: full.csfWhen || null,
+          csfWhere: full.csfWhere || null,
+          csfWhy: full.csfWhy || null,
+          csfHow: full.csfHow || null,
+          csfEvidence: full.csfEvidence || null,
+          keyActivities: full.keyActivities || null,
+          riskAddressed: full.riskAddressed || null,
+          testingApproach: full.testingApproach || null,
+          uncertainFlags: full.uncertainFlags || null,
+          rawHealthScore: full.rawHealthScore ?? 80,
+          lastTestedDate: full.lastTestedDate || null,
+          lastTestResult: full.lastTestResult || null,
+        });
+      }
+    } catch { /* use existing data if fetch fails */ }
+  };
+
+  const openAddControlForm = (reqRId?: number) => {
+    if (reqRId) setAddControlReqRId(reqRId);
+    setCfEditing({
+      id: "",
+      name: "",
+      statement: "",
+      controlType: "Procedural",
+      processAreaId: processArea.id,
+      isHsseCritical: false,
+      ramRating: null,
+      riskWeight: 1,
+      sourceFile: null,
+      controlRef: null,
+      practiceDocument: null,
+      controlTypeDetail: null,
+      csfWho: null,
+      csfWhat: null,
+      csfWhen: null,
+      csfWhere: null,
+      csfWhy: null,
+      csfHow: null,
+      csfEvidence: null,
+      keyActivities: null,
+      riskAddressed: null,
+      testingApproach: null,
+      uncertainFlags: null,
+      rawHealthScore: 80,
+      lastTestedDate: null,
+      lastTestResult: null,
+    });
+  };
+
+  // ── Tab 2: Requirement section expand/collapse + drag-drop ──
+  const [expandedReqSections, setExpandedReqSections] = useState<Set<number>>(new Set());
+  const [reqData, setReqData] = useState(reqWithControls);
+  const [dragCtrlId, setDragCtrlId] = useState<string | null>(null);
+  const [dragOverReqId, setDragOverReqId] = useState<number | null>(null);
+
+  useEffect(() => { setReqData(reqWithControls); }, [reqWithControls]);
+
+  const toggleReqSection = (rId: number) => {
+    setExpandedReqSections(prev => {
+      const next = new Set(prev);
+      if (next.has(rId)) next.delete(rId); else next.add(rId);
+      return next;
+    });
+  };
+
+  const handleDropControl = async (ctrlId: string, targetReqRId: number) => {
+    if (!ctrlId) return;
+    // Find source requirement
+    const sourceReq = reqData.find(r => r.controls.some(c => c.id === ctrlId));
+    if (!sourceReq || sourceReq.rId === targetReqRId) return;
+    const control = sourceReq.controls.find(c => c.id === ctrlId);
+    if (!control) return;
+
+    // Optimistic local update
+    setReqData(prev => prev.map(r => {
+      if (r.rId === sourceReq.rId) {
+        return { ...r, controls: r.controls.filter(c => c.id !== ctrlId) };
+      }
+      if (r.rId === targetReqRId) {
+        if (r.controls.some(c => c.id === ctrlId)) return r;
+        return { ...r, controls: [...r.controls, control] };
+      }
+      return r;
+    }));
+
+    // Persist via API
+    try {
+      const res = await fetch(`/api/admin/table/MapControl2Requirement/data?controlId=${ctrlId}`);
+      if (res.ok) {
+        const data = await res.json();
+        const existing = (data.rows || []).find((r: any) => r.controlId === ctrlId);
+        if (existing) {
+          await fetch(`/api/admin/table/MapControl2Requirement/${existing.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requirementRId: targetReqRId }),
+          });
+        }
+      }
+      router.refresh();
+    } catch (e) {
+      console.error('Drag-drop failed:', e);
+      router.refresh();
+    }
+  };
 
   const openEditControl = async (control: ControlSummary) => {
     setEditingControl(control);
@@ -389,6 +581,10 @@ export default function ProcessDetailsClient({
           statement: addControlStatement.trim(),
           controlType: addControlType,
           processAreaId: processArea.id,
+          controlRef: addControlRef.trim() || null,
+          controlTypeDetail: addControlTypeDetail.trim() || null,
+          sourceFile: addControlSourceFile.trim() || null,
+          practiceDocument: addControlPracticeDoc.trim() || null,
         }),
       });
 
@@ -412,6 +608,10 @@ export default function ProcessDetailsClient({
       setAddControlReqRId(null);
       setAddControlName("");
       setAddControlStatement("");
+      setAddControlRef("");
+      setAddControlTypeDetail("");
+      setAddControlSourceFile("");
+      setAddControlPracticeDoc("");
       setAddControlType("Procedural");
       router.refresh();
     } catch (err) {
@@ -421,28 +621,83 @@ export default function ProcessDetailsClient({
     }
   };
 
-  const handleDeleteControl = async () => {
-    if (!deleteControlTarget) return;
-
+  const handleUnassignControl = async () => {
+    if (!unassignControlTarget) return;
     setDeleteControlSaving(true);
     setDeleteControlError(null);
-
     try {
-      const res = await fetch(`/api/admin/table/Control/${deleteControlTarget.id}?cascade=true`, {
-        method: "DELETE",
-      });
+      // Find the "Unmapped Controls" requirement for this ProcessArea
+      const reqRes = await fetch("/api/admin/table/Requirement/data?perPage=2000");
+      if (!reqRes.ok) throw new Error("Failed to load requirements");
+      const reqData = await reqRes.json();
+      const unmappedReq = (reqData.rows || []).find(
+        (r: any) => r.requirementId === "Unmapped Controls" && r.processAreaId === processArea.id
+      );
+      if (!unmappedReq) throw new Error("No 'Unmapped Controls' requirement found for this process area");
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to delete control");
+      // Find the MapControl2Requirement record for this control
+      const mapRes = await fetch(`/api/admin/table/MapControl2Requirement/data?controlId=${unassignControlTarget.id}`);
+      if (!mapRes.ok) throw new Error("Failed to find mapping");
+      const mapData = await mapRes.json();
+      const mapping = (mapData.rows || []).find((r: any) => r.controlId === unassignControlTarget.id);
+
+      if (mapping) {
+        await fetch(`/api/admin/table/MapControl2Requirement/${mapping.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ requirementRId: unmappedReq.rId ?? unmappedReq.rID }),
+        });
       }
-
-      setDeleteControlTarget(null);
+      setUnassignControlTarget(null);
       router.refresh();
     } catch (err) {
-      setDeleteControlError(err instanceof Error ? err.message : "Failed to delete control");
+      setDeleteControlError(err instanceof Error ? err.message : "Failed to unassign control");
     } finally {
       setDeleteControlSaving(false);
+    }
+  };
+
+  // ── Bulk Map: assign checked controls to a target requirement ──
+  const handleBulkMap = async () => {
+    if (!bulkMapTargetReqId || bulkMapCheckedControls.size === 0) return;
+    setBulkMapSaving(true);
+    setBulkMapError(null);
+    setBulkMapSuccess(null);
+    let mapped = 0;
+    try {
+      for (const ctrlId of bulkMapCheckedControls) {
+        const res = await fetch(`/api/admin/table/MapControl2Requirement/data?controlId=${ctrlId}`);
+        if (!res.ok) continue;
+        const data = await res.json();
+        const existing = (data.rows || []).find((r: any) => r.controlId === ctrlId);
+        if (existing) {
+          await fetch(`/api/admin/table/MapControl2Requirement/${existing.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ requirementRId: bulkMapTargetReqId, processAreaId: bulkMapPA }),
+          });
+        } else {
+          await fetch("/api/admin/table/MapControl2Requirement/data", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: `m2r_${Date.now()}_${ctrlId.slice(-6)}`,
+              controlId: ctrlId,
+              requirementRId: bulkMapTargetReqId,
+              processAreaId: bulkMapPA,
+            }),
+          });
+        }
+        mapped++;
+      }
+      setBulkMapSuccess(`Mapped ${mapped} control(s) successfully.`);
+      setBulkMapCheckedControls(new Set());
+      setBulkMapTargetReqId(null);
+      router.refresh();
+    } catch (err) {
+      setBulkMapError(err instanceof Error ? err.message : "Bulk mapping failed");
+    } finally {
+      setBulkMapSaving(false);
     }
   };
 
@@ -664,7 +919,7 @@ export default function ProcessDetailsClient({
                             <tr key={action.id} className="border-t border-slate-100">
                               <td className="px-4 py-2 text-slate-700">{action.actionDescription}</td>
                               <td className="px-4 py-2 text-slate-500">{action.actionParty || "—"}</td>
-                              <td className="px-4 py-2 text-slate-500">{action.targetDate ? new Date(action.targetDate).toLocaleDateString() : "—"}</td>
+                              <td className="px-4 py-2 text-slate-500">{formatDate(action.targetDate)}</td>
                               <td className="px-4 py-2">
                                 <span className="rounded bg-amber-100 px-2 py-0.5 text-amber-700 font-medium">Open</span>
                               </td>
@@ -719,11 +974,12 @@ export default function ProcessDetailsClient({
       {/* ─── TAB 2: Requirements & Controls ──────────────────────────────── */}
 
       {activeTab === "subprocesses" && (
+        <>
         <div className="mt-6 space-y-6">
           <div className="flex items-center justify-between">
             <p className="text-sm text-slate-500">
-              {reqWithControls.length} requirement(s) ·{" "}
-              {reqWithControls.reduce((sum, r) => sum + r.controls.length, 0)} linked control(s)
+              {reqData.length} requirement(s) ·{" "}
+              {reqData.reduce((sum, r) => sum + r.controls.length, 0)} linked control(s)
             </p>
             <button
               onClick={() => setShowAddSubProcess(true)}
@@ -732,27 +988,56 @@ export default function ProcessDetailsClient({
               + Add SubProcess
             </button>
           </div>
-          {reqWithControls.length === 0 ? (
+          {reqData.length === 0 ? (
             <p className="text-sm text-slate-400 py-8 text-center">
               No requirements linked to this process area.
             </p>
           ) : (
-            reqWithControls.map((req) => (
+            reqData.map((req) => {
+              const isExpanded = expandedReqSections.has(req.rId);
+              return (
               <div key={req.rId} className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200">
-                  <h2 className="font-semibold text-slate-900">
-                    {req.requirementId}
-                  </h2>
-                  <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
-                    {req.clauseContent}
-                  </p>
-                </div>
+                <button
+                  onClick={() => toggleReqSection(req.rId)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    setDragOverReqId(req.rId);
+                  }}
+                  onDragLeave={() => setDragOverReqId(null)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDragOverReqId(null);
+                    if (dragCtrlId && dragCtrlId !== req.rId.toString()) {
+                      handleDropControl(dragCtrlId, req.rId);
+                    }
+                  }}
+                  className={`w-full text-left bg-slate-50 px-4 py-3 border-b border-slate-200 hover:bg-slate-100 transition-colors ${
+                    dragOverReqId === req.rId ? 'bg-blue-100 border-blue-400' : ''
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="min-w-0">
+                      <h2 className="font-semibold text-slate-900 text-sm">
+                        {req.requirementId} ({req.controls.length})
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-0.5 line-clamp-2">
+                        {req.clauseContent}
+                      </p>
+                    </div>
+                    <span className="text-xs text-slate-300 ml-2 flex-shrink-0">{isExpanded ? '▼' : '▶'}</span>
+                  </div>
+                  {dragOverReqId === req.rId && (
+                    <p className="text-xs text-blue-600 mt-1 animate-pulse">Drop control here</p>
+                  )}
+                </button>
 
-                {req.controls.length > 0 ? (
+                {isExpanded && req.controls.length > 0 && (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead className="bg-slate-100">
                         <tr>
+                          <th className="px-1 py-2 w-5"></th>
                           <th className="px-4 py-2 text-left font-medium text-slate-600">Control</th>
                           <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
                           <th className="px-4 py-2 text-left font-medium text-slate-600">Health</th>
@@ -762,12 +1047,9 @@ export default function ProcessDetailsClient({
                           <th className="px-4 py-2 text-center font-medium text-slate-600">
                             <button
                               type="button"
-                              onClick={() => {
-                                setAddControlReqRId(req.rId);
-                                setAddControlName("");
-                                setAddControlStatement("");
-                                setAddControlType("Procedural");
-                                setAddControlError(null);
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openAddControlForm(req.rId);
                               }}
                               className="text-blue-600 hover:underline font-medium"
                             >
@@ -778,10 +1060,23 @@ export default function ProcessDetailsClient({
                       </thead>
                       <tbody>
                         {req.controls.map((c) => (
-                          <tr key={c.id} className="border-t border-slate-100 hover:bg-slate-50">
+                          <tr
+                            key={c.id}
+                            draggable
+                            title={c.statement || c.name}
+                            onDragStart={(e) => {
+                              setDragCtrlId(c.id);
+                              e.dataTransfer.effectAllowed = 'move';
+                            }}
+                            onDragEnd={() => { setDragCtrlId(null); setDragOverReqId(null); }}
+                            className={`border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-grab active:cursor-grabbing ${
+                              dragCtrlId === c.id ? 'opacity-40 bg-blue-50' : ''
+                            }`}
+                          >
+                            <td className="px-1 py-2 text-slate-300 text-center select-none" title="Drag to another requirement">⋮⋮</td>
                             <td className="px-4 py-2">
                               <button
-                                onClick={() => openEditControl(c)}
+                                onClick={() => openFullEditControl(c)}
                                 className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left"
                               >
                                 {c.name}
@@ -804,10 +1099,8 @@ export default function ProcessDetailsClient({
                               {c._count.controlAssignments === 0 ? (
                                 <span className="text-slate-400 italic">Never Tested</span>
                               ) : c.lastTestedDate ? (
-                                new Date(c.lastTestedDate).toLocaleDateString()
-                              ) : (
-                                "—"
-                              )}
+                                formatDate(c.lastTestedDate)
+                              ) : ("—")}
                             </td>
                             <td className="px-4 py-2">
                               {c._count.controlAssignments === 0 ? (
@@ -821,17 +1114,17 @@ export default function ProcessDetailsClient({
                             <td className="px-4 py-2 text-center">
                               <div className="flex items-center justify-center gap-2">
                                 <button
-                                  onClick={() => openEditControl(c)}
+                                  onClick={() => openFullEditControl(c)}
                                   className="text-xs text-blue-600 hover:underline font-medium"
                                 >
                                   Edit
                                 </button>
                                 <span className="text-slate-300">|</span>
                                 <button
-                                  onClick={() => setDeleteControlTarget({ id: c.id, name: c.name })}
+                                  onClick={() => setUnassignControlTarget({ id: c.id, name: c.name })}
                                   className="text-xs text-red-600 hover:underline font-medium"
                                 >
-                                  Delete
+                                  Unassign
                                 </button>
                               </div>
                             </td>
@@ -840,18 +1133,13 @@ export default function ProcessDetailsClient({
                       </tbody>
                     </table>
                   </div>
-                ) : (
+                )}
+                {isExpanded && req.controls.length === 0 && (
                   <div className="px-4 py-6 text-center text-sm text-slate-400">
                     No controls linked to this requirement yet.
                     <button
                       type="button"
-                      onClick={() => {
-                        setAddControlReqRId(req.rId);
-                        setAddControlName("");
-                        setAddControlStatement("");
-                        setAddControlType("Procedural");
-                        setAddControlError(null);
-                      }}
+                      onClick={() => openAddControlForm(req.rId)}
                       className="ml-1 text-blue-600 hover:underline"
                     >
                       +Add Control
@@ -859,9 +1147,136 @@ export default function ProcessDetailsClient({
                   </div>
                 )}
               </div>
-            ))
+            );})
           )}
         </div>
+
+        {/* ─── Bulk Map Controls to Requirements ──────────────────────── */}
+        <div className="mt-8 border border-slate-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setBulkMapExpanded(!bulkMapExpanded)}
+            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
+          >
+            <span className="text-sm font-semibold text-slate-700">
+              🔗 Bulk Map Controls to Requirements
+            </span>
+            <span className="text-xs text-slate-400">{bulkMapExpanded ? "▲" : "▼"}</span>
+          </button>
+          {bulkMapExpanded && (
+            <div className="px-4 py-4 space-y-4 bg-white">
+              {/* Row 1: ProcessArea + SubProcess comboboxes stacked */}
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Process Area</label>
+                  <select
+                    value={bulkMapPA}
+                    onChange={(e) => { setBulkMapPA(e.target.value); setBulkMapSP(""); }}
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  >
+                    {[...cfProcessAreas].sort((a, b) => a.name.localeCompare(b.name)).map(pa => (
+                      <option key={pa.id} value={pa.id}>{pa.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Sub-Process</label>
+                  <select
+                    value={bulkMapSP}
+                    onChange={(e) => setBulkMapSP(e.target.value)}
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                  >
+                    <option value="">-- Select a sub-process --</option>
+                    {cfSubProcesses
+                      .filter(sp => sp.processAreaId === bulkMapPA)
+                      .sort((a, b) => a.name.localeCompare(b.name))
+                      .map(sp => (
+                        <option key={sp.id} value={sp.id}>{sp.name}</option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Row 2: Checklist of controls */}
+              {bulkMapSP && (
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-2">
+                    Controls ({bulkMapControls.length})
+                    <span className="ml-2 font-normal text-slate-400">
+                      {bulkMapCheckedControls.size > 0 && `— ${bulkMapCheckedControls.size} selected`}
+                    </span>
+                  </label>
+                  <div className="max-h-48 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
+                    {bulkMapControls.length === 0 ? (
+                      <p className="px-3 py-4 text-sm text-slate-400 text-center">No controls found for this sub-process.</p>
+                    ) : (
+                      bulkMapControls.map(c => (
+                        <label
+                          key={c.id}
+                          className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors ${
+                            bulkMapCheckedControls.has(c.id) ? "bg-blue-50" : ""
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={bulkMapCheckedControls.has(c.id)}
+                            onChange={() => {
+                              setBulkMapCheckedControls(prev => {
+                                const next = new Set(prev);
+                                if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                                return next;
+                              });
+                            }}
+                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
+                          />
+                          <span className="text-sm text-slate-800">{c.name}</span>
+                          <span className="text-xs text-slate-400 ml-auto flex-shrink-0">{c.controlType}</span>
+                        </label>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Row 3: Target Requirement combobox + Map button */}
+              {bulkMapCheckedControls.size > 0 && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-xs font-medium text-slate-600 mb-1">
+                      Map to Requirement in this Process Area
+                    </label>
+                    <select
+                      value={bulkMapTargetReqId ?? ""}
+                      onChange={(e) => setBulkMapTargetReqId(e.target.value ? Number(e.target.value) : null)}
+                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                    >
+                      <option value="">-- Select a requirement --</option>
+                      {reqData.filter(r => r.requirementId !== "Unmapped Controls").sort((a, b) => a.requirementId.localeCompare(b.requirementId)).map(r => (
+                        <option key={r.rId} value={r.rId}>
+                          {r.requirementId} — {r.clauseContent.slice(0, 80)}{r.clauseContent.length > 80 ? "…" : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={!bulkMapTargetReqId || bulkMapSaving}
+                      onClick={handleBulkMap}
+                      className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {bulkMapSaving ? "Mapping…" : `Map ${bulkMapCheckedControls.size} Control(s)`}
+                    </button>
+                    {bulkMapError && <span className="text-sm text-red-600">{bulkMapError}</span>}
+                    {bulkMapSuccess && <span className="text-sm text-green-600">{bulkMapSuccess}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        </>
       )}
 
       {/* ─── TAB 3: Assessments ──────────────────────────────────────────── */}
@@ -1239,7 +1654,7 @@ export default function ProcessDetailsClient({
               </div>
             )}
 
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[70vh] overflow-y-auto">
               <Field label="Control Name">
                 <input
                   value={addControlName}
@@ -1257,20 +1672,56 @@ export default function ProcessDetailsClient({
                   className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
                 />
               </Field>
-              <Field label="Control Type">
-                <select
-                  value={addControlType}
-                  onChange={(e) => setAddControlType(e.target.value)}
-                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-white"
-                >
-                  <option value="Administrative">Administrative</option>
-                  <option value="Procedural">Procedural</option>
-                  <option value="Analytical">Analytical</option>
-                  <option value="Behavioral">Behavioral</option>
-                  <option value="Informational">Informational</option>
-                  <option value="Engineering">Engineering</option>
-                </select>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Control Type">
+                  <select
+                    value={addControlType}
+                    onChange={(e) => setAddControlType(e.target.value)}
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm bg-white"
+                  >
+                    <option value="Administrative">Administrative</option>
+                    <option value="Procedural">Procedural</option>
+                    <option value="Analytical">Analytical</option>
+                    <option value="Behavioral">Behavioral</option>
+                    <option value="Informational">Informational</option>
+                    <option value="Engineering">Engineering</option>
+                  </select>
+                </Field>
+                <Field label="Control Ref">
+                  <input
+                    value={addControlRef}
+                    onChange={(e) => setAddControlRef(e.target.value)}
+                    placeholder="e.g. AQ-001"
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm font-mono"
+                  />
+                </Field>
+              </div>
+              <Field label="Control Type Detail">
+                <input
+                  value={addControlTypeDetail}
+                  onChange={(e) => setAddControlTypeDetail(e.target.value)}
+                  placeholder="Additional detail about control type"
+                  className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                />
               </Field>
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="Source File">
+                  <input
+                    value={addControlSourceFile}
+                    onChange={(e) => setAddControlSourceFile(e.target.value)}
+                    placeholder="e.g. 02 Env PS SP"
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </Field>
+                <Field label="Practice Document">
+                  <input
+                    value={addControlPracticeDoc}
+                    onChange={(e) => setAddControlPracticeDoc(e.target.value)}
+                    placeholder="e.g. SEAM_Practice.md"
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                  />
+                </Field>
+              </div>
             </div>
 
             <div className="mt-6 flex items-center justify-end gap-3">
@@ -1375,16 +1826,15 @@ export default function ProcessDetailsClient({
         </div>
       )}
 
-      {/* ─── DELETE CONTROL CONFIRMATION ───────────────────────────────── */}
+      {/* ─── UNASSIGN CONTROL CONFIRMATION ──────────────────────────────── */}
 
-      {deleteControlTarget && (
+      {unassignControlTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
           <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl">
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">Delete Control</h3>
+            <h3 className="text-lg font-semibold text-slate-900 mb-2">Unassign Control</h3>
             <p className="text-sm text-slate-600 mb-4">
-              Are you sure you want to delete <strong>&quot;{deleteControlTarget.name}&quot;</strong>?
-              This action cannot be undone. Any assignments, samples, or findings linked to this control
-              may also be affected.
+              Move <strong>&quot;{unassignControlTarget.name}&quot;</strong> to <strong>&quot;Unmapped Controls&quot;</strong>?
+              The control will be removed from this requirement and mapped to the catch-all requirement.
             </p>
 
             {deleteControlError && (
@@ -1395,22 +1845,48 @@ export default function ProcessDetailsClient({
 
             <div className="flex items-center justify-end gap-3">
               <button
-                onClick={() => setDeleteControlTarget(null)}
+                onClick={() => setUnassignControlTarget(null)}
                 className="rounded border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
-                onClick={handleDeleteControl}
+                onClick={handleUnassignControl}
                 disabled={deleteControlSaving}
-                className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                className="rounded bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700 disabled:opacity-50"
               >
-                {deleteControlSaving ? "Deleting..." : "Delete"}
+                {deleteControlSaving ? "Moving..." : "Unassign"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ─── FULL CONTROL FORM (Add/Edit via ControlForm) ──────────────── */}
+      <ControlForm
+        key={cfEditing?.id || "new"}
+        processAreas={cfProcessAreas}
+        subProcesses={cfSubProcesses}
+        editing={cfEditing?.id ? cfEditing : null}
+        onSaved={async (controlId, isNew) => {
+          if (isNew && addControlReqRId) {
+            // New control created from requirement — map to that requirement
+            await fetch("/api/admin/table/MapControl2Requirement/data", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                id: `m2r_${Date.now()}`,
+                controlId,
+                requirementRId: addControlReqRId,
+                processAreaId: processArea.id,
+              }),
+            }).catch(() => {});
+            setAddControlReqRId(null);
+          }
+          setCfEditing(null);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }

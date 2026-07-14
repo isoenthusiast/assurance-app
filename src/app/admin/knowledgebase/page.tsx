@@ -240,7 +240,7 @@ export function KnowledgebaseManager() {
               >
                 <div className="truncate text-slate-700">{r.knowledgeName}</div>
                 <div className="text-slate-400 text-2xs mt-0.5">
-                  {r.addedBy} · {new Date(r.createdDate).toLocaleDateString()}
+                  {r.addedBy} · {formatDate(r.createdDate)}
                 </div>
               </button>
             ))

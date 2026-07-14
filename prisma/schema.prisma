@@ -236,6 +236,7 @@ model Assessment {
   controlAssignments ControlAssignment[]
   samples            Sample[]
   findings           Finding[]
+  aacts              Aact[]
 }
 
 // Assigns Controls to an Assessment from the assessment UI.
@@ -570,8 +571,8 @@ model AssessmentActType {
 }
 
 model Aact {
-  id                  String   @id @default(cuid())
-  aaID                String   @unique
+  id                  String          @id @default(cuid())
+  aaID                String          @unique
   assuranceID         String
   assacttypeid        String
   activityName        String
@@ -580,7 +581,11 @@ model Aact {
   activityEndTime     String
   activityDuration    String?
   activityDescription String?
-  createdAt           DateTime @default(now())
+  createdAt           DateTime        @default(now())
+  assessment          Assessment      @relation(fields: [assuranceID], references: [id], onDelete: Cascade)
+  controls            AActControls[]  @relation("AactToAActControls")
+  users               AActUsers[]     @relation("AactToAActUsers")
+  details             AActDetails[]   @relation("AactToAActDetails")
 }
 
 model AActControls {
@@ -588,6 +593,7 @@ model AActControls {
   aaId      String
   controlId String
   createdAt DateTime @default(now())
+  aact      Aact     @relation("AactToAActControls", fields: [aaId], references: [aaID], onDelete: Cascade)
 
   @@unique([aaId, controlId])
   @@index([aaId])
@@ -601,6 +607,7 @@ model AActUsers {
   userRoles         String
   assignmentRemarks String?
   createdAt         DateTime @default(now())
+  aact              Aact     @relation("AactToAActUsers", fields: [aaId], references: [aaID], onDelete: Cascade)
 
   @@unique([aaId, userId])
   @@index([aaId])
@@ -616,6 +623,7 @@ model AActDetails {
   checklists             String?
   activityNotes          String?
   createdAt              DateTime @default(now())
+  aact                   Aact     @relation("AactToAActDetails", fields: [aaId], references: [aaID], onDelete: Cascade)
 
   @@index([aaId])
 }

@@ -77,6 +77,7 @@ export default function ProcessAreasClient({
   requirements,
   deleteSubProcessAction,
   editing,
+  isAdmin,
 }: {
   areas: ProcessArea[];
   standards: string[];
@@ -85,6 +86,7 @@ export default function ProcessAreasClient({
   requirements: Requirement[];
   deleteSubProcessAction: (id: string) => Promise<void>;
   editing: Editing;
+  isAdmin: boolean;
 }) {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addDefaultStandard, setAddDefaultStandard] = useState("");
@@ -101,6 +103,7 @@ export default function ProcessAreasClient({
         subProcesses={subProcesses}
         requirements={requirements}
         deleteSubProcessAction={deleteSubProcessAction}
+        isAdmin={isAdmin}
         onAddClick={(defaultStandard) => {
           setAddDefaultStandard(defaultStandard);
           setIsAddOpen(true);

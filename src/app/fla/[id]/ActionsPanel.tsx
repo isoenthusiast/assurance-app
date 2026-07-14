@@ -39,10 +39,7 @@ function toDateInput(value: string | Date | null | undefined) {
   return new Date(value).toISOString().slice(0, 10);
 }
 
-function formatDate(value: string | Date | null | undefined) {
-  if (!value) return '—';
-  return new Date(value).toLocaleDateString();
-}
+import { formatDate } from '@/lib/formatDate';
 
 export default function ActionsPanel({
   findingId,

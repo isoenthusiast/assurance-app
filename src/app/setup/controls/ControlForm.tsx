@@ -44,10 +44,12 @@ export default function ControlForm({
   processAreas,
   subProcesses,
   editing,
+  onSaved,
 }: {
   processAreas: ProcessArea[];
   subProcesses: SubProcess[];
   editing: Editing;
+  onSaved?: (controlId: string, isNew: boolean) => void;
 }) {
   const [processAreaId, setProcessAreaId] = useState(
     editing?.processAreaId ?? processAreas[0]?.id ?? ""
@@ -151,8 +153,13 @@ export default function ControlForm({
       }
     }
 
-    router.refresh();
-    router.push("/setup/controls");
+    if (onSaved) {
+      onSaved(controlId, !id);
+      setIsOpen(false);
+    } else {
+      router.refresh();
+      router.push("/setup/controls");
+    }
   };
 
   if (!isOpen) {
@@ -173,7 +180,7 @@ export default function ControlForm({
     <div
       className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-slate-900/50 p-6"
       onClick={(e) => {
-        if (e.target === e.currentTarget && !editing) setIsOpen(false);
+        if (e.target === e.currentTarget && (!editing || onSaved)) setIsOpen(false);
       }}
     >
       <form
@@ -182,7 +189,7 @@ export default function ControlForm({
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold text-slate-900">{editing ? "Edit Control" : "Add Control"}</h2>
-          {editing ? (
+          {editing && !onSaved ? (
             <Link
               href="/setup/controls"
               className="text-xl leading-none text-slate-400 hover:text-slate-600"
@@ -603,7 +610,7 @@ export default function ControlForm({
           >
             {editing ? "Save changes" : "Add Control"}
           </button>
-          {editing ? (
+          {editing && !onSaved ? (
             <Link href="/setup/controls" className="text-sm text-slate-500 hover:underline">
               Cancel
             </Link>

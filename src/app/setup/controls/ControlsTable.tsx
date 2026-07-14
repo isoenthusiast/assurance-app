@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { deleteControl } from './actions';
 import DeleteButton from '@/components/DeleteButton';
+import { formatDate } from '@/lib/formatDate';
 
 type Control = {
   id: string;
@@ -330,7 +331,7 @@ export default function ControlsTable({
                 <td className="px-4 py-2 text-slate-600">{c.isHsseCritical ? 'Yes' : '—'}</td>
                 <td className="px-4 py-2 text-slate-600 text-center">{c._count.controlAssignments}</td>
                 <td className="px-4 py-2 text-slate-600">
-                  {latestTest ? new Date(latestTest.assessment.endDate as string | Date).toLocaleDateString() : '—'}
+                  {latestTest ? formatDate(latestTest.assessment.endDate as string | Date) : '—'}
                 </td>
                 <td className="px-4 py-2 text-slate-600">
                   <Link

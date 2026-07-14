@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 import { deleteProcessArea } from "./actions";
@@ -175,6 +176,9 @@ export default async function ProcessAreasPage({
     return { ...sp, _count: { controlSubProcesses: totalControls }, assessmentCount: assessments.length, assessments };
   });
 
+  const session = await auth();
+  const isAdmin = session?.user?.role === "Admin";
+
   return (
     <div className="mx-auto max-w-5xl px-6 py-8">
       <h1 className="text-2xl font-semibold text-slate-900">Process Areas</h1>
@@ -195,6 +199,7 @@ export default async function ProcessAreasPage({
         requirements={requirements}
         deleteSubProcessAction={deleteSubProcess}
         editing={editing}
+        isAdmin={isAdmin}
       />
     </div>
   );

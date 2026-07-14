@@ -127,7 +127,7 @@ export default function AttachmentList({
                 </a>
                 {att.description && <span className="text-slate-400 truncate max-w-[150px]">{att.description}</span>}
                 <span className="text-slate-400">{formatSize(att.fileSize)}</span>
-                <span className="text-slate-400">{new Date(att.uploadDate).toLocaleDateString()}</span>
+                <span className="text-slate-400">{formatDate(att.uploadDate)}</span>
               </div>
               <button onClick={() => handleDelete(att)} className="text-red-500 hover:underline ml-2 shrink-0">✕</button>
             </div>

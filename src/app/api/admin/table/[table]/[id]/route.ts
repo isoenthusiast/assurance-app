@@ -136,8 +136,6 @@ export async function DELETE(
     }
 
     const { table, id } = deleteParams;
-    const url = new URL(request.url);
-    const cascade = url.searchParams.get("cascade") === "true";
 
     if (!id) {
       return NextResponse.json(
@@ -145,6 +143,14 @@ export async function DELETE(
         { status: 400 }
       );
     }
+
+    // ── Assessment: comprehensive cascade + orphan cleanup ──────────
+    if (table === "Assessment") {
+      return await deleteAssessment(id);
+    }
+
+    const url = new URL(request.url);
+    const cascade = url.searchParams.get("cascade") === "true";
 
     // Check for children first
     const childCheck = await checkForChildren(table, id);
@@ -214,6 +220,118 @@ export async function DELETE(
       { status: 500 }
     );
   }
+}
+
+/**
+ * Comprehensive Assessment deletion with cascade + orphan cleanup.
+ * 
+ * Cascade (Prisma): ControlAssignment, Sample, Finding,
+ *   Aact → AActControls / AActUsers / AActDetails, Action
+ * Manual cleanup: AttachmentMapping, Attachment, MapArt2Know
+ */
+async function deleteAssessment(assessmentId: string) {
+  // 1. Collect all child IDs before deletion (for manual cleanup)
+  const assessment = await prisma.assessment.findUnique({
+    where: { id: assessmentId },
+    include: {
+      findings: { select: { id: true } },
+      samples: { select: { id: true } },
+      aacts: { select: { aaID: true } },
+    },
+  });
+
+  if (!assessment) {
+    return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+  }
+
+  const findingIds = assessment.findings.map(f => f.id);
+  const sampleIds = assessment.samples.map(s => s.id);
+  const aactAaIds = assessment.aacts.map(a => a.aaID);
+
+  // Also fetch action IDs linked to these findings
+  let actionIds: string[] = [];
+  if (findingIds.length > 0) {
+    const actions = await (prisma as any).$queryRawUnsafe(
+      `SELECT "id" FROM "Action" WHERE "findingId" = ANY($1::text[])`,
+      findingIds
+    ) as any[];
+    actionIds = (actions || []).map((a: any) => a.id);
+  }
+
+  // Build the list of (destTable, recId) pairs for AttachmentMapping cleanup
+  const orphanPairs: [string, string][] = [];
+  orphanPairs.push(["Assessment", assessmentId]);
+  for (const fid of findingIds) orphanPairs.push(["Finding", fid]);
+  for (const sid of sampleIds) orphanPairs.push(["Sample", sid]);
+  for (const aid of aactAaIds) orphanPairs.push(["Aact", aid]);
+  for (const aid of actionIds) orphanPairs.push(["Action", aid]);
+
+  // 2. Manual cleanup: AttachmentMapping (polymorphic)
+  if (orphanPairs.length > 0) {
+    const placeholders = orphanPairs.map((_, i) => `($${i * 2 + 1}::text, $${i * 2 + 2}::text)`).join(", ");
+    const params: string[] = [];
+    for (const [destTable, recId] of orphanPairs) {
+      params.push(destTable, recId);
+    }
+    // Get attachment IDs that will be orphaned
+    const orphanedAttIds = await (prisma as any).$queryRawUnsafe(
+      `SELECT "attachmentId" FROM "AttachmentMapping"
+       WHERE ("destTable", "recId") IN (${placeholders})`,
+      ...params
+    ) as any[];
+
+    // Delete the AttachmentMapping records
+    await (prisma as any).$queryRawUnsafe(
+      `DELETE FROM "AttachmentMapping"
+       WHERE ("destTable", "recId") IN (${placeholders})`,
+      ...params
+    );
+
+    // 3. Delete orphaned Attachments (those whose only mappings were just deleted)
+    const attIds = (orphanedAttIds || []).map((r: any) => r.attachmentId).filter(Boolean);
+    if (attIds.length > 0) {
+      const uniqueAttIds = [...new Set(attIds)];
+      const attPlaceholders = uniqueAttIds.map((_, i) => `$${i + 1}::text`).join(", ");
+      await (prisma as any).$queryRawUnsafe(
+        `DELETE FROM "Attachment"
+         WHERE "id" = ANY(ARRAY[${attPlaceholders}])
+         AND "id" NOT IN (SELECT "attachmentId" FROM "AttachmentMapping")`,
+        ...uniqueAttIds
+      );
+    }
+  }
+
+  // 4. Manual cleanup: MapArt2Know (polymorphic: artID references any entity)
+  const allEntityIds = [assessmentId, ...findingIds, ...sampleIds, ...aactAaIds, ...actionIds];
+  if (allEntityIds.length > 0) {
+    const mapParams = allEntityIds.map((_, i) => `$${i + 1}::text`).join(", ");
+    await (prisma as any).$queryRawUnsafe(
+      `DELETE FROM "MapArt2Know" WHERE "artID" = ANY(ARRAY[${mapParams}])`,
+      ...allEntityIds
+    );
+  }
+
+  // 5. Delete the Assessment — Prisma cascades the rest
+  //    (ControlAssignment, Sample, Finding→Action, Aact→AActControls/AActUsers/AActDetails)
+  await prisma.assessment.delete({ where: { id: assessmentId } });
+
+  return NextResponse.json({
+    success: true,
+    deleted: {
+      assessmentId,
+      cascadedTables: [
+        "ControlAssignment", "Sample", "Finding", "Aact",
+        "AActControls", "AActUsers", "AActDetails", "Action",
+      ],
+      orphanCleaned: ["AttachmentMapping", "Attachment", "MapArt2Know"],
+      stats: {
+        findings: findingIds.length,
+        samples: sampleIds.length,
+        aacts: aactAaIds.length,
+        actions: actionIds.length,
+      },
+    },
+  });
 }
 
 export async function PUT(
