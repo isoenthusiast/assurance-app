@@ -794,6 +794,7 @@ function ManageCompany({ users }: { users: any[] }) {
   const [companies, setCompanies] = useState<any[]>([]);
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
+  const [assignCompanyId, setAssignCompanyId] = useState<string>("");
   const [companyPage, setCompanyPage] = useState(1);
   const [companyPerPage, setCompanyPerPage] = useState(5);
   const [companyTotalRows, setCompanyTotalRows] = useState(0);
@@ -863,11 +864,11 @@ function ManageCompany({ users }: { users: any[] }) {
   useEffect(() => { loadAssignments(); }, [loadAssignments]);
 
   const assignUserToCompany = async () => {
-    if (!selectedUserId || !selectedCompanyId) { setMsg({ type: "err", text: "Select both a user and a company." }); return; }
+    if (!selectedUserId || !assignCompanyId) { setMsg({ type: "err", text: "Select both a user and a company." }); return; }
     setMsg(null);
     try {
       // Insert into UserCompany junction table
-      const body = { id: `uc_${Date.now()}`, userId: selectedUserId, companyId: selectedCompanyId };
+      const body = { id: `uc_${Date.now()}`, userId: selectedUserId, companyId: assignCompanyId };
       const res = await fetch("/api/admin/table/UserCompany", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1030,7 +1031,7 @@ function ManageCompany({ users }: { users: any[] }) {
               </label>
               <label className="block flex-1 min-w-[180px]">
                 <span className="text-xs text-slate-500">Company</span>
-                <select value={selectedCompanyId} onChange={e => setSelectedCompanyId(e.target.value)}
+                <select value={assignCompanyId} onChange={e => setAssignCompanyId(e.target.value)}
                   className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1 text-sm bg-white">
                   <option value="">— Select Company —</option>
                   {companies.map((c: any) => <option key={c.id} value={c.id}>{c.companyName} ({c.shortName || c.companyID})</option>)}

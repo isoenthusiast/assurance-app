@@ -40,11 +40,14 @@ export async function POST(
       const model = (prisma as any)[camelName];
 
       if (!model) {
-        return NextResponse.json({ error: `Unknown table: ${table}` }, { status: 404 });
-      }
-
-      // ControlAssignment: validate required fields + normalize effective
-      if (table === 'ControlAssignment') {
+        // Raw SQL fallback for models not accessible via Proxy (e.g., UserCompany)
+        const columns = Object.keys(body).map(k => `"${k}"`).join(", ");
+        const placeholders = Object.keys(body).map((_, i) => `$${i + 1}`).join(", ");
+        const values = Object.values(body);
+        const sql = `INSERT INTO "${table}" (${columns}) VALUES (${placeholders}) RETURNING *`;
+        const rows = await (prisma as any).$queryRawUnsafe(sql, ...values);
+        result = Array.isArray(rows) ? rows[0] : rows;
+      } else if (table === 'ControlAssignment') {
         if (!body.assessmentId || !body.controlId) {
           return NextResponse.json(
             { error: 'assessmentId and controlId are required' },

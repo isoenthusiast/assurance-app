@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 14, 2026 (v2.5.0)  
+**Last Updated:** July 14, 2026 (v2.5.1)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.5.1 — UserCompany Assignments & Build Fixes:** Admin Manage Company section now writes to `UserCompany` junction table (not `User.companyId`). All-assignments table shows user↔company mappings sorted by user name with Remove action. Three build failures documented and fixed: TS strict union type on column defs, params destructure scope in GET handler, ProcessArea `_count` type mismatch. Pre-push build verification step added to schema change checklist.
+>
 > **v2.5.0 — Multi-Company Architecture:** Restructured app for multi-company support. Added `companyId` to 8 core tables (Control, ProcessArea, SubProcess, Requirement, Assessment, Attachment, AssessmentTemplate, UserRole). Created `UserCompany` junction table for user↔company access control. Company-scoped assurance model: each company owns its controls, process areas, sub-processes, requirements, assessments, templates, and attachments. Template company "SAMS001" serves as master blueprint (admin-only, invisible to other users). Company selector combobox in header filters all views by selected company. Intelligent control↔requirement mapping via `MapControl2Requirement` with drag-and-drop re-assignment. Process Areas page restructured: Sub-Processes column replaced with Requirements; expandable requirement rows show linked controls with drag-and-drop. Schema change checklist documented to prevent stale admin column views.
 >
 > **v2.4.6 — Standard Table & Requirement-Control Mapping:** Added `Standard` model (6 rows) as canonical standards registry with sequenceNo ordering. Added `MapControl2Requirement` junction table (1,048 mappings) linking Control ⟷ Requirement. `ProcessArea.standardId` (StandardID) FK replaces free-text standard field. Admin Requirements tree derives hierarchy from Standard → ProcessArea tables. Requirements table default-sorted by Req ID ascending (natural sort). Expanded row shows Associated Controls panel.
@@ -335,6 +337,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.5.1 | 2026-07-14 | Admin Manage Company: UserCompany assignments table (sorted, refreshable, removable). Three Railway build fixes (TS strict union, params scope, _count type). Pre-push build verification in checklist. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
 | v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |
 | v2.4.5 | 2026-07-13 | Renamed MRequirement → Requirement. Added Manage Requirements admin panel with hierarchical filter and inline editor. |
