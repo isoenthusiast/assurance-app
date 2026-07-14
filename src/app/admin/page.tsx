@@ -1148,6 +1148,7 @@ function ManageCompany({ users }: { users: any[] }) {
           </div>
         </div>
       )}
+    </div>
   );
 }
 
