@@ -1543,8 +1543,8 @@ function RequirementManager() {
                 <tr>
                   <th className="w-8 px-2 py-1.5 text-left font-medium text-slate-600">#</th>
                   {([
-                    { key: 'reqId', label: 'Req ID', min: 80 },
-                    { key: 'clause', label: 'Clause Content', min: 150 },
+                    { key: 'reqId', label: 'Req ID', min: 80, cls: '' },
+                    { key: 'clause', label: 'Clause Content', min: 150, cls: '' },
                     { key: 'intent', label: 'Intent / Outcome', min: 120, cls: 'hidden lg:table-cell' },
                     { key: 'standard', label: 'Standard', min: 100, cls: 'hidden xl:table-cell' },
                   ] as const).map(col => (
