@@ -122,26 +122,33 @@ async function main() {
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "Standard" (
       "id" TEXT PRIMARY KEY,
-      "standard" TEXT NOT NULL UNIQUE,
+      "standard" TEXT NOT NULL,
       "standardDescription" TEXT,
       "sequenceNo" INTEGER NOT NULL DEFAULT 0,
+      "companyId" TEXT,
       "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     )
   `);
+  // Add composite unique if table was just created (IF NOT EXISTS skips if already present)
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Standard_standard_companyId_key" ON "Standard"("standard", "companyId")`);
   console.log("✅ Created Standard table");
 
-  // Backfill Standard from ProcessArea.standard only
+  // Backfill Standard from ProcessArea.standard only (one-time migration).
+  // WHERE NOT EXISTS prevents duplicates; no ON CONFLICT needed.
+  // NOTE: ON CONFLICT removed because the unique constraint is composite (standard, companyId)
+  // and backfilled rows have companyId=NULL. PostgreSQL treats NULLs as distinct in unique
+  // constraints, so ON CONFLICT would never fire anyway.
   const stdBackfill = await prisma.$executeRawUnsafe(`
-    INSERT INTO "Standard" ("id", "standard", "sequenceNo")
+    INSERT INTO "Standard" ("id", "standard", "sequenceNo", "companyId")
     SELECT DISTINCT
       gen_random_uuid()::text,
       pa.standard,
-      ROW_NUMBER() OVER (ORDER BY MIN(pa."createdAt"))
+      ROW_NUMBER() OVER (ORDER BY MIN(pa."createdAt")),
+      NULL
     FROM "ProcessArea" pa
     WHERE pa.standard IS NOT NULL AND pa.standard != ''
-      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = pa.standard)
+      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = pa.standard AND s."companyId" IS NULL)
     GROUP BY pa.standard
-    ON CONFLICT ("standard") DO NOTHING
   `);
   console.log(`✅ Backfilled Standard table: ${stdBackfill} standards`);
 
