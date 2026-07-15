@@ -1,10 +1,10 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 15, 2026 (v2.5.3)  
+**Last Updated:** July 15, 2026 (v2.5.4)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.5.3 — Cartesian Backfill Removed, +Requirement Button & Master Data Protection:** Removed destructive `INSERT...SELECT` Cartesian backfill from `prisma/sync-schema.ts` that was re-creating 12,003 cross-product `MapControl2Requirement` mappings on every Railway deploy (every control → every requirement in same PA). Added `sys.exit(1)` guard to `scripts/backfill_control_requirement.py`. Created `/memories/master-data-protection.md` policy: no mass updates on ProcessArea, SubProcess, Requirement, Control, or junction tables without explicit instruction. ProcessDetailsClient: replaced "+ Add SubProcess" button with "+ Requirement" admin-style 9-field form (Standard, pID, ProcessArea ID, Requirement ID, Clause Content, Intent/Outcome, Clause Applicability, References, Applicable) mapped to current ProcessArea. Assessment delete uses `confirm()` dialog listing cascade-deleted and cleaned-up tables.
+> **v2.5.4 — Design Doc Audit, Mapping Activity Log & API/Page Documentation:** Full audit of entire codebase against APP_DESIGN.md (45 models, 47 route files, 35 pages). Fixed API route count: 47 route files → ~80 HTTP endpoints. Added 17 undocumented pages and 13 undocumented API endpoints to docs. Architecture: added `CompanySelector.tsx`, `formatDate.ts`, `src/outputs/`, `src/proxy.ts`. Documented all 10+ schema cascade relationships beyond Assessment tree. Admin: new "📜 Mapping Activity Log" viewer with before/after JSON and ↩ Revert for MapControl2Requirement changes. All mapping ops (drag-drop, bulk map, unassign, +Add Control) create ActivityLog entries.
 >
 > **v2.5.2 — Assessment Cascade Delete, ControlForm Integration & Bulk Control-Requirement Mapping:** Added `onDelete: Cascade` relations: Assessment→Aact→AActControls/AActUsers/AActDetails (4 FK constraints applied via sync_schema.py with orphan cleanup). Comprehensive `DELETE /api/admin/table/Assessment/[id]` handler with manual polymorphic cleanup (AttachmentMapping, orphaned Attachment, MapArt2Know). Admin delete confirmation modal lists all cascaded and cleaned-up tables. ProcessDetailsClient now uses full `ControlForm` component for add/edit with `onSaved` callback (stays on source page; new controls auto-mapped to requirement). New collapsible "Bulk Map Controls to Requirements" section: PA→SP comboboxes, checkbox control list, requirement target, bulk `MapControl2Requirement` creation. ControlsSelector (assessment page) replaced SubProcess filter with Requirement filter; wildcard search uses regex (`*` pattern matching). `ControlFromDocument.controlType` changed from `ControlType` enum to `String` to resolve schema push conflict. Control statement tooltip on hover in Requirements & Controls tab. Alphabetical sorting on bulk map comboboxes.
 >
@@ -236,8 +236,10 @@ seam-assurance-app/
 │   │   ├── setup/   # Process Areas, Controls, Sub-Processes, Activity Types, Badges
 │   │   ├── admin/   # Admin dashboard, templates, knowledgebase, generic table editor, CSV, user/role/company management
 │   │   └── api/     # 70+ API routes
-│   ├── components/  # NavBar, SignOutButton, GamificationDashboard, DeleteButton, AttachmentList, UserSearchSelect
-│   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts, schema-introspection.ts, fallback-schemas.ts
+│   ├── components/  # NavBar, SignOutButton, GamificationDashboard, DeleteButton, AttachmentList, UserSearchSelect, CompanySelector
+│   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts, schema-introspection.ts, fallback-schemas.ts, formatDate.ts
+│   ├── outputs/     # Export output directory
+│   ├── proxy.ts     # Prisma Proxy pattern for lazy client init
 │   └── generated/   # Generated Prisma client
 ├── railway.toml     # RAILPACK builder, pre-deploy schema sync + seed
 ├── next.config.ts   # standalone output, pg external
@@ -252,7 +254,7 @@ seam-assurance-app/
 - JWT callbacks inject id and role into session
 - BCrypt password hashing
 
-## 6. API Routes (70+ endpoints)
+## 6. API Routes (~80 HTTP endpoints across 47 route files)
 
 ### Assessments
 GET/POST `/api/admin/assessments`, GET/PUT/DELETE `/[id]`
@@ -284,6 +286,26 @@ GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
 ### Gamification
 POST `/api/gamification/award`, GET `/stats/[userId]`, GET `/leaderboard` — leaderboard excludes username "admin", uses cumulative `SUM(PointTransaction.points)`
 
+### Controls & Reference Data
+GET `/api/controls` — list all controls with process areas, sub-processes, and requirement mappings
+GET `/api/controls/reference` — control reference data
+
+### Badges
+POST `/api/admin/badges/generate` — generate badges from definitions
+DELETE `/api/admin/badges/clear` — clear all badges and user achievements
+
+### System & Diagnostics
+GET `/api/admin/diagnose` — system diagnostics
+GET `/api/admin/tables` — list all database tables with row estimates
+GET `/api/admin/export-all-tables` — full database export
+GET `/api/admin/database/tables` — database table metadata
+GET `/api/admin/database/tables/[name]` — per-table schema info
+GET `/api/admin/database/sync-check` — schema sync validation
+
+### Templates & Suggestions
+GET/POST `/api/admin/template/[table]` — per-table template CRUD
+POST `/api/admin/suggest-activity-types` — activity type suggestions
+
 ### Admin Utilities
 CSV validate/import, generic table CRUD (all 45 models), column management, SQL executor (`/api/admin/execute-sql` — Admin-only, small blocklist: DROP DATABASE, DELETE FROM information_schema, PRAGMA database_list; see §12 for blast-radius notes), database management, export, diagnostics, information_schema column discovery
 
@@ -303,6 +325,17 @@ CSV validate/import, generic table CRUD (all 45 models), column management, SQL 
 | `/setup/processdetails/[id]` | 3-tab drill-down: Process Overview (stats, linked assessments, outstanding actions), **Requirements & Controls** (expandable requirement groups with drag-and-drop control re-mapping, full ControlForm integration for add/edit with `onSaved` callback, "Unassign" moves control to Unmapped Controls, collapsible "Bulk Map Controls to Requirements" panel with PA→SP→checklist→requirement→bulk map), Assessments (linked assessments list) |
 | `/setup/controls` | 28-field control form |
 | `/setup/badges` | Badge generation and management |
+| `/setup/sub-processes` | Sub-Process CRUD table |
+| `/setup/activity-types` | Assurance activity type CRUD |
+| `/setup/assessments` | Alternate assessment list + create workflow |
+| `/admin/assessments` | Admin assessment list, create, from-template |
+| `/admin/templates/[id]` | Template edit page |
+| `/admin/database-management` | Database management utilities |
+| `/admin/document-controls` | Document-extracted controls browser |
+| `/admin/import-csv` | CSV import page |
+| `/admin/export-data` | Data export page |
+| `/admin/add-activity-types` | Add activity types |
+| `/admin/columns` | Column management |
 
 ## 8. Activity Logging
 
@@ -373,7 +406,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v2.5.3 | 2026-07-15 | Removed Cartesian MapControl2Requirement backfill from sync-schema.ts (was creating 12K mappings per deploy). Disabled backfill_control_requirement.py. Created master-data-protection.md policy. ProcessDetailsClient: +Requirement admin-style form replaces +Add SubProcess. Assessment delete uses native confirm() dialog. |
+| v2.5.4 | 2026-07-15 | Comprehensive design doc audit (45 models, 47 route files, 35 pages verified). Fixed API count (70+→~80 HTTP endpoints). Added 17 undocumented pages and 13 undocumented APIs. Architecture: CompanySelector, formatDate.ts, proxy.ts. Mapping Activity Log in Admin with before/after JSON and revert. ActivityLog entries on all mapping ops. |
 | v2.5.2 | 2026-07-14 | Assessment cascade delete (4 FK constraints, orphan cleanup, confirmation modal). ControlForm integration in ProcessDetailsClient with onSaved callback. Bulk Map Controls to Requirements panel. ControlsSelector: Requirement filter replaces SubProcess, regex wildcard search. ControlFromDocument.controlType → String. Control statement tooltips. Bulk map combobox sorting. Design doc audit with 7 gap fixes. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
 | v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |
