@@ -113,23 +113,10 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "MapControl2Requirement_processAreaId_idx" ON "MapControl2Requirement"("processAreaId")`);
   console.log("✅ Created MapControl2Requirement table");
 
-  // Backfill MapControl2Requirement: link Controls to Requirements via shared ProcessArea
-  const mapBackfill = await prisma.$executeRawUnsafe(`
-    INSERT INTO "MapControl2Requirement" ("id", "controlId", "requirementRId", "processAreaId")
-    SELECT DISTINCT
-      gen_random_uuid()::text,
-      c.id,
-      r."rID",
-      pa.id
-    FROM "Control" c
-    JOIN "ProcessArea" pa ON c."processAreaId" = pa.id
-    JOIN "Requirement" r ON r."processAreaId" = pa.id
-    WHERE NOT EXISTS (
-      SELECT 1 FROM "MapControl2Requirement" m
-      WHERE m."controlId" = c.id AND m."requirementRId" = r."rID"
-    )
-  `);
-  console.log(`✅ Backfilled MapControl2Requirement: ${mapBackfill} mappings`);
+  // NOTE: Backfill removed — the INSERT...SELECT Cartesian product was creating
+  // 12,000+ unwanted mappings on every deploy (every control → every requirement in same PA).
+  // Use scripts/map_controls_to_requirements.py for intelligent one-time mapping instead.
+  // See /memories/master-data-protection.md for the full protection policy.
 
   // Create Standard table
   await prisma.$executeRawUnsafe(`
