@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { logActivity, getUsername } from "@/lib/activity-log";
 
 export async function GET(request: Request) {
@@ -10,7 +11,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
+    // Read company filter from cookie
+    let companyWhere: { companyId?: string } = {};
+    try {
+      const cookieStore = await cookies();
+      const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
+      if (selectedCompanyId) companyWhere = { companyId: selectedCompanyId };
+    } catch { /* ignore */ }
+
     const assessments = await prisma.assessment.findMany({
+      where: companyWhere,
       include: {
         activityType: true,
         assessor: { select: { id: true, name: true } },

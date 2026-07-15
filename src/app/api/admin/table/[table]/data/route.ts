@@ -3,6 +3,13 @@ import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getTableSchema } from "@/lib/schema-introspection";
 import { getFallbackSchema } from "@/lib/fallback-schemas";
+import { cookies } from "next/headers";
+
+/** Tables that have a companyId column and should be company-scoped */
+const COMPANY_SCOPED_TABLES = new Set([
+  "Control", "ProcessArea", "SubProcess", "Requirement",
+  "Assessment", "AssessmentTemplate", "Attachment", "UserRole",
+]);
 
 export async function GET(
   request: Request,
@@ -63,6 +70,17 @@ export async function GET(
     url.searchParams.forEach((val, key) => {
       if (key !== "page" && key !== "perPage") where[key] = val;
     });
+
+    // Inject companyId filter for company-scoped tables
+    if (COMPANY_SCOPED_TABLES.has(table)) {
+      try {
+        const cookieStore = await cookies();
+        const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
+        if (selectedCompanyId && !where.companyId) {
+          where.companyId = selectedCompanyId;
+        }
+      } catch { /* cookies() may throw in edge cases */ }
+    }
 
     try {
       const model = (prisma as any)[camelName];
@@ -249,6 +267,14 @@ export async function POST(
         const camelName = table.charAt(0).toLowerCase() + table.slice(1);
         const model = (prisma as any)[camelName];
         if (!model) return NextResponse.json({ error: 'Invalid table' }, { status: 400 });
+        // Auto-inject companyId for company-scoped tables
+        if (COMPANY_SCOPED_TABLES.has(table) && !body.companyId) {
+          try {
+            const cookieStore = await cookies();
+            const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
+            if (selectedCompanyId) body.companyId = selectedCompanyId;
+          } catch { /* ignore */ }
+        }
         result = await model.create({ data: body });
         break;
       }
