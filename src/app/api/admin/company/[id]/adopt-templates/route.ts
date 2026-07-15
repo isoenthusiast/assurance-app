@@ -22,18 +22,24 @@ export async function POST(
   try {
     const session = await auth();
     if (!session?.user || (session.user as any).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+      const resp = NextResponse.json({ error: "Not authorized" }, { status: 403 });
+      resp.cookies.set('status_message', 'Not authorized to adopt templates', { path: '/', maxAge: 60 });
+      return resp;
     }
 
     // Get target company info
     const targetCompany = await prisma.company.findUnique({ where: { id: targetCompanyId } });
     if (!targetCompany) {
-      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+      const resp = NextResponse.json({ error: "Company not found" }, { status: 404 });
+      resp.cookies.set('status_message', 'Company not found', { path: '/', maxAge: 60 });
+      return resp;
     }
 
     // Don't copy into SAMS001 itself
     if (targetCompany.companyID === "SAMS001") {
-      return NextResponse.json({ error: "Cannot adopt templates into SAMS001 (it IS the master)" }, { status: 400 });
+      const resp = NextResponse.json({ error: "Cannot adopt templates into SAMS001 (it IS the master)" }, { status: 400 });
+      resp.cookies.set('status_message', 'Cannot adopt templates into SAMS001', { path: '/', maxAge: 60 });
+      return resp;
     }
 
     // Get SAMS001 company
@@ -41,7 +47,9 @@ export async function POST(
       `SELECT id FROM "Company" WHERE "companyID" = 'SAMS001' LIMIT 1`
     ) as any[];
     if (!sams || sams.length === 0) {
-      return NextResponse.json({ error: "Master template company SAMS001 not found" }, { status: 500 });
+      const resp = NextResponse.json({ error: "Master template company SAMS001 not found" }, { status: 500 });
+      resp.cookies.set('status_message', 'Master template company SAMS001 not found', { path: '/', maxAge: 60 });
+      return resp;
     }
     const samsId = sams[0].id;
 
@@ -51,10 +59,12 @@ export async function POST(
       targetCompanyId
     ) as any[];
     if (existingStandards[0]?.cnt > 0) {
-      return NextResponse.json(
+      const resp = NextResponse.json(
         { error: "Company already has template data. Delete existing records first or use a different company.", alreadyAdopted: true },
         { status: 409 }
       );
+      resp.cookies.set('status_message', `${targetCompany.companyID} already has template data`, { path: '/', maxAge: 60 });
+      return resp;
     }
 
     const shortName = (targetCompany.shortName || targetCompany.companyID).toUpperCase();
@@ -265,20 +275,25 @@ export async function POST(
 
       await (prisma as any).$queryRawUnsafe(`COMMIT`);
 
-      return NextResponse.json({
+      const parts = [`${results.standards || 0} standards`, `${results.processAreas || 0} process areas`, `${results.controls || 0} controls`, `${results.requirements || 0} requirements`, `${results.assessmentTemplates || 0} templates`];
+      const resp = NextResponse.json({
         success: true,
         message: `Adopted templates from SAMS001 into ${targetCompany.companyID}`,
         results,
       });
+      resp.cookies.set('status_message', `Templates adopted for ${targetCompany.companyID}: ${parts.join(', ')}`, { path: '/', maxAge: 60 });
+      return resp;
     } catch (err: any) {
       await (prisma as any).$queryRawUnsafe(`ROLLBACK`);
       throw err;
     }
   } catch (error: any) {
     console.error("Adopt templates error:", error);
-    return NextResponse.json(
+    const resp = NextResponse.json(
       { error: error.message || "Failed to adopt templates" },
       { status: 500 }
     );
+    resp.cookies.set('status_message', `Template adoption failed: ${error.message || 'Unknown error'}`, { path: '/', maxAge: 60 });
+    return resp;
   }
 }
