@@ -1,7 +1,21 @@
 """
+⚠️ DANGER — DO NOT RUN ⚠️
+
 Backfill MapControl2Requirement: maps Controls to Requirements via shared ProcessArea.
-One requirement can have many controls; one control can map to many requirements.
+THIS SCRIPT DOES A CARTESIAN PRODUCT — it maps EVERY control to EVERY requirement
+in the same ProcessArea. This is almost never what you want.
+
+Use scripts/map_controls_to_requirements.py instead, which uses NLP-based
+intelligent scoring to map each control to the single best matching requirement.
+
+If you need to re-enable this, remove the sys.exit below.
 """
+import sys
+print("⚠️ This script does a CARTESIAN PRODUCT (every control → every requirement in PA).")
+print("   Use scripts/map_controls_to_requirements.py instead for intelligent mapping.")
+print("   If you're sure, edit this file and remove the sys.exit().")
+sys.exit(1)
+
 import psycopg2
 import os
 

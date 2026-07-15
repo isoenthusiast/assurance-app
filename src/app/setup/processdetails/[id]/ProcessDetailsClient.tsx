@@ -192,8 +192,11 @@ export default function ProcessDetailsClient({
   const [deleteControlSaving, setDeleteControlSaving] = useState(false);
   const [unassignControlTarget, setUnassignControlTarget] = useState<{ id: string; name: string } | null>(null);
 
-  // ── Tab 2: Add SubProcess modal state ──
-  const [showAddSubProcess, setShowAddSubProcess] = useState(false);
+  // ── Tab 2: Add Requirement modal state ──
+  const [showAddRequirement, setShowAddRequirement] = useState(false);
+  const [addReqForm, setAddReqForm] = useState<Record<string, any>>({});
+  const [addReqSaving, setAddReqSaving] = useState(false);
+  const [addReqMsg, setAddReqMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   // ── Linked Sub-Process filter state ──
   const [allProcessAreas, setAllProcessAreas] = useState<any[]>([]);
@@ -702,6 +705,39 @@ export default function ProcessDetailsClient({
     }
   };
 
+  // ── Add Requirement (Admin-style inline form) ──
+  const handleAddRequirement = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAddReqSaving(true);
+    setAddReqMsg(null);
+    try {
+      // Generate next rID
+      const res = await fetch("/api/admin/table/Requirement/data?perPage=3000");
+      if (!res.ok) throw new Error("Failed to fetch requirements");
+      const data = await res.json();
+      const maxRId = Math.max(...(data.rows || []).map((r: any) => r.rId ?? r.rID ?? 0), 0);
+      const newRId = maxRId + 1;
+      const body = { ...addReqForm, rId: newRId, rID: newRId, createdAt: new Date().toISOString() };
+
+      const saveRes = await fetch("/api/admin/table/Requirement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!saveRes.ok) {
+        const err = await saveRes.json();
+        throw new Error(err.error || "Failed to add requirement");
+      }
+      setAddReqMsg({ type: "ok", text: `Requirement added (rID=${newRId}).` });
+      setShowAddRequirement(false);
+      router.refresh();
+    } catch (err: any) {
+      setAddReqMsg({ type: "err", text: err.message });
+    } finally {
+      setAddReqSaving(false);
+    }
+  };
+
   const handleCreateAssessment = async () => {
     if (!newAssessmentName.trim()) {
       setAssessmentError("Assessment name is required");
@@ -983,10 +1019,24 @@ export default function ProcessDetailsClient({
               {reqData.reduce((sum, r) => sum + r.controls.length, 0)} linked control(s)
             </p>
             <button
-              onClick={() => setShowAddSubProcess(true)}
+              onClick={() => {
+                setAddReqForm({
+                  standard: processArea.standard || "",
+                  pId: processArea.pId || "",
+                  processAreaId: processArea.id,
+                  requirementId: "",
+                  clauseContent: "",
+                  intentOutcome: "",
+                  clauseApplicability: "",
+                  references: "",
+                  applicable: true,
+                });
+                setAddReqMsg(null);
+                setShowAddRequirement(true);
+              }}
               className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
             >
-              + Add SubProcess
+              + Requirement
             </button>
           </div>
           {reqData.length === 0 ? (
@@ -1747,40 +1797,26 @@ export default function ProcessDetailsClient({
         </div>
       )}
 
-      {/* ─── ADD SUBPROCESS FORM ──────────────────────────────────────── */}
+      {/* ─── ADD REQUIREMENT FORM ──────────────────────────────────────── */}
 
-      {showAddSubProcess && (
+      {showAddRequirement && (
         <div
           className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-6"
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowAddSubProcess(false);
+            if (e.target === e.currentTarget) setShowAddRequirement(false);
           }}
         >
           <form
-            onSubmit={async (e: React.FormEvent<HTMLFormElement>) => {
-              e.preventDefault();
-              const fd = new FormData(e.currentTarget);
-              await fetch("/api/admin/table/SubProcess", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  name: fd.get("name")?.toString() ?? "",
-                  description: fd.get("description")?.toString() || null,
-                  processAreaId: fd.get("processAreaId")?.toString() ?? "",
-                }),
-              });
-              setShowAddSubProcess(false);
-              router.refresh();
-            }}
-            className="my-8 w-full max-w-md space-y-3 rounded border border-slate-200 bg-white p-5 shadow-xl"
+            onSubmit={handleAddRequirement}
+            className="my-8 w-full max-w-2xl space-y-4 rounded border border-slate-200 bg-white p-6 shadow-xl"
           >
             <div className="flex items-center justify-between">
-              <h2 className="font-medium text-slate-900">
-                Add Sub-Process to {processArea.name}
+              <h2 className="text-lg font-semibold text-slate-900">
+                Add Requirement — {processArea.name}
               </h2>
               <button
                 type="button"
-                onClick={() => setShowAddSubProcess(false)}
+                onClick={() => setShowAddRequirement(false)}
                 className="text-xl leading-none text-slate-400 hover:text-slate-600"
                 aria-label="Close"
               >
@@ -1788,36 +1824,102 @@ export default function ProcessDetailsClient({
               </button>
             </div>
 
+            {addReqMsg && (
+              <div className={`rounded px-3 py-2 text-xs ${addReqMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+                {addReqMsg.text}
+              </div>
+            )}
+
             <input type="hidden" name="processAreaId" value={processArea.id} />
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Name</label>
-              <input
-                name="name"
-                required
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-sm font-medium text-slate-700">Description</label>
-              <textarea
-                name="description"
-                rows={2}
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-xs text-slate-500">Standard</span>
+                <input
+                  value={addReqForm.standard ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, standard: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">pID</span>
+                <input
+                  value={addReqForm.pId ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, pId: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Process Area ID</span>
+                <input value={addReqForm.processAreaId ?? ""} disabled className="mt-0.5 w-full rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-sm font-mono text-slate-400" />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Requirement ID</span>
+                <input
+                  value={addReqForm.requirementId ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, requirementId: e.target.value }))}
+                  placeholder={`e.g., ${processArea.name.replace(/ .*/, "")} - X`}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm font-mono"
+                />
+              </label>
+              <label className="block col-span-2">
+                <span className="text-xs text-slate-500">Clause Content</span>
+                <textarea
+                  value={addReqForm.clauseContent ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, clauseContent: e.target.value }))}
+                  rows={3}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label className="block col-span-2">
+                <span className="text-xs text-slate-500">Intent / Outcome</span>
+                <textarea
+                  value={addReqForm.intentOutcome ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, intentOutcome: e.target.value }))}
+                  rows={2}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label className="block col-span-2">
+                <span className="text-xs text-slate-500">Clause Applicability</span>
+                <input
+                  value={addReqForm.clauseApplicability ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, clauseApplicability: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">References</span>
+                <input
+                  value={addReqForm.references ?? ""}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, references: e.target.value }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-500">Applicable</span>
+                <select
+                  value={addReqForm.applicable ? "true" : "false"}
+                  onChange={e => setAddReqForm((f: any) => ({ ...f, applicable: e.target.value === "true" }))}
+                  className="mt-0.5 w-full rounded border border-slate-300 px-2 py-1.5 text-sm bg-white"
+                >
+                  <option value="true">Yes</option>
+                  <option value="false">No</option>
+                </select>
+              </label>
             </div>
 
             <div className="flex items-center gap-3 pt-1">
               <button
                 type="submit"
-                className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+                disabled={addReqSaving}
+                className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700 disabled:opacity-50"
               >
-                Add
+                {addReqSaving ? "Saving..." : "Add Requirement"}
               </button>
               <button
                 type="button"
-                onClick={() => setShowAddSubProcess(false)}
+                onClick={() => setShowAddRequirement(false)}
                 className="text-sm text-slate-500 hover:underline"
               >
                 Cancel
