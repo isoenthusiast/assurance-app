@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 15, 2026 (v2.6.0)  
+**Last Updated:** July 15, 2026 (v2.6.1)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.6.1 — Composite Unique Constraints & Template Adoption Fixes:** Changed 4 single-column `@unique` to `@@unique([field, companyId])` for multi-company isolation: `Standard.standard`, `ProcessArea.name`, `AssessmentTemplate.name`, `UserRole.uRoleName`. Added `ON CONFLICT DO NOTHING` to all 10 INSERT statements in adopt-templates API to prevent duplicate key violations from name-based ID remapping. Full audit: all company-scoped tables now use composite uniqueness.
+>
 > **v2.6.0 — Multi-Company Isolation & Template Adoption:** Full company-scoped data isolation across all pages and APIs. `src/lib/company-context.ts` with `getCompanyFilter()`. All pages + APIs filter by selected company cookie. SAMS001 admin-only gating. Standard table has companyId. `POST /api/admin/company/[id]/adopt-templates` duplicates SAMS001 master data (Standard→PA→SP→Req→Control + Templates + junctions) with ID remapping. Admin: "📋 Adopt Templates" button.
 >
 > **v2.5.4 — Design Doc Audit, Mapping Activity Log:** Full codebase audit (45 models, 47 route files, 35 pages). Fixed API count. Added 17 undocumented pages + 13 APIs. Mapping Activity Log with revert.","newString":"**Last Updated:** July 15, 2026 (v2.6.0)"  
@@ -412,7 +414,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v2.6.0 | 2026-07-15 | Multi-company isolation: company-context.ts, all pages + APIs filter by cookie, SAMS001 admin gating, Standard.companyId. Template adoption API copies SAMS001→target company (10 tables with FK remapping). Admin: "📋 Adopt Templates" button. |
+| v2.6.1 | 2026-07-15 | Composite unique constraints on 4 company-scoped tables (Standard, ProcessArea, AssessmentTemplate, UserRole). All 10 adopt-template INSERTs have ON CONFLICT DO NOTHING. |
 | v2.5.2 | 2026-07-14 | Assessment cascade delete (4 FK constraints, orphan cleanup, confirmation modal). ControlForm integration in ProcessDetailsClient with onSaved callback. Bulk Map Controls to Requirements panel. ControlsSelector: Requirement filter replaces SubProcess, regex wildcard search. ControlFromDocument.controlType → String. Control statement tooltips. Bulk map combobox sorting. Design doc audit with 7 gap fixes. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
 | v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |
