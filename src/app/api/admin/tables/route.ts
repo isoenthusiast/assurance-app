@@ -8,6 +8,10 @@ export async function GET() {
     if (!session?.user || session.user.role !== "Admin") {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
+
+    // Refresh PostgreSQL statistics so n_live_tup is accurate (avoid stale 0 counts)
+    await prisma.$executeRawUnsafe(`ANALYZE`);
+
     const tables = await prisma.$queryRawUnsafe<
       Array<{ table_name: string; row_estimate: number }>
     >(`

@@ -44,7 +44,6 @@ export async function GET(
           type: config.type,
         }));
       }
-      // If both fail, columns stays empty — we'll derive from row data below
     }
 
     // ControlAssignment gets a computed "ControlID" display column
@@ -61,10 +60,9 @@ export async function GET(
     let rows: any[] = [];
     let totalRows = 0;
 
-    // Generic fetch — works for any Prisma model
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
 
-    // Build optional where clause from query params (e.g. ?controlId=xxx)
+    // Build optional where clause from query params
     const url = new URL(request.url);
     const where: Record<string, string> = {};
     url.searchParams.forEach((val, key) => {
@@ -85,8 +83,6 @@ export async function GET(
     try {
       const model = (prisma as any)[camelName];
       if (!model) {
-        // Fallback: query via raw SQL for tables not in the Prisma client (e.g., new models)
-        // Query columns from information_schema
         if (columns.length === 0) {
           const dbCols = await (prisma as any).$queryRawUnsafe(
             `SELECT column_name, data_type FROM information_schema.columns WHERE table_schema = 'public' AND table_name = $1 ORDER BY ordinal_position`,
@@ -103,7 +99,6 @@ export async function GET(
             }));
           }
         }
-        // Query rows via raw SQL
         const quotedTable = `"${table}"`;
         const rawRows = await (prisma as any).$queryRawUnsafe(
           `SELECT * FROM ${quotedTable} LIMIT 1000`
@@ -117,7 +112,6 @@ export async function GET(
         totalRows = rows.length;
       }
 
-      // ControlAssignment: resolve controlRef/name into a human-readable ControlID
       if (table === 'ControlAssignment') {
         const assignments = await prisma.controlAssignment.findMany({
           include: { control: { select: { controlRef: true, name: true } } },
@@ -137,7 +131,6 @@ export async function GET(
       console.error(`Error fetching ${table}:`, err.message);
     }
 
-    // Prefer row-derived columns over stale DMMF — always accurate
     if (rows.length > 0) {
       const sample = rows[0];
       columns = Object.keys(sample).map((key) => ({
@@ -149,7 +142,6 @@ export async function GET(
       }));
     }
 
-    // Final fallback: query information_schema directly for any table with 0 rows
     if (columns.length === 0) {
       try {
         const dbColumns = await (prisma as any).$queryRawUnsafe(
@@ -166,16 +158,14 @@ export async function GET(
                 : 'String',
           }));
         }
-      } catch { /* information_schema fallback failed — columns stays empty */ }
+      } catch { }
     }
 
-    // ControlAssignment: ensure ControlID display column is after controlId
     if (table === 'ControlAssignment' && !columns.some((c) => c.name === 'ControlID')) {
       const idx = columns.findIndex((c) => c.name === 'controlId');
       columns.splice(idx >= 0 ? idx + 1 : columns.length, 0, { name: 'ControlID', type: 'String' });
     }
 
-    // Pagination support
     const page = parseInt(url.searchParams.get("page") || "1");
     const perPage = parseInt(url.searchParams.get("perPage") || "50");
     const start = (page - 1) * perPage;

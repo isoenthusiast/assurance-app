@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 15, 2026 (v2.6.1)  
+**Last Updated:** July 16, 2026 (v2.6.2)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.6.2 — Admin Data API Fix & StatusBar Component:** Fixed critical 404 bug on `/api/admin/table/[table]/data` — all table data pages were returning 404 due to stale Turbopack compilation (route file existed but Next.js couldn't resolve it). Resolution: incremental file re-save forced proper recompilation. Also fixed `/api/admin/tables` row counts: replaced stale `pg_stat_user_tables.n_live_tup` estimates with `ANALYZE`-refreshed counts. Added `StatusBar` client component (`src/components/StatusBar.tsx`) — polls `status_message` cookie every 3s, displays fixed bottom bar with pulsing indicator, auto-hides after 10s or on click. Wired `adopt-templates` API to set `status_message` cookie on all 7 response paths (success + all error codes). Added `<StatusBar />` to root layout for global visibility. Lessons learned: Turbopack route compilation can silently fail; `pg_stat_user_tables` estimates are unreliable after DB restores; `Promise.all` with 45 `COUNT(*)` queries exhausts connection pool.
+>
 > **v2.6.1 — Composite Unique Constraints & Template Adoption Fixes:** Changed 4 single-column `@unique` to `@@unique([field, companyId])` for multi-company isolation: `Standard.standard`, `ProcessArea.name`, `AssessmentTemplate.name`, `UserRole.uRoleName`. Added `ON CONFLICT DO NOTHING` to all 10 INSERT statements in adopt-templates API to prevent duplicate key violations from name-based ID remapping. Full audit: all company-scoped tables now use composite uniqueness.
 >
 > **v2.6.0 — Multi-Company Isolation & Template Adoption:** Full company-scoped data isolation across all pages and APIs. `src/lib/company-context.ts` with `getCompanyFilter()`. All pages + APIs filter by selected company cookie. SAMS001 admin-only gating. Standard table has companyId. `POST /api/admin/company/[id]/adopt-templates` duplicates SAMS001 master data (Standard→PA→SP→Req→Control + Templates + junctions) with ID remapping. Admin: "📋 Adopt Templates" button.
@@ -414,6 +416,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.6.2 | 2026-07-16 | Fixed 404 on all /api/admin/table/[table]/data routes (stale Turbopack compilation). Fixed /api/admin/tables row counts (ANALYZE before pg_stat_user_tables). Added StatusBar component with status_message cookie polling. Wired adopt-templates API to set status cookie on all 7 response paths. |
 | v2.6.1 | 2026-07-15 | Composite unique constraints on 4 company-scoped tables (Standard, ProcessArea, AssessmentTemplate, UserRole). All 10 adopt-template INSERTs have ON CONFLICT DO NOTHING. |
 | v2.5.2 | 2026-07-14 | Assessment cascade delete (4 FK constraints, orphan cleanup, confirmation modal). ControlForm integration in ProcessDetailsClient with onSaved callback. Bulk Map Controls to Requirements panel. ControlsSelector: Requirement filter replaces SubProcess, regex wildcard search. ControlFromDocument.controlType → String. Control statement tooltips. Bulk map combobox sorting. Design doc audit with 7 gap fixes. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
