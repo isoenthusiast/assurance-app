@@ -831,6 +831,7 @@ function ManageCompany({ users }: { users: any[] }) {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({ companyID: "", companyName: "", referenceID: "", shortName: "" });
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [adopting, setAdopting] = useState(false);
   const [submode, setSubmode] = useState<"select" | "add">("select");
   // UserCompany assignments for selected company
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -937,6 +938,19 @@ function ManageCompany({ users }: { users: any[] }) {
     } catch { /* ignore */ }
   };
 
+  const adoptTemplates = async () => {
+    if (!selectedCompanyId) return;
+    if (!confirm("Copy ALL master templates from SAMS001 into this company?\n\nTables: Standard, ProcessArea, SubProcess, Requirement, Control, AssessmentTemplate\n\nThis may take a moment. Continue?")) return;
+    setAdopting(true); setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/company/${selectedCompanyId}/adopt-templates`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setMsg({ type: "ok", text: `Templates adopted successfully.` });
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+    finally { setAdopting(false); }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2.5 border-b border-slate-200 font-semibold text-slate-900 text-sm">🏢 Manage Company</div>
@@ -1034,6 +1048,12 @@ function ManageCompany({ users }: { users: any[] }) {
                 <button onClick={saveCompany} className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
                   {submode === "add" ? "Create Company" : "Save Changes"}
                 </button>
+                {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && (
+                  <button onClick={adoptTemplates} disabled={adopting}
+                    className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
+                    {adopting ? "Adopting…" : "📋 Adopt Templates"}
+                  </button>
+                )}
                 {submode === "select" && (
                   <button onClick={() => { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }}
                     className="rounded border px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>

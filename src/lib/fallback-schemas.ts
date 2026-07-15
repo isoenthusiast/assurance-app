@@ -23,6 +23,7 @@ const FALLBACK_SCHEMAS: Record<
     "standard":            { type: "String",   required: true,  isId: false },
     "standardDescription": { type: "String",   required: false, isId: false },
     "sequenceNo":          { type: "Int",      required: true,  isId: false },
+    "companyId":           { type: "String",   required: false, isId: false },
     "createdAt":           { type: "DateTime", required: true,  isId: false },
   },
   "Requirement": {

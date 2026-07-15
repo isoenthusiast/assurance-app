@@ -35,6 +35,8 @@ export default function ProcessHealthDashboard({
   assessments: AssessmentInProgress[];
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [sectionOpen, setSectionOpen] = useState(true);
+  const [assessmentsOpen, setAssessmentsOpen] = useState(true);
 
   if (processes.length === 0) {
     return (
@@ -51,9 +53,6 @@ export default function ProcessHealthDashboard({
     if (!grouped[std]) grouped[std] = [];
     grouped[std].push(p);
   }
-
-  const [sectionOpen, setSectionOpen] = useState(true);
-  const [assessmentsOpen, setAssessmentsOpen] = useState(true);
 
   const toggle = (std: string) => setExpanded(prev => ({ ...prev, [std]: !prev[std] }));
 
