@@ -224,8 +224,8 @@ export async function POST(
 
       // ── 8. Copy AssessmentTemplates ──
       await (prisma as any).$queryRawUnsafe(`
-        INSERT INTO "AssessmentTemplate" ("id", "name", "description", "companyId", "createdAt")
-        SELECT gen_random_uuid()::text, "name", "description", $1, NOW()
+        INSERT INTO "AssessmentTemplate" ("id", "name", "description", "companyId", "createdAt", "updatedAt")
+        SELECT gen_random_uuid()::text, "name", "description", $1, NOW(), NOW()
         FROM "AssessmentTemplate" WHERE "companyId" = $2
         ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
