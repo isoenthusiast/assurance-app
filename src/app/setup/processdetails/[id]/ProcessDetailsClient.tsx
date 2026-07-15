@@ -349,6 +349,37 @@ export default function ProcessDetailsClient({
     });
   };
 
+  // ── Activity Log helper for control-requirement mapping changes ──
+  const logMappingChange = async (
+    mappingId: string,
+    controlId: string,
+    controlName: string,
+    oldReqRId: number | null,
+    oldReqId: string,
+    newReqRId: number,
+    newReqId: string
+  ) => {
+    const beforeData = JSON.stringify(oldReqRId
+      ? { requirementRId: oldReqRId, requirementId: oldReqId, controlId, controlName }
+      : { mapped: false, controlId, controlName });
+    const afterData = JSON.stringify({ requirementRId: newReqRId, requirementId: newReqId, controlId, controlName });
+    await fetch("/api/admin/table/ActivityLog", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        description: `Control→Requirement: ${controlName.slice(0,60)} → ${newReqId}`,
+        activityType: "MapControl2Requirement",
+        username: "admin",
+        refTable: "MapControl2Requirement",
+        refRecord: mappingId,
+        beforeData,
+        afterData,
+        createdAt: new Date().toISOString(),
+      }),
+    }).catch(() => {}); // fire-and-forget
+  };
+
   const handleDropControl = async (ctrlId: string, targetReqRId: number) => {
     if (!ctrlId) return;
     // Find source requirement
@@ -381,6 +412,12 @@ export default function ProcessDetailsClient({
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ requirementRId: targetReqRId }),
           });
+          // Log the mapping change
+          logMappingChange(
+            existing.id, ctrlId, control.name,
+            sourceReq.rId, sourceReq.requirementId,
+            targetReqRId, reqData.find(r => r.rId === targetReqRId)?.requirementId || ""
+          );
         }
       }
       router.refresh();
@@ -646,11 +683,19 @@ export default function ProcessDetailsClient({
       const mapping = (mapData.rows || []).find((r: any) => r.controlId === unassignControlTarget.id);
 
       if (mapping) {
+        const oldReqRId = mapping.requirementRId;
+        const oldReq = (reqData.rows || []).find((r: any) => r.rId === oldReqRId || r.rID === oldReqRId);
         await fetch(`/api/admin/table/MapControl2Requirement/${mapping.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ requirementRId: unmappedReq.rId ?? unmappedReq.rID }),
         });
+        // Log the unassign
+        logMappingChange(
+          mapping.id, unassignControlTarget.id, unassignControlTarget.name,
+          oldReqRId, oldReq?.requirementId || "",
+          unmappedReq.rId ?? unmappedReq.rID, "Unmapped Controls"
+        );
       }
       setUnassignControlTarget(null);
       router.refresh();
@@ -674,23 +719,32 @@ export default function ProcessDetailsClient({
         if (!res.ok) continue;
         const data = await res.json();
         const existing = (data.rows || []).find((r: any) => r.controlId === ctrlId);
+        const ctrlName = bulkMapControls.find(c => c.id === ctrlId)?.name || ctrlId;
+        const targetReqName = reqData.find(r => r.rId === bulkMapTargetReqId)?.requirementId || "";
         if (existing) {
           await fetch(`/api/admin/table/MapControl2Requirement/${existing.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ requirementRId: bulkMapTargetReqId, processAreaId: bulkMapPA }),
           });
+          // Log: get old requirement ID
+          const oldReq = reqData.find(r => r.rId === existing.requirementRId);
+          logMappingChange(existing.id, ctrlId, ctrlName,
+            existing.requirementRId, oldReq?.requirementId || "",
+            bulkMapTargetReqId, targetReqName);
         } else {
+          const newId = `m2r_${Date.now()}_${ctrlId.slice(-6)}`;
           await fetch("/api/admin/table/MapControl2Requirement/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              id: `m2r_${Date.now()}_${ctrlId.slice(-6)}`,
+              id: newId,
               controlId: ctrlId,
               requirementRId: bulkMapTargetReqId,
               processAreaId: bulkMapPA,
             }),
           });
+          logMappingChange(newId, ctrlId, ctrlName, null, "", bulkMapTargetReqId, targetReqName);
         }
         mapped++;
       }
@@ -1973,17 +2027,21 @@ export default function ProcessDetailsClient({
         editing={cfEditing?.id ? cfEditing : null}
         onSaved={async (controlId, isNew) => {
           if (isNew && addControlReqRId) {
-            // New control created from requirement — map to that requirement
+            const mappingId = `m2r_${Date.now()}`;
             await fetch("/api/admin/table/MapControl2Requirement/data", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({
-                id: `m2r_${Date.now()}`,
+                id: mappingId,
                 controlId,
                 requirementRId: addControlReqRId,
                 processAreaId: processArea.id,
               }),
             }).catch(() => {});
+            // Log the new mapping
+            const ctrlName = cfEditing?.name || controlId;
+            const targetReq = reqData.find(r => r.rId === addControlReqRId);
+            logMappingChange(mappingId, controlId, ctrlName, null, "", addControlReqRId, targetReq?.requirementId || "");
             setAddControlReqRId(null);
           }
           setCfEditing(null);

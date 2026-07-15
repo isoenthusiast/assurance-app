@@ -1,9 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 14, 2026 (v2.5.2)  
+**Last Updated:** July 15, 2026 (v2.5.3)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
+> **v2.5.3 — Cartesian Backfill Removed, +Requirement Button & Master Data Protection:** Removed destructive `INSERT...SELECT` Cartesian backfill from `prisma/sync-schema.ts` that was re-creating 12,003 cross-product `MapControl2Requirement` mappings on every Railway deploy (every control → every requirement in same PA). Added `sys.exit(1)` guard to `scripts/backfill_control_requirement.py`. Created `/memories/master-data-protection.md` policy: no mass updates on ProcessArea, SubProcess, Requirement, Control, or junction tables without explicit instruction. ProcessDetailsClient: replaced "+ Add SubProcess" button with "+ Requirement" admin-style 9-field form (Standard, pID, ProcessArea ID, Requirement ID, Clause Content, Intent/Outcome, Clause Applicability, References, Applicable) mapped to current ProcessArea. Assessment delete uses `confirm()` dialog listing cascade-deleted and cleaned-up tables.
+>
 > **v2.5.2 — Assessment Cascade Delete, ControlForm Integration & Bulk Control-Requirement Mapping:** Added `onDelete: Cascade` relations: Assessment→Aact→AActControls/AActUsers/AActDetails (4 FK constraints applied via sync_schema.py with orphan cleanup). Comprehensive `DELETE /api/admin/table/Assessment/[id]` handler with manual polymorphic cleanup (AttachmentMapping, orphaned Attachment, MapArt2Know). Admin delete confirmation modal lists all cascaded and cleaned-up tables. ProcessDetailsClient now uses full `ControlForm` component for add/edit with `onSaved` callback (stays on source page; new controls auto-mapped to requirement). New collapsible "Bulk Map Controls to Requirements" section: PA→SP comboboxes, checkbox control list, requirement target, bulk `MapControl2Requirement` creation. ControlsSelector (assessment page) replaced SubProcess filter with Requirement filter; wildcard search uses regex (`*` pattern matching). `ControlFromDocument.controlType` changed from `ControlType` enum to `String` to resolve schema push conflict. Control statement tooltip on hover in Requirements & Controls tab. Alphabetical sorting on bulk map comboboxes.
 >
 > **v2.5.1 — UserCompany Assignments & API Fixes:** Admin Manage Company section now writes to `UserCompany` junction table (not `User.companyId`). All-assignments table shows user↔company mappings sorted by user name with Remove action. Fixed shared state collision between company editor and assignment form (`assignCompanyId` separate from `selectedCompanyId`). Added raw SQL INSERT fallback to POST `/api/admin/table/[table]` for models not in Prisma proxy (resolved "Unknown table: UserCompany" error). Documented pre-push build verification step in schema change checklist.
@@ -339,6 +341,7 @@ startCommand = "npm run start"
 - Railway PostgreSQL plugin auto-provisions database
 - Internal: `postgres.railway.internal:5432`, Public: `hayabusa.proxy.rlwy.net:54471`
 - Schema sync via direct SQL (ALTER/CREATE IF NOT EXISTS) in `prisma/sync-schema.ts` — **not** Prisma Migrate (no `_prisma_migrations` table). Dev schema changes must be added to `sync-schema.ts` to propagate to production.
+- ⚠️ **CRITICAL**: `sync-schema.ts` runs on **every deploy**. Never include data backfills (INSERT...SELECT) — they will re-execute on every push. Use CREATE TABLE IF NOT EXISTS and CREATE INDEX IF NOT EXISTS only. One-time data operations belong in standalone scripts under `scripts/`, not deploy hooks.
 
 ## 12. Known Architectural Debt & Risks
 
@@ -370,6 +373,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.5.3 | 2026-07-15 | Removed Cartesian MapControl2Requirement backfill from sync-schema.ts (was creating 12K mappings per deploy). Disabled backfill_control_requirement.py. Created master-data-protection.md policy. ProcessDetailsClient: +Requirement admin-style form replaces +Add SubProcess. Assessment delete uses native confirm() dialog. |
 | v2.5.2 | 2026-07-14 | Assessment cascade delete (4 FK constraints, orphan cleanup, confirmation modal). ControlForm integration in ProcessDetailsClient with onSaved callback. Bulk Map Controls to Requirements panel. ControlsSelector: Requirement filter replaces SubProcess, regex wildcard search. ControlFromDocument.controlType → String. Control statement tooltips. Bulk map combobox sorting. Design doc audit with 7 gap fixes. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
 | v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |

@@ -19,7 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements" | "activityLog">("tables");
 
   // Generic table edit state
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -177,6 +177,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("knowledgebase")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "knowledgebase" ? "bg-blue-50 font-medium" : ""}`}>📚 Knowledgebase</button>
             <button onClick={() => setView("documentControls")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "documentControls" ? "bg-blue-50 font-medium" : ""}`}>📄 Document Controls</button>
             <button onClick={() => setView("requirements")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "requirements" ? "bg-blue-50 font-medium" : ""}`}>📋 Requirements</button>
+            <button onClick={() => setView("activityLog")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "activityLog" ? "bg-blue-50 font-medium" : ""}`}>📜 Mapping Activity Log</button>
           </div>
         </div>
 
@@ -210,6 +211,8 @@ export default function AdminDashboard() {
           <DocumentControlsManager />
         ) : view === "requirements" ? (
           <RequirementManager />
+        ) : view === "activityLog" ? (
+          <ActivityLogViewer />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
@@ -1829,6 +1832,104 @@ function RequirementManager() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Activity Log Viewer (Control-Requirement Mappings) ─────────────────────
+
+function ActivityLogViewer() {
+  const [entries, setEntries] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reverting, setReverting] = useState<string | null>(null);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  const loadEntries = async () => {
+    setLoading(true); setError(null);
+    try {
+      const res = await fetch("/api/admin/table/ActivityLog/data?perPage=200&refTable=MapControl2Requirement");
+      if (!res.ok) throw new Error("Failed to load");
+      const data = await res.json();
+      setEntries((data.rows || []).sort((a: any, b: any) => (b.timestamp || "").localeCompare(a.timestamp || "")));
+    } catch (e: any) { setError(e.message); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => { loadEntries(); }, []);
+
+  const parseJson = (val: any) => {
+    if (!val) return null;
+    return typeof val === "string" ? JSON.parse(val) : val;
+  };
+
+  const handleRevert = async (entry: any) => {
+    if (!entry.beforeData || !entry.afterData) return;
+    try {
+      const before = parseJson(entry.beforeData);
+      const after = parseJson(entry.afterData);
+      if (!before?.requirementRId || !after?.requirementRId || before.requirementRId === after.requirementRId) {
+        setMsg({ type: "err", text: "No change to revert." }); return;
+      }
+      setReverting(entry.id); setMsg(null);
+      const res = await fetch(`/api/admin/table/MapControl2Requirement/${entry.refRecord}`, {
+        method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requirementRId: before.requirementRId }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Revert failed");
+      setMsg({ type: "ok", text: `↩ Reverted to ${before.requirementId || before.requirementRId}.` });
+      loadEntries();
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+    finally { setReverting(null); }
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between">
+        <span className="font-semibold text-slate-900 text-sm">📜 Mapping Activity Log</span>
+        <button onClick={loadEntries} className="text-xs text-blue-600 hover:underline">↻ Refresh</button>
+      </div>
+      {msg && (
+        <div className={`mx-4 mt-3 rounded px-3 py-2 text-xs ${msg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{msg.text}</div>
+      )}
+      <div className="flex-1 overflow-auto">
+        {loading ? <div className="p-4 text-xs text-slate-400">Loading...</div>
+        : error ? <div className="p-4 text-xs text-red-500">Error: {error}</div>
+        : entries.length === 0 ? <div className="p-4 text-xs text-slate-400">No mapping activity logged yet. Changes appear here when controls are mapped via drag-and-drop, bulk map, or unassign.</div>
+        : (
+          <table className="w-full text-xs">
+            <thead className="sticky top-0 bg-slate-100"><tr>
+              <th className="px-3 py-2 text-left font-medium text-slate-600">Timestamp</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-600">Control</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-600">Before</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-600">After</th>
+              <th className="px-3 py-2 text-center font-medium text-slate-600 w-20">Revert</th>
+            </tr></thead>
+            <tbody>
+              {entries.map((entry: any) => {
+                const before = parseJson(entry.beforeData);
+                const after = parseJson(entry.afterData);
+                const changed = before?.requirementRId && after?.requirementRId && before.requirementRId !== after.requirementRId;
+                return (
+                  <tr key={entry.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 text-slate-500 whitespace-nowrap">{new Date(entry.timestamp).toLocaleString()}</td>
+                    <td className="px-3 py-2 font-medium text-slate-800">{after?.controlName || "—"}</td>
+                    <td className="px-3 py-2 text-slate-500">{before?.requirementId || (before?.mapped === false ? "Unmapped" : "—")}</td>
+                    <td className="px-3 py-2 text-slate-700">{after?.requirementId || "—"}</td>
+                    <td className="px-3 py-2 text-center">
+                      {changed ? (
+                        <button onClick={() => handleRevert(entry)} disabled={reverting === entry.id} className="text-xs text-amber-600 hover:underline disabled:opacity-50 font-medium">
+                          {reverting === entry.id ? "..." : "↩ Revert"}
+                        </button>
+                      ) : <span className="text-slate-300">—</span>}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
