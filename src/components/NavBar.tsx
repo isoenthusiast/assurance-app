@@ -2,6 +2,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
+import { MASTER_COMPANY_ID } from "@/lib/company-context";
 import SignOutButton from "./SignOutButton";
 import CompanySelector from "./CompanySelector";
 
@@ -29,6 +30,10 @@ export default async function NavBar() {
         id: uc.company.id,
         companyID: uc.company.companyID,
       }));
+      // SAMS001 is the master template — only visible to Admin users
+      if (role !== "Admin") {
+        companies = companies.filter((c) => c.companyID !== MASTER_COMPANY_ID);
+      }
     } catch {
       // DB might not be ready
     }

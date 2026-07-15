@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSelectedCompanyId } from "@/lib/company-context";
 
 export const dynamic = "force-dynamic";
 import ControlForm from "./ControlForm";
@@ -10,8 +11,11 @@ export default async function ControlsPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
+  const companyId = await getSelectedCompanyId();
+  const companyWhere = companyId ? { companyId } : {};
   const [controls, processAreas, subProcesses, editing] = await Promise.all([
     prisma.control.findMany({
+      where: companyWhere,
       orderBy: [{ processArea: { name: "asc" } }, { name: "asc" }],
       include: {
         processArea: true,
@@ -26,8 +30,8 @@ export default async function ControlsPage({
         },
       },
     }),
-    prisma.processArea.findMany({ orderBy: { name: "asc" } }),
-    prisma.subProcess.findMany({ orderBy: { name: "asc" } }),
+    prisma.processArea.findMany({ where: companyWhere, orderBy: { name: "asc" } }),
+    prisma.subProcess.findMany({ where: companyWhere, orderBy: { name: "asc" } }),
     edit ? prisma.control.findUnique({ where: { id: edit }, include: { controlSubProcesses: { select: { subProcessId: true, isPrimary: true } } } }) : Promise.resolve(null),
   ]);
 

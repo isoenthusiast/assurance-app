@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { getSelectedCompanyId } from "@/lib/company-context";
 import { GamificationDashboard } from "@/components/GamificationDashboard";
 import ProcessHealthDashboard from "./ProcessHealthDashboard";
 
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function FlaDashboardPage() {
   const session = await auth();
   const userId = session?.user?.id;
+  const companyId = await getSelectedCompanyId();
 
   // Compute process health: average rawHealthScore across all controls
   // linked to subprocesses under each process area, grouped by Standard table.
@@ -25,6 +27,7 @@ export default async function FlaDashboardPage() {
     LEFT JOIN "SubProcess" sp ON sp."processAreaId" = pa."id"
     LEFT JOIN "ControlSubProcess" csp ON csp."subProcessId" = sp."id"
     LEFT JOIN "Control" c ON c."id" = csp."controlId" AND c."rawHealthScore" IS NOT NULL
+    ${companyId ? `WHERE pa."companyId" = '${companyId}'` : ''}
     GROUP BY pa."id", pa."name", s."standard", s."sequenceNo", pa."standard"
     ORDER BY COALESCE(s."sequenceNo", 999), s."standard", pa."standard", "avgHealth" ASC
   `);
@@ -39,7 +42,7 @@ export default async function FlaDashboardPage() {
 
   // Fetch assessments in progress with sample counts
   const inProgressAssessments = await prisma.assessment.findMany({
-    where: { status: { not: "Completed" } },
+    where: { status: { not: "Completed" }, ...(companyId ? { companyId } : {}) },
     orderBy: { startDate: "desc" },
     include: {
       _count: { select: { samples: true } },

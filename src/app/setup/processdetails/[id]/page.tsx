@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSelectedCompanyId } from "@/lib/company-context";
 
 export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
@@ -10,9 +11,10 @@ export default async function ProcessDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const companyId = await getSelectedCompanyId();
 
   const processArea = await prisma.processArea.findUnique({
-    where: { id },
+    where: { id, ...(companyId ? { companyId } : {}) },
     include: {
       _count: { select: { subProcesses: true, controls: true } },
     },

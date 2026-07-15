@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { getSelectedCompanyId } from "@/lib/company-context";
 
 export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
@@ -20,9 +21,10 @@ export default async function AssessmentDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const companyId = await getSelectedCompanyId();
 
   const assessment = await prisma.assessment.findUnique({
-    where: { id },
+    where: { id, ...(companyId ? { companyId } : {}) },
     include: {
       activityType: true,
       assessor: true,

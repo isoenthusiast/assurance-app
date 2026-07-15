@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
+import { getSelectedCompanyId } from "@/lib/company-context";
 
 export const dynamic = "force-dynamic";
 import { deleteProcessArea } from "./actions";
@@ -36,8 +37,11 @@ export default async function ProcessAreasPage({
   searchParams: Promise<{ edit?: string }>;
 }) {
   const { edit } = await searchParams;
+  const companyId = await getSelectedCompanyId();
+  const companyWhere = companyId ? { companyId } : {};
   const [areas, editing, allAreas, subProcesses, requirements, testedAssignments] = await Promise.all([
     prisma.processArea.findMany({
+      where: companyWhere,
       orderBy: { pId: "asc" },
       select: {
         id: true,
@@ -48,16 +52,17 @@ export default async function ProcessAreasPage({
         _count: { select: { subProcesses: true, controls: true, requirements: true } },
       },
     }),
-    edit ? prisma.processArea.findUnique({ where: { id: edit } }) : Promise.resolve(null),
+    edit ? prisma.processArea.findUnique({ where: { id: edit, ...companyWhere } }) : Promise.resolve(null),
     prisma.processArea.findMany({
       select: { standard: true },
-      where: { standard: { not: null } },
+      where: { standard: { not: null }, ...companyWhere },
       distinct: ['standard'],
       orderBy: { standard: 'asc' },
     }),
     // Fetched up front (not per-expand) so expanding a row is instant — the
     // table just filters this list by processAreaId client-side.
     prisma.subProcess.findMany({
+      where: companyWhere,
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -69,6 +74,7 @@ export default async function ProcessAreasPage({
     }),
     // Requirements with linked controls (via MapControl2Requirement)
     prisma.requirement.findMany({
+      where: companyWhere,
       orderBy: { requirementId: "asc" },
       select: {
         rId: true,
