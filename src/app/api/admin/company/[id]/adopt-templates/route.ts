@@ -113,6 +113,7 @@ export async function POST(
         JOIN "ProcessArea" opa ON opa."id" = sp."processAreaId" AND opa."companyId" = $2
         JOIN "ProcessArea" npa ON npa."name" = $3 || opa."name" AND npa."companyId" = $1
         WHERE sp."companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId, prefix);
       results.subProcesses = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "SubProcess" WHERE "companyId" = $1`, targetCompanyId
@@ -142,6 +143,7 @@ export async function POST(
         JOIN "ProcessArea" opa ON opa."id" = r."processAreaId" AND opa."companyId" = $2
         JOIN "ProcessArea" npa ON npa."name" = $3 || opa."name" AND npa."companyId" = $1
         WHERE r."companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId, prefix, maxRId);
       results.requirements = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "Requirement" WHERE "companyId" = $1`, targetCompanyId
@@ -168,6 +170,7 @@ export async function POST(
         JOIN "ProcessArea" opa ON opa."id" = c."processAreaId" AND opa."companyId" = $2
         JOIN "ProcessArea" npa ON npa."name" = $3 || opa."name" AND npa."companyId" = $1
         WHERE c."companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId, prefix);
       results.controls = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "Control" WHERE "companyId" = $1`, targetCompanyId
@@ -187,6 +190,7 @@ export async function POST(
         JOIN "SubProcess" osp ON osp."id" = csp."subProcessId" AND osp."companyId" = $2
         JOIN "Control" nc ON nc."name" = oc."name" AND nc."companyId" = $1
         JOIN "SubProcess" nsp ON nsp."name" = osp."name" AND nsp."companyId" = $1
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
       results.controlSubProcesses = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "ControlSubProcess" csp 
@@ -209,6 +213,7 @@ export async function POST(
         JOIN "Requirement" nr ON nr."clauseContent" = oreq."clauseContent" 
           AND nr."requirementId" = oreq."requirementId" AND nr."companyId" = $1
         JOIN "ProcessArea" npa ON npa."name" = $3 || opa."name" AND npa."companyId" = $1
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId, prefix);
       results.mapControl2Requirement = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "MapControl2Requirement" m
@@ -238,6 +243,7 @@ export async function POST(
         JOIN "Control" oc ON oc."id" = tl."controlId" AND oc."companyId" = $2
         JOIN "AssessmentTemplate" nt ON nt."name" = ot."name" AND nt."companyId" = $1
         JOIN "Control" nc ON nc."name" = oc."name" AND nc."companyId" = $1
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
 
       // ── 10. Copy Junction: AssessmentTemplateActivityType ──
@@ -251,6 +257,7 @@ export async function POST(
         FROM "AssessmentTemplateActivityType" ta
         JOIN "AssessmentTemplate" ot ON ot."id" = ta."templateId" AND ot."companyId" = $2
         JOIN "AssessmentTemplate" nt ON nt."name" = ot."name" AND nt."companyId" = $1
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
 
       await (prisma as any).$queryRawUnsafe(`COMMIT`);
