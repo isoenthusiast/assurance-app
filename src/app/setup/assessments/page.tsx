@@ -150,6 +150,30 @@ export default function AssessmentsPage() {
 
   const updatePage = (p: number) => { setCurrentPage(p); setPageInput(String(p)); };
 
+  // Group assessments by status for collapsible sections
+  const statusGroups = useMemo(() => {
+    const groups: { label: string; statuses: string[]; icon: string; color: string; assessments: Assessment[] }[] = [
+      { label: 'In Progress', statuses: ['InProgress'], icon: '🔄', color: 'border-blue-200', assessments: [] },
+      { label: 'Planned', statuses: ['Planned'], icon: '📋', color: 'border-slate-200', assessments: [] },
+      { label: 'Completed / Cancelled', statuses: ['Completed', 'Cancelled'], icon: '✅', color: 'border-green-200', assessments: [] },
+    ];
+    for (const a of paginatedAssessments) {
+      const group = groups.find(g => g.statuses.includes(a.status));
+      if (group) group.assessments.push(a);
+    }
+    return groups.filter(g => g.assessments.length > 0);
+  }, [paginatedAssessments]);
+
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+
+  const toggleGroup = (label: string) => {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      next.has(label) ? next.delete(label) : next.add(label);
+      return next;
+    });
+  };
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <div className="mb-8 flex items-center justify-between">
@@ -199,39 +223,64 @@ export default function AssessmentsPage() {
             )}
           </div>
 
-          <div className="overflow-x-auto rounded border border-slate-200">
-            <table className="min-w-full text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-3 py-2"><input type="checkbox" onChange={e => handleSelectAll(e.target.checked)} checked={paginatedAssessments.length > 0 && selectedIds.size === paginatedAssessments.length} /></th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Name</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Activity Type</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Status</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Controls</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Assessor</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Period</th>
-                  <th className="px-3 py-2 font-medium text-slate-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedAssessments.map(a => (
-                  <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2"><input type="checkbox" checked={selectedIds.has(a.id)} onChange={e => handleSelectAssessment(a.id, e.target.checked)} /></td>
-                    <td className="px-3 py-2 font-medium text-slate-900"><Link href={`/fla/${a.id}`} className="hover:underline">{a.name}</Link></td>
-                    <td className="px-3 py-2 text-slate-600">{a.activityType?.name}</td>
-                    <td className="px-3 py-2"><span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${a.status === 'Completed' ? 'bg-green-100 text-green-700' : a.status === 'InProgress' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>{a.status}</span></td>
-                    <td className="px-3 py-2 text-slate-600">{a.controlAssignments?.length || 0}</td>
-                    <td className="px-3 py-2 text-slate-600">{a.assessor?.name}</td>
-                    <td className="px-3 py-2 text-slate-500 text-xs">{a.startDate ? new Date(a.startDate).toLocaleDateString() : '—'} – {a.endDate ? new Date(a.endDate).toLocaleDateString() : '—'}</td>
-                    <td className="px-3 py-2 text-right">
-                      <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline mr-2">View</Link>
-                      <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline">Edit</Link>
-                    </td>
-                  </tr>
-                ))}
-                {paginatedAssessments.length === 0 && <tr><td colSpan={8} className="px-3 py-6 text-center text-slate-400">No assessments found</td></tr>}
-              </tbody>
-            </table>
+          <div className="space-y-3">
+            {statusGroups.map(group => {
+              const isCollapsed = collapsedGroups.has(group.label);
+              return (
+                <div key={group.label} className={`rounded border ${group.color} overflow-hidden`}>
+                  <button
+                    onClick={() => toggleGroup(group.label)}
+                    className="w-full px-4 py-2 bg-slate-50 hover:bg-slate-100 flex items-center justify-between"
+                  >
+                    <span className="text-sm font-medium text-slate-700">
+                      {group.icon} {group.label} ({group.assessments.length})
+                    </span>
+                    <span className="text-xs text-slate-400">{isCollapsed ? '▶' : '▼'}</span>
+                  </button>
+                  {!isCollapsed && (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full text-left text-sm">
+                        <thead className="bg-white border-b border-slate-100">
+                          <tr>
+                            <th className="px-3 py-2"><input type="checkbox" onChange={e => {
+                              const checked = e.target.checked;
+                              const next = new Set(selectedIds);
+                              group.assessments.forEach(a => checked ? next.add(a.id) : next.delete(a.id));
+                              setSelectedIds(next);
+                            }} checked={group.assessments.length > 0 && group.assessments.every(a => selectedIds.has(a.id))} /></th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Name</th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Activity Type</th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Controls</th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Assessor</th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Period</th>
+                            <th className="px-3 py-2 font-medium text-slate-700">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.assessments.map(a => (
+                            <tr key={a.id} className="border-t border-slate-100 hover:bg-slate-50">
+                              <td className="px-3 py-2"><input type="checkbox" checked={selectedIds.has(a.id)} onChange={e => handleSelectAssessment(a.id, e.target.checked)} /></td>
+                              <td className="px-3 py-2 font-medium text-slate-900"><Link href={`/fla/${a.id}`} className="hover:underline">{a.name}</Link></td>
+                              <td className="px-3 py-2 text-slate-600">{a.activityType?.name}</td>
+                              <td className="px-3 py-2 text-slate-600">{a.controlAssignments?.length || 0}</td>
+                              <td className="px-3 py-2 text-slate-600">{a.assessor?.name}</td>
+                              <td className="px-3 py-2 text-slate-500 text-xs">{a.startDate ? new Date(a.startDate).toLocaleDateString() : '—'} – {a.endDate ? new Date(a.endDate).toLocaleDateString() : '—'}</td>
+                              <td className="px-3 py-2 text-right">
+                                <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline mr-2">View</Link>
+                                <Link href={`/fla/${a.id}`} className="text-xs text-blue-600 hover:underline">Edit</Link>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            {statusGroups.length === 0 && (
+              <div className="text-center text-slate-400 py-8">No assessments found</div>
+            )}
           </div>
 
           {totalPages > 1 && (
