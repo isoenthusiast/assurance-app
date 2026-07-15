@@ -63,11 +63,6 @@ export default async function NavBar() {
                 Controls
               </Link>
               {role === "Admin" && (
-                <Link href="/setup/badges" className="hover:text-slate-900">
-                  Badges
-                </Link>
-              )}
-              {role === "Admin" && (
                 <Link href="/admin" className="hover:text-slate-900">
                   Admin
                 </Link>
