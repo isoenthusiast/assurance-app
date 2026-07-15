@@ -69,21 +69,23 @@ model AssuranceActivityType {
 // ── Standard — Management system standards (ISO, ICOP, etc.) ─────────
 model Standard {
   id                  String         @id @default(cuid())
-  standard            String         @unique
+  standard            String
   standardDescription String?
   sequenceNo          Int            @default(0)
   companyId           String?
   createdAt           DateTime       @default(now())
   processAreas        ProcessArea[]
 
+  @@unique([standard, companyId])
   @@map("Standard")
 }
 
 model ProcessArea {
   id           String             @id @default(cuid())
-  name         String             @unique
+  name         String
   description  String?
   createdAt    DateTime           @default(now())
+  @@unique([name, companyId])
   pId          String?
   standard     String?
   standardId   String?            @map("StandardID")
@@ -186,13 +188,15 @@ model Control {
 
 model AssessmentTemplate {
   id              String                             @id @default(cuid())
-  name            String                             @unique
+  name            String
   description     String?
   createdAt       DateTime                           @default(now())
   updatedAt       DateTime                           @updatedAt
   companyId       String?
   activityTypes   AssessmentTemplateActivityType[]
   controlLinkages AssessmentTemplateControlLinkage[]
+
+  @@unique([name, companyId])
 }
 
 model AssessmentTemplateControlLinkage {
@@ -503,13 +507,15 @@ enum Role {
 
 model UserRole {
   id                 String   @id @default(cuid())
-  uRoleName          String   @unique
+  uRoleName          String
   uRoleDescription   String?
   uRolePositions     String?
   uRoleReportingLine String?
   companyId          String?
   createdAt          DateTime @default(now())
   userMappings       UserRoleMapping[]
+
+  @@unique([uRoleName, companyId])
 }
 
 model UserRoleMapping {
