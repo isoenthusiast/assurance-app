@@ -9,7 +9,6 @@ import { cookies } from "next/headers";
 const COMPANY_SCOPED_TABLES = new Set([
   "Control", "ProcessArea", "SubProcess", "Requirement",
   "Assessment", "AssessmentTemplate", "Attachment", "UserRole",
-  "Standard",
 ]);
 
 export async function GET(
