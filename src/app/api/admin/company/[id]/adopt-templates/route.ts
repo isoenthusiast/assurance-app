@@ -70,6 +70,7 @@ export async function POST(
         INSERT INTO "Standard" ("id", "standard", "standardDescription", "sequenceNo", "companyId", "createdAt")
         SELECT gen_random_uuid()::text, "standard", "standardDescription", "sequenceNo", $1, NOW()
         FROM "Standard" WHERE "companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
       results.standards = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "Standard" WHERE "companyId" = $1`, targetCompanyId
@@ -94,6 +95,7 @@ export async function POST(
         JOIN "Standard" s ON s."id" = pa."StandardID" AND s."companyId" = $2
         JOIN "Standard" ns ON ns."standard" = s."standard" AND ns."companyId" = $1
         WHERE pa."companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId, prefix);
       results.processAreas = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "ProcessArea" WHERE "companyId" = $1`, targetCompanyId
@@ -225,6 +227,7 @@ export async function POST(
         INSERT INTO "AssessmentTemplate" ("id", "name", "description", "companyId", "createdAt")
         SELECT gen_random_uuid()::text, "name", "description", $1, NOW()
         FROM "AssessmentTemplate" WHERE "companyId" = $2
+        ON CONFLICT DO NOTHING
       `, targetCompanyId, samsId);
       results.assessmentTemplates = (await (prisma as any).$queryRawUnsafe(
         `SELECT COUNT(*)::int as cnt FROM "AssessmentTemplate" WHERE "companyId" = $1`, targetCompanyId
