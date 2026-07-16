@@ -133,24 +133,11 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Standard_standard_companyId_key" ON "Standard"("standard", "companyId")`);
   console.log("✅ Created Standard table");
 
-  // Backfill Standard from ProcessArea.standard only (one-time migration).
-  // WHERE NOT EXISTS prevents duplicates; no ON CONFLICT needed.
-  // NOTE: ON CONFLICT removed because the unique constraint is composite (standard, companyId)
-  // and backfilled rows have companyId=NULL. PostgreSQL treats NULLs as distinct in unique
-  // constraints, so ON CONFLICT would never fire anyway.
-  const stdBackfill = await prisma.$executeRawUnsafe(`
-    INSERT INTO "Standard" ("id", "standard", "sequenceNo", "companyId")
-    SELECT DISTINCT
-      gen_random_uuid()::text,
-      pa.standard,
-      ROW_NUMBER() OVER (ORDER BY MIN(pa."createdAt")),
-      NULL
-    FROM "ProcessArea" pa
-    WHERE pa.standard IS NOT NULL AND pa.standard != ''
-      AND NOT EXISTS (SELECT 1 FROM "Standard" s WHERE s.standard = pa.standard AND s."companyId" IS NULL)
-    GROUP BY pa.standard
-  `);
-  console.log(`✅ Backfilled Standard table: ${stdBackfill} standards`);
+  // NOTE: Standard backfill removed — it created rows with companyId=NULL on every deploy
+  // where no NULL rows existed, which is a side effect of the preDeployCommand pattern.
+  // Standards should come from SAMS001 seeding or Adopt Templates, not from a deploy-time backfill.
+  // The ProcessArea.StandardID FK is backfilled below by matching standard names.
+  // See /memories/lessons-learned-2026-07-14.md Lesson #12 and #19.
 
   // Add standardId to ProcessArea, backfill from Standard.standard match
   await prisma.$executeRawUnsafe(`ALTER TABLE "ProcessArea" ADD COLUMN IF NOT EXISTS "StandardID" TEXT`);
