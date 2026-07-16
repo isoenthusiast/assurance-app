@@ -241,9 +241,10 @@ export async function POST(request: Request) {
     }
 
     const ext = path.extname(file.name).toLowerCase();
-    if (![".docx", ".pdf"].includes(ext)) {
+    const ALLOWED = [".docx", ".pdf", ".txt", ".md", ".csv"];
+    if (!ALLOWED.includes(ext)) {
       return NextResponse.json(
-        { error: `Unsupported format '${ext}'. Please upload .docx or .pdf files.` },
+        { error: `Unsupported format '${ext}'. Please upload ${ALLOWED.join(" or ")} files.` },
         { status: 400 }
       );
     }
@@ -256,8 +257,28 @@ export async function POST(request: Request) {
     try {
       if (ext === ".docx") {
         markdown = await docxToMarkdown(buffer);
-      } else {
+      } else if (ext === ".pdf") {
         markdown = await pdfToMarkdown(buffer);
+      } else if (ext === ".md") {
+        markdown = buffer.toString("utf-8");
+      } else if (ext === ".csv") {
+        // Convert CSV to Markdown table
+        const csvText = buffer.toString("utf-8");
+        const lines = csvText.trim().split(/\r?\n/);
+        if (lines.length === 0) { markdown = csvText; }
+        else {
+          const rows = lines.map(line => line.split(",").map(cell => cell.trim()));
+          const header = rows[0];
+          markdown = "| " + header.join(" | ") + " |\n";
+          markdown += "| " + header.map(() => "---").join(" | ") + " |\n";
+          for (let i = 1; i < rows.length; i++) {
+            markdown += "| " + rows[i].join(" | ") + " |\n";
+          }
+        }
+      } else {
+        // .txt — wrap in markdown code block to preserve formatting
+        markdown = "```\n" + buffer.toString("utf-8") + "\n```";
+      }
       }
     } catch (convError: any) {
       console.error("Conversion error:", convError);
