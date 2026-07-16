@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { getSelectedCompanyId } from "@/lib/company-context";
 import { GamificationDashboard } from "@/components/GamificationDashboard";
 import ProcessHealthDashboard from "./ProcessHealthDashboard";
+import OutstandingActions from "@/components/OutstandingActions";
 
 export const dynamic = "force-dynamic";
 
@@ -59,14 +60,30 @@ export default async function FlaDashboardPage() {
     testedSamples: a.samples.filter((s) => s.status === "Tested").length,
   }));
 
+  // Fetch outstanding actions (not yet closed) with finding descriptions
+  const outstandingActions = await prisma.action.findMany({
+    where: { actionClosureEffective: false },
+    orderBy: { targetDate: "asc" },
+    include: {
+      finding: { select: { description: true } },
+    },
+  });
+
   return (
     <div className="mx-auto max-w-7xl px-6 py-8">
       <h1 className="text-2xl font-semibold text-slate-900 mb-6">Assurance Management Dashboard</h1>
 
       <div className="grid grid-cols-3 gap-6">
         {/* Main content */}
-        <div className="col-span-2">
+        <div className="col-span-2 space-y-6">
           <ProcessHealthDashboard processes={processHealth} assessments={assessmentsInProgress} />
+          <OutstandingActions actions={outstandingActions.map(a => ({
+            id: a.id,
+            actionDescription: a.actionDescription,
+            actionParty: a.actionParty,
+            targetDate: a.targetDate?.toISOString() ?? null,
+            findingDescription: a.finding.description,
+          }))} />
         </div>
 
         {/* Gamification Sidebar */}
