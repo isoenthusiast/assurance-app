@@ -1036,10 +1036,7 @@ export default function ProcessDetailsClient({
                 {requirementStats.map((req) => (
                   <div key={req.rId} className="rounded border border-slate-200 bg-slate-50 p-3">
                     <div className="font-medium text-sm text-slate-900">{req.requirementId}</div>
-                    <div className="mt-1 text-xs text-slate-500 whitespace-normal break-words">
-                      {req.clauseContent}
-                    </div>
-                    <div className="mt-2 flex items-center gap-2">
+                    <div className="mt-1.5 flex items-center gap-2">
                       <div className="flex-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all ${
@@ -1051,6 +1048,9 @@ export default function ProcessDetailsClient({
                       <span className="text-2xs font-medium text-slate-500 whitespace-nowrap">
                         {req.healthPct}% ({req.effectiveControls}/{req.totalLinkedControls})
                       </span>
+                    </div>
+                    <div className="mt-2 text-xs text-slate-500 whitespace-normal break-words">
+                      {req.clauseContent}
                     </div>
                   </div>
                 ))}
