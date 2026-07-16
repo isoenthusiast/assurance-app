@@ -116,3 +116,87 @@ node node_modules/prisma/build/index.js generate
 - [ ] Run `npm run build` locally and fix all TS errors
 - [ ] Commit with descriptive message: `feat(scope): what changed`
 - [ ] Push → Railway auto-deploys
+
+---
+
+## 9. Turbopack: Bare `catch {}` Causes Parse Error
+
+**Symptom:** `Expected a semicolon` at outer `} catch (error) {` line, with parsing ecmascript source code failed.
+
+**Root Cause:** Turbopack (Next.js 16.2.9) does not support optional catch binding (`catch { }` without a variable). The parser gets confused by the bare `catch` and misinterprets subsequent brace blocks.
+
+**Fix:** Always use `catch (_e) { }` or `catch (e: any) { }` — never bare `catch { }`.
+
+**Prevention:** When writing try/catch blocks, always include an error variable even if unused. Prefer `_e` convention for intentionally unused catch variables.
+
+---
+
+## 10. Turbopack: Stale Cache After File Edits
+
+**Symptom:** Parse errors reference variable names and line numbers that don't exist in the current file (e.g., `knowingBoxId`). The error persists across multiple edits and restarts.
+
+**Root Cause:** Turbopack caches compiled modules aggressively. When a file has a parse error, subsequent correct edits may not invalidate the cache. The error output references stale compiled code.
+
+**Fix:** Kill the dev server, delete `.next` folder, restart. For stubborn cases: `taskkill /PID <pid> /F` then `Remove-Item -Recurse .next` then restart dev server.
+
+**Prevention:** If a parse error makes no sense relative to the current file contents, clear the cache before debugging the code further.
+
+---
+
+## 11. Railway Build: Missing `import { cookies }` 
+
+**Symptom:** Railway `next build` fails with `Type error: Cannot find name 'cookies'` at line using `await cookies()`.
+
+**Root Cause:** Turbopack dev mode auto-imports `cookies` from `next/headers` implicitly, but the production `next build` TypeScript check requires explicit import.
+
+**Fix:** Always add `import { cookies } from "next/headers"` in any route handler that uses `cookies()`.
+
+**Prevention:** Run `npm run build` locally before pushing to catch strict TypeScript errors that Turbopack dev mode ignores.
+
+---
+
+## 12. Prisma 7.8: Model Delegate Not Available at Runtime
+
+**Symptom:** `PrismaClientValidationError` when calling `prisma.knowledgebase.findMany()`. The generated TypeScript types include the model, but the runtime delegate is missing.
+
+**Root Cause:** Prisma 7.8 has a bug where certain models (Knowledgebase) are generated as TypeScript types but not included in the runtime Prisma Client delegate class.
+
+**Fix:** Use `prisma.$queryRawUnsafe()` for all queries on affected models. For the data API generic table route, add the table to a `RAW_SQL_TABLES` set that forces the raw SQL path.
+
+**Prevention:** After regenerating Prisma client, verify the model exists in `src/generated/prisma/internal/class.ts`. If not, add it to `RAW_SQL_TABLES` in the generic data route and use `$queryRawUnsafe` in server components.
+
+---
+
+## 13. State Variable Cleanup: Check All References
+
+**Symptom:** `ReferenceError: cfProcessAreas is not defined` after removing state variables that seemed unused.
+
+**Root Cause:** `cfProcessAreas` and `cfSubProcesses` were used by both the removed `ControlForm` component AND the "Bulk Map Controls to Requirements" section. Removing the state broke the bulk map feature.
+
+**Fix:** Before removing any state variable, search for ALL references including JSX template expressions that may not be obvious.
+
+**Prevention:** Use "Find All References" or grep for the variable name before deletion. State variables shared across multiple UI sections must be preserved even if one consumer is removed.
+
+---
+
+## 14. `@@unique` Constraint Change Requires Full Migration
+
+**Symptom:** Changing `@@unique([requirementId, standard, companyId])` to `@@unique([requirementId, processAreaId, companyId])` — the old index prevented creating per-PA Unmapped Controls.
+
+**Root Cause:** The unique constraint design dictated the data model. One Unmapped Controls per standard meant 6 requirements serving 65 PAs. The constraint had to be changed to support the correct design.
+
+**Fix:** Coordinated 4-step migration: (1) Drop old unique index, (2) Create new unique index, (3) Create missing Unmapped Controls per PA (177 created), (4) Remap 3,186 controls via ControlSubProcess → SubProcess → ProcessArea chain.
+
+**Prevention:** When designing unique constraints, consider the actual domain requirements (one per PA vs one per standard). Test the constraint against real usage scenarios before committing to it.
+
+---
+
+## 15. PowerShell Inline Python Is Always Broken
+
+**Symptom:** `python -c "..."` commands fail with parse errors, missing parentheses, or "The 'from' keyword is not supported".
+
+**Root Cause:** PowerShell's command parser conflicts with Python syntax — semicolons, quotes, and parentheses are interpreted differently.
+
+**Fix:** Always write Python scripts to `.py` files and run them. Never attempt inline Python in PowerShell.
+
+**Prevention:** This is Lesson #22 from previous sessions, re-confirmed today. The `create_and_run_task` with a `.py` file is the reliable pattern.
