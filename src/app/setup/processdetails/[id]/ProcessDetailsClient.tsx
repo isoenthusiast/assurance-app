@@ -895,7 +895,7 @@ export default function ProcessDetailsClient({
             <h2 className="text-lg font-semibold text-slate-900 mb-4">📊 Process Health</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
-                <h3 className="text-sm font-medium text-slate-600 mb-3">Control Effectiveness</h3>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Control Effectiveness</h3>
                 <div className="space-y-3">
                   <HealthBar
                     label="Effective"
@@ -918,7 +918,7 @@ export default function ProcessDetailsClient({
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-slate-600 mb-3">Assessment Activity</h3>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Assessment Activity</h3>
                 <div className="space-y-3">
                   <HealthBar
                     label="Completed"
@@ -935,7 +935,7 @@ export default function ProcessDetailsClient({
                 </div>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-slate-600 mb-3">Sample Testing</h3>
+                <h3 className="text-sm font-semibold text-slate-700 mb-3">Sample Testing</h3>
                 <div className="space-y-3">
                   <HealthBar
                     label={`Effective (${overviewStats.effectiveSamples}/${overviewStats.testedSamples || 0})`}
@@ -1032,7 +1032,7 @@ export default function ProcessDetailsClient({
             {requirementStats.length === 0 ? (
               <p className="text-sm text-slate-400">No requirements linked to this process area.</p>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 {requirementStats.map((req) => (
                   <div key={req.rId} className="rounded border border-slate-200 bg-slate-50 p-3">
                     <div className="font-medium text-sm text-slate-900">{req.requirementId}</div>
