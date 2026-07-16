@@ -60,9 +60,12 @@ export default async function FlaDashboardPage() {
     testedSamples: a.samples.filter((s) => s.status === "Tested").length,
   }));
 
-  // Fetch outstanding actions (not yet closed) with finding descriptions
+  // Fetch outstanding actions (not yet closed) filtered by selected company
   const outstandingActions = await prisma.action.findMany({
-    where: { actionClosureEffective: false },
+    where: {
+      actionClosureEffective: false,
+      ...(companyId ? { finding: { assessment: { companyId } } } : {}),
+    },
     orderBy: { targetDate: "asc" },
     include: {
       finding: { select: { description: true } },
