@@ -23,8 +23,17 @@ export default function TemplatesPage() {
   const [selectedProcessAreaId, setSelectedProcessAreaId] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string>("");
+
+  // Read selectedCompanyId cookie to detect company switches
+  const getCompanyId = () => {
+    const match = document.cookie.match(/(?:^|;\s*)selectedCompanyId=([^;]*)/);
+    return match ? match[1] : "";
+  };
 
   useEffect(() => {
+    setCompanyId(getCompanyId());
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -58,7 +67,18 @@ export default function TemplatesPage() {
     };
 
     fetchData();
-  }, []);
+  }, [companyId]); // Re-fetch when company changes
+
+  // Poll for company cookie changes (CompanySelector sets cookie + router.refresh)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newId = getCompanyId();
+      if (newId !== companyId) {
+        setCompanyId(newId);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [companyId]);
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Delete template "${name}"? This cannot be undone.`)) return;
