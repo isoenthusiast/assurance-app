@@ -170,7 +170,7 @@ export async function POST(
         SELECT
           (SELECT COALESCE(MAX("rID"), 0) FROM "Requirement") + ROW_NUMBER() OVER (ORDER BY pa."id"),
           'Unmapped Controls',
-          'Controls not yet mapped to a specific requirement for this process area.',
+          'Controls not yet mapped to a specific requirement.',
           'These controls need to be reviewed and assigned to the correct requirement.',
           'All controls',
           '',
@@ -184,10 +184,11 @@ export async function POST(
         WHERE pa."companyId" = $1
           AND NOT EXISTS (
             SELECT 1 FROM "Requirement" r
-            WHERE r."processAreaId" = pa."id"
+            WHERE r."standard" = pa."standard"
               AND r."requirementId" = 'Unmapped Controls'
               AND r."companyId" = $1
           )
+        ON CONFLICT DO NOTHING
       `, targetCompanyId);
 
       // ── 5. Copy Controls ──
