@@ -1220,6 +1220,7 @@ function RequirementManager() {
   const [standards, setStandards] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string>("");
 
   // Tree expand/collapse state
   const [expandedStandards, setExpandedStandards] = useState<Set<string>>(new Set());
@@ -1243,6 +1244,28 @@ function RequirementManager() {
   const [allControls, setAllControls] = useState<any[]>([]);
   const [allMappings, setAllMappings] = useState<any[]>([]);
   const controlsLoadedRef = useRef(false);
+
+  // ── Company cookie polling (mirrors templates page pattern) ────────
+  const getCompanyId = () => {
+    const match = document.cookie.match(/(?:^|;\s*)selectedCompanyId=([^;]*)/);
+    return match ? match[1] : "";
+  };
+
+  // Detect initial companyId on mount
+  useEffect(() => {
+    setCompanyId(getCompanyId());
+  }, []);
+
+  // Poll for company cookie changes (CompanySelector sets cookie + router.refresh)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const newId = getCompanyId();
+      if (newId !== companyId) {
+        setCompanyId(newId);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [companyId]);
 
   // ── Resizable columns ───────────────────────────────────────────────
   const tableRef = useRef<HTMLTableElement>(null);
@@ -1327,9 +1350,18 @@ function RequirementManager() {
     );
   };
 
-  // Load all data on mount
+  // Load all data, re-fetching when companyId changes
   useEffect(() => {
     setLoading(true);
+    // Reset tree state when company switches
+    setSelStandardId("");
+    setSelPAId("");
+    setExpandedStandards(new Set());
+    setExpandedReqId(null);
+    setEditForm({});
+    setIsAdding(false);
+    setPage(1);
+    controlsLoadedRef.current = false; // re-lazy-load controls for new company
     Promise.all([
       fetch("/api/admin/table/Requirement/data?perPage=2000").then(r => r.json()),
       fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
@@ -1340,7 +1372,7 @@ function RequirementManager() {
       setStandards((stdData.rows || []).sort((a: any, b: any) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)));
     }).catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, []);
+  }, [companyId]);
 
   // Lazy-load controls & mappings when first expanding a requirement
   useEffect(() => {
