@@ -1,18 +1,20 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 16, 2026 (v2.6.4)  
+**Last Updated:** July 16, 2026 (v2.6.5)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.6.4 — Adopt Templates Idempotency & Orphan Prevention:** Added `@@unique([name, companyId])` to **Control** and `@@unique([requirementId, standard, companyId])` to **Requirement** — completing business-key unique constraints on all 10 adopt-template tables. Without these, Adopt Templates running twice created 2× controls and 4× MapControl2Requirement mappings (ON CONFLICT DO NOTHING only caught PK conflicts; UUIDs never conflicted). Added `POST /api/admin/company/[id]/clean-templates` endpoint for full template data deletion. Added "🧹 Clean Templates" button to admin Manage Company UI. Removed Standard NULL-companyId backfill from `sync-schema.ts` (created 6 orphan rows on every deploy). Removed Standard table from `COMPANY_SCOPED_TABLES`. Created `DEPLOYMENT_CHECKLIST.md` with 6-step pre-deployment audit covering all 25 lessons learned. Added `orphan_analysis.py` for comprehensive FK integrity checking. Added `full_db_backup.py` for complete PostgreSQL dumps (45 tables, 23K+ rows). Confirmed: SMDS adoption produces exactly 1,048 controls with 1,048 mappings (1:1 match with SAMS001); second Adopt click returns 409 Conflict.
+> **v2.6.5 — Admin UX Hardening & Company-Aware Templates:** Added Proceed/Cancel confirmation step for Adopt Templates and Clean Templates — both now require explicit ✅ Proceed click after warning message. Both buttons gated to username "Admin" only (not just Admin role). Fixed Assessment Templates page: now company-aware via `selectedCompanyId` cookie polling — templates list and process area filter update when company selector changes. API endpoint `GET /api/admin/assessment-templates` now reads `selectedCompanyId` cookie and filters by `companyId`. Added `POST /api/admin/company/[id]/clean-templates` with Admin-only gating. Added `🧹 Clean Templates` button in admin Manage Company UI. OGP adoption verified 1,048 controls / 1,048 mappings (matches SAMS001 and SMDS).
 
-> **v2.6.3 — Deploy Fix: sync-schema.ts ON CONFLICT Constraint Mismatch:** Fixed `P2010`/`42P10` deploy crash at `prisma/sync-schema.ts:134`. The Standard table's unique constraint changed from single-column (`standard`) to composite (`standard, companyId`) in v2.6.1, but the backfill INSERT still used `ON CONFLICT ("standard")` which no longer matched any constraint. Removed ON CONFLICT (WHERE NOT EXISTS already handles deduplication). Added `companyId` column to CREATE TABLE. Added `CREATE UNIQUE INDEX IF NOT EXISTS "Standard_standard_companyId_key"`. Lesson: sync-schema.ts raw SQL must be audited against schema.prisma before every schema-changing deploy.
+> **v2.6.4 — Adopt Templates Idempotency & Orphan Prevention:** Added `@@unique([name, companyId])` to **Control** and `@@unique([requirementId, standard, companyId])` to **Requirement** — completing business-key unique constraints on all 10 adopt-template tables. Removed Standard NULL-companyId backfill from `sync-schema.ts`. Created `DEPLOYMENT_CHECKLIST.md` with 6-step pre-deployment audit. Added `orphan_analysis.py` and `full_db_backup.py`. SMDS adoption verified 1:1 with SAMS001 (1,048 controls, 1,048 mappings); second Adopt click returns 409 Conflict.
 
-> **v2.6.2 — Admin Data API Fix & StatusBar Component:** Fixed critical 404 bug on `/api/admin/table/[table]/data` — all table data pages were returning 404 due to stale Turbopack compilation. Also fixed `/api/admin/tables` row counts: replaced stale `pg_stat_user_tables.n_live_tup` with `ANALYZE`-refreshed counts. Added `StatusBar` component with `status_message` cookie polling; wired `adopt-templates` API to set status cookie on all 7 response paths.
+> **v2.6.3 — Deploy Fix: sync-schema.ts ON CONFLICT Constraint Mismatch:** Fixed `P2010`/`42P10` deploy crash. Removed ON CONFLICT, added composite unique index.
 
-> **v2.6.1 — Composite Unique Constraints & Template Adoption Fixes:** Changed 4 single-column `@unique` to `@@unique([field, companyId])` for multi-company isolation. Added `ON CONFLICT DO NOTHING` to all 10 INSERT statements in adopt-templates API.
+> **v2.6.2 — Admin Data API Fix & StatusBar Component:** Fixed 404 on `/api/admin/table/[table]/data` (stale Turbopack). Fixed `/api/admin/tables` row counts (ANALYZE). Added `StatusBar` component with `status_message` cookie polling. Wired adopt-templates status cookie.
 
-> **v2.6.0 — Multi-Company Isolation & Template Adoption:** Full company-scoped data isolation. `src/lib/company-context.ts`. All pages + APIs filter by selected company cookie. `POST /api/admin/company/[id]/adopt-templates` duplicates SAMS001 master data. Admin: "📋 Adopt Templates" button.
+> **v2.6.1 — Composite Unique Constraints & Template Adoption Fixes:** Changed 4 single-column `@unique` to `@@unique([field, companyId])`. Added `ON CONFLICT DO NOTHING` to all 10 adopt-template INSERTs.
+
+> **v2.6.0 — Multi-Company Isolation & Template Adoption:** Full company-scoped data isolation. `POST /api/admin/company/[id]/adopt-templates`. Admin: "📋 Adopt Templates" button.
 
 > **v2.5.4 — Design Doc Audit, Mapping Activity Log:** Full codebase audit (45 models, 47 route files, 35 pages). Mapping Activity Log with revert.","newString":"**Last Updated:** July 15, 2026 (v2.6.0)"  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
@@ -420,7 +422,8 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| v2.6.4 | 2026-07-16 | Added @@unique to Control + Requirement. Clean-templates API + admin Clean button. Removed Standard NULL-companyId backfill. DEPLOYMENT_CHECKLIST.md. orphan_analysis.py, full_db_backup.py. SMDS verified 1:1. |
+| v2.6.5 | 2026-07-16 | Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. GET /api/admin/assessment-templates now filtered by companyId. OGP verified 1:1. |
+| v2.6.4 | 2026-07-16 | Added @@unique to Control + Requirement. Clean-templates API + Clean button. Removed Standard NULL-companyId backfill. DEPLOYMENT_CHECKLIST.md. SMDS verified 1:1. |
 | v2.6.3 | 2026-07-16 | Fixed sync-schema.ts P2010/42P10 deploy crash. Removed ON CONFLICT, added companyId column + composite unique index. |
 | v2.6.2 | 2026-07-16 | Fixed 404 on all /api/admin/table/[table]/data routes (stale Turbopack). Fixed /api/admin/tables row counts (ANALYZE). StatusBar component. |
 | v2.6.1 | 2026-07-15 | Composite unique constraints on 4 company-scoped tables. All 10 adopt-template INSERTs have ON CONFLICT DO NOTHING. |
