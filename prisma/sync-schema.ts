@@ -166,7 +166,7 @@ async function main() {
     DELETE FROM "Requirement" r1
     USING "Requirement" r2
     WHERE r1."requirementId" = r2."requirementId"
-      AND r1."standard" = r2."standard"
+      AND r1."processAreaId" = r2."processAreaId"
       AND COALESCE(r1."companyId", '__NULL__') = COALESCE(r2."companyId", '__NULL__')
       AND r1."rID" > r2."rID"
   `);

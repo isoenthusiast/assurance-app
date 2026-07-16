@@ -36,6 +36,12 @@
 			"type": "shell",
 			"command": "cd ..; git add -A; git commit -m 'docs: APP_DESIGN v2.7.0 — full audit, 45 models, 49 routes, 29 pages, 9 components' --allow-empty; git push",
 			"group": "none"
+		},
+		{
+			"label": "Clean & Start Dev",
+			"type": "shell",
+			"command": "Remove-Item -Recurse -Force .next -ErrorAction SilentlyContinue; npx next dev",
+			"group": "none"
 		}
 	]
 }
