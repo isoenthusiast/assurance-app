@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { getSelectedCompanyId } from "@/lib/company-context";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 import { notFound } from "next/navigation";
@@ -11,6 +12,9 @@ export default async function ProcessDetailsPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const session = await auth();
+  const currentUserName = session?.user?.name || null;
+  const currentUserRole = (session?.user as any)?.role || null;
   const companyId = await getSelectedCompanyId();
 
   const processArea = await prisma.processArea.findUnique({
@@ -137,6 +141,26 @@ export default async function ProcessDetailsPage({
     };
   });
 
+  // --- Knowledgebase entries for this process area (filtered by companyId) ---
+  // Use raw SQL — Prisma 7.8 does not expose knowledgebase delegate at runtime
+  const kbEntriesRaw = await prisma.$queryRawUnsafe<any[]>(
+    `SELECT "kID", "knowledgeName", "knowledgeContent", "remarks", "createdDate", "addedBy", "companyId", "processAreaId"
+     FROM "Knowledgebase"
+     WHERE "processAreaId" = $1${companyId ? ` AND "companyId" = '${companyId}'` : ''}
+     ORDER BY "createdDate" DESC`,
+    id
+  );
+  const kbEntries = kbEntriesRaw.map((e: any) => ({
+    kID: e.kID,
+    knowledgeName: e.knowledgeName,
+    knowledgeContent: e.knowledgeContent,
+    remarks: e.remarks,
+    createdDate: e.createdDate instanceof Date ? e.createdDate.toISOString() : String(e.createdDate),
+    addedBy: e.addedBy,
+    companyId: e.companyId,
+    processAreaId: e.processAreaId,
+  }));
+
   // --- Requirements with full control data (for Tab 2: Requirements & Controls) ---
   const requirementsWithControls = await prisma.requirement.findMany({
     where: { processAreaId: id },
@@ -195,6 +219,10 @@ export default async function ProcessDetailsPage({
       allControls={mergedSubProcesses.flatMap((sp) => sp.controls)}
       requirementStats={requirementStats}
       reqWithControls={reqWithControls}
+      currentUserName={currentUserName}
+      currentUserRole={currentUserRole}
+      companyId={companyId}
+      kbEntries={kbEntries}
     />
   );
 }

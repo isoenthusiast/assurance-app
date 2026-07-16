@@ -106,6 +106,17 @@ type ReqWithControl = {
   controls: ControlSummary[];
 };
 
+type KbEntry = {
+  kID: string;
+  knowledgeName: string;
+  knowledgeContent: string;
+  remarks: string | null;
+  createdDate: string;
+  addedBy: string;
+  companyId: string | null;
+  processAreaId: string | null;
+};
+
 type Props = {
   processArea: ProcessArea;
   subProcesses: SubProcess[];
@@ -115,6 +126,10 @@ type Props = {
   allControls: ControlSummary[];
   requirementStats: RequirementStat[];
   reqWithControls: ReqWithControl[];
+  currentUserName: string | null;
+  currentUserRole: string | null;
+  companyId: string | null;
+  kbEntries: KbEntry[];
 };
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -149,6 +164,10 @@ export default function ProcessDetailsClient({
   allControls,
   requirementStats,
   reqWithControls,
+  currentUserName,
+  currentUserRole,
+  companyId,
+  kbEntries,
 }: Props) {
   const [activeTab, setActiveTab] = useState<"overview" | "subprocesses" | "assessments" | "knowledgebase">("overview");
   const router = useRouter();
@@ -219,6 +238,10 @@ export default function ProcessDetailsClient({
   const [kbMsg, setKbMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [kbRemarks, setKbRemarks] = useState("");
   const [kbDragOver, setKbDragOver] = useState(false);
+  const [kbView, setKbView] = useState<"list" | "add" | "view">("list");
+  const [selectedKbEntry, setSelectedKbEntry] = useState<KbEntry | null>(null);
+  const [kbEditContent, setKbEditContent] = useState("");
+  const [kbEditSaving, setKbEditSaving] = useState(false);
   const kbFileRef = useRef<HTMLInputElement>(null);
   const [bulkMapSP, setBulkMapSP] = useState("");
   const [bulkMapCheckedControls, setBulkMapCheckedControls] = useState<Set<string>>(new Set());
@@ -876,10 +899,32 @@ export default function ProcessDetailsClient({
       const data = await res.json();
       setKbMsg({ type: "ok", text: `"${file.name}" saved to Knowledgebase.` });
       setKbRemarks("");
+      setKbView("list");
+      router.refresh();
     } catch (e: any) {
       setKbMsg({ type: "err", text: e.message });
     } finally {
       setKbUploading(false);
+    }
+  };
+
+  // ── Knowledgebase: save edited content ──
+  const handleKbSaveEdit = async () => {
+    if (!selectedKbEntry) return;
+    setKbEditSaving(true);
+    try {
+      const res = await fetch(`/api/admin/table/Knowledgebase/${selectedKbEntry.kID}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ knowledgeContent: kbEditContent }),
+      });
+      if (!res.ok) throw new Error((await res.json()).error || "Save failed");
+      setKbMsg({ type: "ok", text: "Knowledge entry updated." });
+      setSelectedKbEntry({ ...selectedKbEntry, knowledgeContent: kbEditContent });
+    } catch (e: any) {
+      setKbMsg({ type: "err", text: e.message });
+    } finally {
+      setKbEditSaving(false);
     }
   };
 
@@ -1510,52 +1555,162 @@ export default function ProcessDetailsClient({
       {/* ─── TAB 4: Knowledgebase ──────────────────────────────────────── */}
 
       {activeTab === "knowledgebase" && (
-        <div className="mt-6 space-y-4">
-          <div className="rounded-lg border border-slate-200 bg-white p-6">
-            <h2 className="text-lg font-semibold text-slate-900 mb-4">📚 Knowledgebase — Upload Document</h2>
-            <p className="text-xs text-slate-500 mb-4">
-              Upload a document (.docx, .pdf, .md, .txt, .csv) to convert and save to the Knowledgebase for this process area.
-            </p>
-
-            {/* Upload zone */}
-            <div
-              className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
-                kbDragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-white"
+        <div className="mt-6 flex gap-4 h-[calc(100vh-280px)] min-h-[400px]">
+          {/* LEFT PANEL — Menu + Entry List */}
+          <div className="w-64 flex-shrink-0 rounded-lg border border-slate-200 bg-white flex flex-col overflow-hidden">
+            <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Knowledgebase</span>
+            </div>
+            {/* + Add Knowledge button */}
+            <button
+              onClick={() => { setKbView("add"); setSelectedKbEntry(null); setKbMsg(null); }}
+              className={`w-full text-left px-3 py-2 text-xs font-medium flex items-center gap-2 hover:bg-blue-50 border-b border-slate-100 ${
+                kbView === "add" ? "bg-blue-50 text-blue-700 border-l-2 border-l-blue-500" : "text-slate-600"
               }`}
-              onDragOver={(e) => { e.preventDefault(); setKbDragOver(true); }}
-              onDragLeave={() => setKbDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setKbDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleKbFile(f); }}
             >
-              <div className="text-3xl mb-2">📄</div>
-              <div className="text-sm text-slate-600 mb-1">Drop file here</div>
-              <div className="text-xs text-slate-400 mb-3">.docx · .pdf · .md · .txt · .csv</div>
-              <button
-                onClick={() => kbFileRef.current?.click()}
-                disabled={kbUploading}
-                className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-              >
-                {kbUploading ? "Converting..." : "Browse Files"}
-              </button>
-              <input ref={kbFileRef} type="file" accept=".docx,.pdf,.md,.txt,.csv" className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleKbFile(f); }} />
+              <span>＋</span> Add Knowledge
+            </button>
+            {/* Entry list */}
+            <div className="flex-1 overflow-y-auto">
+              {kbEntries.length === 0 ? (
+                <div className="px-3 py-4 text-xs text-slate-400 text-center">
+                  No knowledge entries for this process area.
+                </div>
+              ) : (
+                kbEntries.map((entry) => {
+                  const isSelected = selectedKbEntry?.kID === entry.kID && kbView === "view";
+                  return (
+                    <button
+                      key={entry.kID}
+                      onClick={() => { setSelectedKbEntry(entry); setKbView("view"); setKbEditContent(entry.knowledgeContent); setKbMsg(null); }}
+                      className={`w-full text-left px-3 py-2 text-xs border-b border-slate-50 hover:bg-slate-50 ${
+                        isSelected ? "bg-blue-50 border-l-2 border-l-blue-500 font-medium" : ""
+                      }`}
+                    >
+                      <div className="truncate text-slate-700">{entry.knowledgeName}</div>
+                      <div className="text-slate-400 text-2xs mt-0.5">
+                        {entry.addedBy} · {entry.createdDate ? new Date(entry.createdDate).toLocaleDateString() : ""}
+                      </div>
+                    </button>
+                  );
+                })
+              )}
             </div>
+          </div>
 
-            {/* Remarks */}
-            <div className="mt-4">
-              <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
-              <input
-                type="text" value={kbRemarks} onChange={(e) => setKbRemarks(e.target.value)}
-                placeholder="e.g., Extracted from HSSE manual v3..."
-                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-              />
-            </div>
+          {/* RIGHT PANEL — Content */}
+          <div className="flex-1 rounded-lg border border-slate-200 bg-white flex flex-col overflow-hidden min-w-0">
+            {kbView === "add" && (
+              <div className="flex-1 overflow-auto p-6">
+                <h3 className="text-base font-semibold text-slate-900 mb-1">＋ Add Knowledge</h3>
+                <p className="text-xs text-slate-500 mb-4">
+                  Upload a document (.docx, .pdf, .md, .txt, .csv). It will be converted to Markdown and saved for this process area.
+                </p>
 
-            {/* Status message */}
-            {kbMsg && (
-              <div className={`mt-4 rounded px-3 py-2 text-sm ${
-                kbMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
-              }`}>
-                {kbMsg.text}
+                {/* Upload zone */}
+                <div
+                  className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                    kbDragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-white"
+                  }`}
+                  onDragOver={(e) => { e.preventDefault(); setKbDragOver(true); }}
+                  onDragLeave={() => setKbDragOver(false)}
+                  onDrop={(e) => { e.preventDefault(); setKbDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleKbFile(f); }}
+                >
+                  <div className="text-3xl mb-2">📄</div>
+                  <div className="text-sm text-slate-600 mb-1">Drop file here</div>
+                  <div className="text-xs text-slate-400 mb-3">.docx · .pdf · .md · .txt · .csv</div>
+                  <button
+                    onClick={() => kbFileRef.current?.click()}
+                    disabled={kbUploading}
+                    className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    {kbUploading ? "Converting..." : "Browse Files"}
+                  </button>
+                  <input ref={kbFileRef} type="file" accept=".docx,.pdf,.md,.txt,.csv" className="hidden"
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) handleKbFile(f); }} />
+                </div>
+
+                {/* Remarks */}
+                <div className="mt-4">
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
+                  <input
+                    type="text" value={kbRemarks} onChange={(e) => setKbRemarks(e.target.value)}
+                    placeholder="e.g., Extracted from HSSE manual v3..."
+                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Status message */}
+                {kbMsg && (
+                  <div className={`mt-4 rounded px-3 py-2 text-sm ${
+                    kbMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+                  }`}>
+                    {kbMsg.text}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {kbView === "view" && selectedKbEntry && (
+              <>
+                {/* Header */}
+                <div className="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between shrink-0">
+                  <div className="min-w-0">
+                    <span className="font-semibold text-slate-900 text-sm truncate block">{selectedKbEntry.knowledgeName}</span>
+                    <span className="text-xs text-slate-400">
+                      by {selectedKbEntry.addedBy} on {new Date(selectedKbEntry.createdDate).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0 ml-3">
+                    {(currentUserName === selectedKbEntry.addedBy || currentUserRole === "Admin") && (
+                      <button
+                        onClick={handleKbSaveEdit}
+                        disabled={kbEditSaving}
+                        className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                      >
+                        {kbEditSaving ? "Saving..." : "Save"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Remarks */}
+                {selectedKbEntry.remarks && (
+                  <div className="px-4 py-2 bg-amber-50 border-b border-amber-200 text-xs text-amber-800 shrink-0">
+                    📝 {selectedKbEntry.remarks}
+                  </div>
+                )}
+
+                {/* Status message */}
+                {kbMsg && (
+                  <div className={`mx-4 mt-2 rounded px-3 py-2 text-sm shrink-0 ${
+                    kbMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+                  }`}>
+                    {kbMsg.text}
+                  </div>
+                )}
+
+                {/* Content — editable for owner/admin, view-only otherwise */}
+                <div className="flex-1 overflow-auto p-4">
+                  {(currentUserName === selectedKbEntry.addedBy || currentUserRole === "Admin") ? (
+                    <textarea
+                      value={kbEditContent}
+                      onChange={(e) => setKbEditContent(e.target.value)}
+                      className="w-full h-full min-h-[300px] rounded border border-slate-300 px-3 py-2 text-sm font-mono focus:border-blue-500 focus:outline-none resize-none"
+                    />
+                  ) : (
+                    <pre className="text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed">
+                      {selectedKbEntry.knowledgeContent}
+                    </pre>
+                  )}
+                </div>
+              </>
+            )}
+
+            {kbView === "list" && !selectedKbEntry && (
+              <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+                <div className="text-4xl">📚</div>
+                <div className="text-sm">Select an entry or add new knowledge</div>
               </div>
             )}
           </div>
