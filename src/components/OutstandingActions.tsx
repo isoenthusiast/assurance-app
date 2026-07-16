@@ -208,7 +208,7 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
             </thead>
             <tbody>
               {sorted.map(a => (
-                <tr key={a.actionId} className="border-b border-slate-100 hover:bg-blue-50 cursor-pointer" onClick={() => openDetail(a.id)}>
+                <tr key={a.actionId} className="border-b border-slate-100 hover:bg-blue-50 cursor-pointer" onClick={(e) => { e.stopPropagation(); openDetail(a.id); }}>
                   <td className="px-3 py-1.5 font-mono text-2xs text-blue-600 whitespace-nowrap">
                     {a.actionId || "—"}
                   </td>
