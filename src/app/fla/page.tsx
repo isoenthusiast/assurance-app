@@ -68,6 +68,7 @@ export default async function FlaDashboardPage() {
     },
     orderBy: { targetDate: "asc" },
     select: {
+      id: true,
       actionId: true,
       actionDescription: true,
       actionParty: true,
@@ -85,6 +86,7 @@ export default async function FlaDashboardPage() {
         <div className="col-span-2 space-y-6">
           <ProcessHealthDashboard processes={processHealth} assessments={assessmentsInProgress} />
           <OutstandingActions actions={outstandingActions.map(a => ({
+            id: a.id,
             actionId: a.actionId,
             actionDescription: a.actionDescription,
             actionParty: a.actionParty,
