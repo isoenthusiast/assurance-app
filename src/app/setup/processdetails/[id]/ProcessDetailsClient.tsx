@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import ControlForm from "../../controls/ControlForm";
 import { formatDate } from "@/lib/formatDate";
 // Sub-process creation uses fetch API directly (avoid server action host validation)
 
@@ -223,11 +222,6 @@ export default function ProcessDetailsClient({
   const [filterStandard, setFilterStandard] = useState("");
   const [filterPA, setFilterPA] = useState("");
   const [showLinkedList, setShowLinkedList] = useState(false);
-
-  // ── ControlForm (full control add/edit from /setup/controls) ──
-  const [cfProcessAreas, setCfProcessAreas] = useState<{ id: string; name: string }[]>([]);
-  const [cfSubProcesses, setCfSubProcesses] = useState<{ id: string; name: string; processAreaId: string }[]>([]);
-  const [cfEditing, setCfEditing] = useState<any>(null);
 
   // ── Bulk Map Controls to Requirements ──
   const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
@@ -2271,37 +2265,6 @@ export default function ProcessDetailsClient({
         </div>
       )}
 
-      {/* ─── FULL CONTROL FORM (Add/Edit via ControlForm) ──────────────── */}
-      {activeTab !== "knowledgebase" && (
-      <ControlForm
-        key={cfEditing?.id || "new"}
-        processAreas={cfProcessAreas}
-        subProcesses={cfSubProcesses}
-        editing={cfEditing?.id ? cfEditing : null}
-        onSaved={async (controlId, isNew) => {
-          if (isNew && addControlReqRId) {
-            const mappingId = `m2r_${Date.now()}`;
-            await fetch("/api/admin/table/MapControl2Requirement/data", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                id: mappingId,
-                controlId,
-                requirementRId: addControlReqRId,
-                processAreaId: processArea.id,
-              }),
-            }).catch(() => {});
-            // Log the new mapping
-            const ctrlName = cfEditing?.name || controlId;
-            const targetReq = reqData.find(r => r.rId === addControlReqRId);
-            logMappingChange(mappingId, controlId, ctrlName, null, "", addControlReqRId, targetReq?.requirementId || "");
-            setAddControlReqRId(null);
-          }
-          setCfEditing(null);
-          router.refresh();
-        }}
-      />
-      )}
     </div>
   );
 }
