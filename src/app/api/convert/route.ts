@@ -284,12 +284,19 @@ export async function POST(request: Request) {
     let kbRecord = null;
     if (saveToKB) {
       const username = (session.user as { name?: string }).name || "unknown";
+      // Read companyId from cookie for company-scoping
+      let companyId: string | null = null;
+      try {
+        const cookieStore = await cookies();
+        companyId = cookieStore.get("selectedCompanyId")?.value || null;
+      } catch { /* cookies() may throw */ }
       kbRecord = await prisma.knowledgebase.create({
         data: {
           knowledgeName: originalName,
           knowledgeContent: markdown,
           remarks,
           addedBy: username,
+          companyId,
         },
       });
     }

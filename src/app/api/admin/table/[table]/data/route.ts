@@ -7,7 +7,7 @@ import { cookies } from "next/headers";
 
 /** Tables that have a companyId column and should be company-scoped */
 const COMPANY_SCOPED_TABLES = new Set([
-  "Control", "SubProcess",
+  "Control", "SubProcess", "Knowledgebase",
   "Assessment", "AssessmentTemplate", "Attachment", "UserRole",
 ]);
 

@@ -164,7 +164,9 @@ Polymorphic tables (no FK possible) require manual cleanup in the DELETE handler
 - **AttachmentMapping** — polymorphic M2M: Attachment → any table (destTable, recId)
 
 ### Knowledge Management
-- **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy)
+- **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy, companyId)
+  - `@@unique([knowledgeName, companyId])` — prevents duplicate document names within a company
+  - companyId is company-scoped; KnowledgebaseManager filters by selected company
   - Fed by `POST /api/convert` which uses **mammoth** (docx→markdown) and **pdfjs-dist + tesseract.js** (PDF text extraction with OCR fallback for scanned pages) — pure Node/JS, no Python dependency
   - Rendered as direct component in admin page (not iframe) with drag-and-drop upload, full-text preview, search, .md download
 - **MapArt2Know** — artifact-to-knowledge mapping (mapA2KID, artName, artID, kID, whyToMap)

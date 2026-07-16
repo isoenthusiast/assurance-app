@@ -10,6 +10,7 @@ interface KBRecord {
   remarks: string | null;
   createdDate: string;
   addedBy: string;
+  companyId: string | null;
 }
 
 export default function KnowledgebasePage() {

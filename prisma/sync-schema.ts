@@ -175,6 +175,12 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Requirement_requirementId_standard_companyId_key" ON "Requirement"("requirementId", "standard", "companyId")`);
   console.log("✅ Added unique constraint: Requirement(requirementId, standard, companyId)");
 
+  // ── Knowledgebase: add companyId column + unique index ────────────
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Knowledgebase" ADD COLUMN IF NOT EXISTS "companyId" TEXT`);
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Knowledgebase_knowledgeName_companyId_key" ON "Knowledgebase"("knowledgeName", "companyId")`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Knowledgebase_companyId_idx" ON "Knowledgebase"("companyId")`);
+  console.log("✅ Added companyId to Knowledgebase");
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }
