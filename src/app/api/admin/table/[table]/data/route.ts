@@ -7,9 +7,12 @@ import { cookies } from "next/headers";
 
 /** Tables that have a companyId column and should be company-scoped */
 const COMPANY_SCOPED_TABLES = new Set([
-  "Control", "SubProcess", "Knowledgebase",
+  "Control", "SubProcess",
   "Assessment", "AssessmentTemplate", "Attachment", "UserRole",
 ]);
+
+/** Tables that should use raw SQL instead of Prisma model (e.g., when model delegate is stale) */
+const RAW_SQL_TABLES = new Set(["Knowledgebase"]);
 
 export async function GET(
   request: Request,
@@ -81,7 +84,7 @@ export async function GET(
     }
 
     try {
-      const model = (prisma as any)[camelName];
+      const model = RAW_SQL_TABLES.has(table) ? null : (prisma as any)[camelName];
       if (!model) {
         if (columns.length === 0) {
           const dbCols = await (prisma as any).$queryRawUnsafe(

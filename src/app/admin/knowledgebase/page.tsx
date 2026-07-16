@@ -19,17 +19,27 @@ export default function KnowledgebasePage() {
 
 export function KnowledgebaseManager() {
   const [records, setRecords] = useState<KBRecord[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [search, setSearch] = useState("");
   const [selectedRecord, setSelectedRecord] = useState<KBRecord | null>(null);
   const [remarks, setRemarks] = useState("");
+  const [kbCompanyId, setKbCompanyId] = useState("SAMS001");
   const [dragOver, setDragOver] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const PER_PAGE = 20;
+
+  // Load companies on mount
+  useEffect(() => {
+    fetch("/api/admin/table/Company/data?perPage=100").then(r => r.json()).then(d => {
+      setCompanies((d.rows || []).sort((a: any, b: any) => (a.companyName || a.companyID || "").localeCompare(b.companyName || b.companyID || "")));
+    }).catch(() => {});
+  }, []);
 
   // Load records
   const loadRecords = useCallback(async () => {
@@ -81,6 +91,7 @@ export function KnowledgebaseManager() {
         formData.append("file", file);
         formData.append("saveToKnowledgebase", "true");
         if (remarks) formData.append("remarks", remarks);
+        if (kbCompanyId) formData.append("companyId", kbCompanyId);
 
         const res = await fetch("/api/convert", {
           method: "POST",
@@ -106,7 +117,7 @@ export function KnowledgebaseManager() {
         setUploading(false);
       }
     },
-    [remarks, loadRecords]
+    [remarks, kbCompanyId, loadRecords]
   );
 
   // Delete record
@@ -185,6 +196,20 @@ export function KnowledgebaseManager() {
           />
         </div>
 
+        {/* Company selector */}
+        <div>
+          <label className="text-xs font-medium text-slate-600">Company</label>
+          <select
+            value={kbCompanyId}
+            onChange={(e) => setKbCompanyId(e.target.value)}
+            className="mt-1 w-full rounded border border-slate-300 px-2 py-1.5 text-xs bg-white focus:border-blue-500 focus:outline-none"
+          >
+            {companies.map((c: any) => (
+              <option key={c.id} value={c.id}>{c.companyName || c.companyID || c.id}</option>
+            ))}
+          </select>
+        </div>
+
         {/* Remarks */}
         <div>
           <label className="text-xs font-medium text-slate-600">Remarks (optional)</label>
@@ -232,20 +257,58 @@ export function KnowledgebaseManager() {
           ) : records.length === 0 ? (
             <div className="p-3 text-xs text-slate-400">No entries yet.</div>
           ) : (
-            records.map((r) => (
-              <button
-                key={r.kID}
-                onClick={() => setSelectedRecord(r)}
-                className={`w-full text-left px-3 py-2 text-xs border-b border-slate-50 hover:bg-slate-50 ${
-                  selectedRecord?.kID === r.kID ? "bg-blue-50 border-l-2 border-l-blue-500 font-medium" : ""
-                }`}
-              >
-                <div className="truncate text-slate-700">{r.knowledgeName}</div>
-                <div className="text-slate-400 text-2xs mt-0.5">
-                  {r.addedBy} · {formatDate(r.createdDate)}
-                </div>
-              </button>
-            ))
+            (() => {
+              // Group by companyId → knowledgeName for tree view
+              const grouped: Record<string, KBRecord[]> = {};
+              for (const r of records) {
+                const co = r.companyId || "(no company)";
+                if (!grouped[co]) grouped[co] = [];
+                grouped[co].push(r);
+              }
+              // Sort companies
+              const coIds = Object.keys(grouped).sort((a, b) => {
+                if (a === "(no company)") return 1;
+                if (b === "(no company)") return -1;
+                const ca = companies.find((c: any) => c.id === a);
+                const cb = companies.find((c: any) => c.id === b);
+                return (ca?.companyName || a).localeCompare(cb?.companyName || b);
+              });
+              return coIds.map(coId => {
+                const coName = companies.find((c: any) => c.id === coId)?.companyName || coId;
+                const isExpanded = expandedCompanies.has(coId);
+                const coRecords = grouped[coId].sort((a, b) => a.knowledgeName.localeCompare(b.knowledgeName));
+                return (
+                  <div key={coId}>
+                    <button
+                      onClick={() => setExpandedCompanies(prev => {
+                        const next = new Set(prev);
+                        if (next.has(coId)) next.delete(coId); else next.add(coId);
+                        return next;
+                      })}
+                      className="w-full text-left px-2 py-1.5 text-xs font-medium text-slate-600 bg-slate-50 border-b border-slate-100 hover:bg-slate-100 flex items-center gap-1.5"
+                    >
+                      <span className="text-2xs">{isExpanded ? "▼" : "▶"}</span>
+                      <span className="truncate">{coName}</span>
+                      <span className="ml-auto text-2xs text-slate-400">{coRecords.length}</span>
+                    </button>
+                    {isExpanded && coRecords.map((r) => (
+                      <button
+                        key={r.kID}
+                        onClick={() => setSelectedRecord(r)}
+                        className={`w-full text-left pl-6 pr-2 py-1.5 text-xs border-b border-slate-50 hover:bg-slate-50 ${
+                          selectedRecord?.kID === r.kID ? "bg-blue-50 border-l-2 border-l-blue-500 font-medium" : ""
+                        }`}
+                      >
+                        <div className="truncate text-slate-700">{r.knowledgeName}</div>
+                        <div className="text-slate-400 text-2xs mt-0.5">
+                          {r.addedBy} · {formatDate(r.createdDate)}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                );
+              });
+            })()
           )}
         </div>
       </div>
