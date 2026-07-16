@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 
 type Section = {
   id: string;
@@ -70,7 +69,8 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function HelpImage({ src, alt, caption }: { src: string; alt: string; caption?: string }) {
   return (
     <div className="my-4 rounded-lg border border-slate-200 overflow-hidden">
-      <Image src={src} alt={alt} width={800} height={450} className="w-full" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={src} alt={alt} className="w-full cursor-pointer" onClick={() => window.open(src, '_blank')} />
       {caption && <p className="px-3 py-2 text-xs text-slate-500 bg-slate-50 border-t border-slate-200">{caption}</p>}
     </div>
   );
