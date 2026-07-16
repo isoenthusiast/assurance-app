@@ -343,7 +343,7 @@ function FAQSection() {
         />
         <FaqItem
           q="How do I add a new control?"
-          a='From a Process Area\'s Requirements & Controls tab, click "+ Add Control" inside any expanded requirement, or use the Bulk Map section. The AI Chat Assistant can also suggest controls.'
+          a="From a Process Area's Requirements &amp; Controls tab, click &quot;+ Add Control&quot; inside any expanded requirement, or use the Bulk Map section. The AI Chat Assistant can also suggest controls."
         />
         <FaqItem
           q="How do I change a control's requirement?"
