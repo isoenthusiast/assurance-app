@@ -1,11 +1,15 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 16, 2026 (v2.7.0)  
+**Last Updated:** July 16, 2026 (v2.8.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"  
 **Companion:** `APP_DESIGN_PowerPlatform.md` — Power Platform (PowerApps/Power Automate/PowerBI/SharePoint) for tablet & mobile field use. Review when updating this document.
 
-> **v2.7.0 — Dashboard, Actions & Deployment Hardening:** Added Outstanding Actions collapsible section to FLA dashboard with sortable/resizable columns, click-to-view modal with finding + action details, inline edit mode (admin/actionParty/auditee gated), and AttachmentList integration. Added `actionId` column (ACTID-XXXXXX) to Action model with backfill. Fixed 3 deploy-blocking issues: TypeScript type error in cleanTemplates (Lesson #26), Requirement unique index violation from Unmapped Controls catch-all duplicates (Lesson #27), and sync-schema.ts dedup-before-index pattern. Created `DEPLOYMENT_CHECKLIST.md` 6-step audit. All 3 companies (SAMS001, SMDS, OGP) verified 1:1 with 1,048 controls/1,048 mappings each.
+> **v2.8.0 — Unmapped Controls per ProcessArea, AI Chat Assistant & Knowledgebase Scoping:**
+> - **Unmapped Controls restructure:** Changed `@@unique([requirementId, standard, companyId])` → `@@unique([requirementId, processAreaId, companyId])` on Requirement. Each ProcessArea now owns its own "Unmapped Controls" requirement (195 total across 3 companies). Controls auto-mapped via ControlSubProcess → SubProcess → ProcessArea chain.
+> - **AI Chat Assistant:** New `POST /api/chat/knowledge` endpoint calls DeepSeek V4 (`deepseek-chat`) with knowledgebase context scoped to the process area + SAMS001 global knowledge. Parses `___CONTROL___` blocks from responses for suggested controls. New `POST /api/chat/update-control` creates Control records from approved suggestions. Chatbox integrated into Knowledgebase left panel with approve/reject cards and "Save to Knowledgebase" button.
+> - **Knowledgebase scoping:** Added `companyId` and `processAreaId` to Knowledgebase model. Knowledgebase tab on process details page with 2-panel layout (entry tree + content viewer/editor). Upload supports .docx, .pdf, .md, .txt, .csv.
+> - **Dashboard & Process Details UI polish:** Standard Health headers wrap text, score bars removed from PA breakdown. Requirements cards reordered (ReqNo → Scoring → ClauseContent). Process Health columns stack on mobile. "+ Add Control" removed from process details page.
 
 > **v2.6.5 — Admin UX Hardening & Company-Aware Templates:** Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. `GET /api/admin/assessment-templates` filtered by companyId. Clean Templates API + button.
 
@@ -167,8 +171,10 @@ Polymorphic tables (no FK possible) require manual cleanup in the DELETE handler
 - **Knowledgebase** — converted documents (kID, knowledgeName, knowledgeContent, remarks, createdDate, addedBy, companyId, processAreaId)
   - `@@unique([knowledgeName, companyId])` — prevents duplicate document names within a company
   - `processAreaId` optionally links to a ProcessArea; uploads from the Process Details page auto-set this
-  - companyId is company-scoped; KnowledgebaseManager filters by selected company
-  - Fed by `POST /api/convert` which uses **mammoth** (docx→markdown) and **pdfjs-dist + tesseract.js** (PDF text extraction with OCR fallback for scanned pages) — pure Node/JS, no Python dependency
+  - `companyId` scopes documents to a company; KnowledgebaseManager tree groups by company
+  - Knowledgebase tab on `/setup/processdetails/[id]` with 2-panel layout: left panel has entry tree + AI chatbox, right panel shows content with edit mode for owners/admins
+  - AI Chat Assistant (DeepSeek V4) with context from process area knowledge + SAMS001 global knowledge
+  - Fed by `POST /api/convert` which uses **mammoth** (docx→markdown) and **pdfjs-dist + tesseract.js** (PDF text extraction with OCR fallback) — pure Node/JS, no Python dependency. Also supports .md (passthrough), .csv (→table), .txt (→code block)
   - Rendered as direct component in admin page (not iframe) with drag-and-drop upload, full-text preview, search, .md download
 - **MapArt2Know** — artifact-to-knowledge mapping (mapA2KID, artName, artID, kID, whyToMap)
 
@@ -189,9 +195,12 @@ Polymorphic tables (no FK possible) require manual cleanup in the DELETE handler
   - Unique on (controlFromDocumentId, subProcessId) with isPrimary flag
 
 ### SMDS ICOP Statutory Requirements
-- **Requirement** — 738 statutory/regulatory requirements from SMDS ICOP framework (rID as PK, standard, pID, requirementId, clauseContent, intentOutcome, clauseApplicability, references, applicable)
-  - `processAreaId` FK → ProcessArea (backfilled via pID matching)
+- **Requirement** — 738 statutory/regulatory requirements from SMDS ICOP framework + 195 "Unmapped Controls" catch-all requirements (one per ProcessArea per company)
+  - `@@unique([requirementId, processAreaId, companyId])` — one Unmapped Controls per ProcessArea
+  - `rID` as PK, `standard`, `pID`, `requirementId`, `clauseContent`, `intentOutcome`, `clauseApplicability`, `references`, `applicable`
+  - `processAreaId` FK → ProcessArea
   - `controlMappings` → MapControl2Requirement[] (M2M to Control)
+  - Controls are auto-mapped to their PA's Unmapped Controls via ControlSubProcess → SubProcess → ProcessArea chain
   - Imported from `frontline library/mRequirement.csv` via `scripts/import_mrequirements.py`
   - Admin UI at `/admin` → "📋 Requirements" with:
     - **Tree view:** Standard → ProcessArea hierarchy derived from Standard + ProcessArea tables (standardId FK)
@@ -300,7 +309,12 @@ Full CRUD at `/api/admin/samples`, `/findings`, `/actions` with `/[id]`
 GET `/api/attachments?destTable=X&recId=Y`, POST (FormData upload), DELETE `/[id]`
 
 ### Document Conversion
-POST `/api/convert` — upload .docx/.pdf, returns Markdown (mammoth for docx, pdfjs-dist + tesseract.js OCR for PDF); optional `saveToKnowledgebase=true` + `remarks` to persist to Knowledgebase table
+POST `/api/convert` — upload .docx/.pdf/.md/.txt/.csv, converts to Markdown (mammoth for docx, pdfjs-dist + tesseract.js OCR for PDF, .md passthrough, .csv→table, .txt→code block); optional `saveToKnowledgebase=true` + `remarks` + `companyId` + `processAreaId` to persist to Knowledgebase table
+
+### AI Chat Assistant
+POST `/api/chat/knowledge` — sends user message + processAreaId + companyId + conversation history to DeepSeek V4 (`deepseek-chat`). System prompt includes process area info and knowledgebase content from both the current PA and SAMS001 global knowledge. Parses `___CONTROL___` JSON blocks from responses for suggested controls.
+
+POST `/api/chat/update-control` — creates a Control record from an AI-suggested control (name, statement, controlType, processAreaId, companyId).
 
 ### Templates
 GET/POST `/api/admin/assessment-templates`, GET/PUT/DELETE `/[id]`
