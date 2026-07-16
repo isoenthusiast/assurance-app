@@ -1218,14 +1218,16 @@ function RequirementManager() {
   const [requirements, setRequirements] = useState<any[]>([]);
   const [processAreas, setProcessAreas] = useState<any[]>([]);
   const [standards, setStandards] = useState<any[]>([]);
+  const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [companyId, setCompanyId] = useState<string>("");
 
-  // Tree expand/collapse state
+  // Tree expand/collapse state (Company → Standard → ProcessArea)
+  const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
   const [expandedStandards, setExpandedStandards] = useState<Set<string>>(new Set());
 
   // Current selection (drives table filter + breadcrumb)
+  const [selCompanyId, setSelCompanyId] = useState<string>("");     // Company.id
   const [selStandardId, setSelStandardId] = useState<string>("");  // Standard.id
   const [selPAId, setSelPAId] = useState<string>("");              // ProcessArea.id
 
@@ -1244,28 +1246,6 @@ function RequirementManager() {
   const [allControls, setAllControls] = useState<any[]>([]);
   const [allMappings, setAllMappings] = useState<any[]>([]);
   const controlsLoadedRef = useRef(false);
-
-  // ── Company cookie polling (mirrors templates page pattern) ────────
-  const getCompanyId = () => {
-    const match = document.cookie.match(/(?:^|;\s*)selectedCompanyId=([^;]*)/);
-    return match ? match[1] : "";
-  };
-
-  // Detect initial companyId on mount
-  useEffect(() => {
-    setCompanyId(getCompanyId());
-  }, []);
-
-  // Poll for company cookie changes (CompanySelector sets cookie + router.refresh)
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const newId = getCompanyId();
-      if (newId !== companyId) {
-        setCompanyId(newId);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [companyId]);
 
   // ── Resizable columns ───────────────────────────────────────────────
   const tableRef = useRef<HTMLTableElement>(null);
@@ -1350,29 +1330,22 @@ function RequirementManager() {
     );
   };
 
-  // Load all data, re-fetching when companyId changes
+  // Load all data on mount (no company filtering — show all companies)
   useEffect(() => {
     setLoading(true);
-    // Reset tree state when company switches
-    setSelStandardId("");
-    setSelPAId("");
-    setExpandedStandards(new Set());
-    setExpandedReqId(null);
-    setEditForm({});
-    setIsAdding(false);
-    setPage(1);
-    controlsLoadedRef.current = false; // re-lazy-load controls for new company
     Promise.all([
-      fetch("/api/admin/table/Requirement/data?perPage=2000").then(r => r.json()),
+      fetch("/api/admin/table/Requirement/data?perPage=5000").then(r => r.json()),
       fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
       fetch("/api/admin/table/Standard/data?perPage=50").then(r => r.json()),
-    ]).then(([reqData, paData, stdData]) => {
+      fetch("/api/admin/table/Company/data?perPage=100").then(r => r.json()),
+    ]).then(([reqData, paData, stdData, coData]) => {
       setRequirements(reqData.rows || []);
       setProcessAreas(paData.rows || []);
       setStandards((stdData.rows || []).sort((a: any, b: any) => (a.sequenceNo ?? 0) - (b.sequenceNo ?? 0)));
+      setCompanies((coData.rows || []).sort((a: any, b: any) => (a.companyName || a.companyID || "").localeCompare(b.companyName || b.companyID || "")));
     }).catch(e => setError(e.message))
       .finally(() => setLoading(false));
-  }, [companyId]);
+  }, []);
 
   // Lazy-load controls & mappings when first expanding a requirement
   useEffect(() => {
@@ -1397,9 +1370,12 @@ function RequirementManager() {
   })();
 
   // ── Derived tree data ──────────────────────────────────────────────
-  // PAs for a given Standard (by Standard.id → ProcessArea.standardId)
-  const getPAsForStandard = (stdId: string) =>
-    processAreas.filter(pa => pa.standardId === stdId || pa.StandardID === stdId);
+  // PAs for a given Standard AND Company
+  const getPAsForStandard = (stdId: string, coId: string) =>
+    processAreas.filter(pa =>
+      (pa.standardId === stdId || pa.StandardID === stdId) &&
+      (pa.companyId === coId || pa.companyID === coId)
+    );
 
   // Get Standard name by id
   const getStdName = (stdId: string) => {
@@ -1407,19 +1383,45 @@ function RequirementManager() {
     return s ? s.standard : stdId;
   };
 
+  // Get Company display name by id
+  const getCoName = (coId: string) => {
+    const c = companies.find((x: any) => x.id === coId);
+    return c ? (c.companyName || c.companyID || coId) : coId;
+  };
+
+  // Standards that have PAs under a given company
+  const getStandardsForCompany = (coId: string) => {
+    const paIdsForCo = new Set(processAreas.filter(pa => pa.companyId === coId || pa.companyID === coId).map(pa => pa.standardId || pa.StandardID));
+    return standards.filter(s => paIdsForCo.has(s.id));
+  };
+
   // ── Toggle helpers ─────────────────────────────────────────────────
-  const toggleStandard = (stdId: string) => {
+  const toggleCompany = (coId: string) => {
+    setExpandedCompanies(prev => {
+      const next = new Set(prev);
+      if (next.has(coId)) next.delete(coId); else next.add(coId);
+      return next;
+    });
+    setSelCompanyId(coId);
+    setSelStandardId("");
+    setSelPAId("");
+    setPage(1);
+  };
+
+  const toggleStandard = (stdId: string, coId: string) => {
     setExpandedStandards(prev => {
       const next = new Set(prev);
       if (next.has(stdId)) next.delete(stdId); else next.add(stdId);
       return next;
     });
+    setSelCompanyId(coId);
     setSelStandardId(stdId);
     setSelPAId("");
     setPage(1);
   };
 
-  const selectPA = (paId: string, stdId: string) => {
+  const selectPA = (paId: string, stdId: string, coId: string) => {
+    setSelCompanyId(coId);
     setSelStandardId(stdId);
     setSelPAId(paId);
     setPage(1);
@@ -1429,10 +1431,10 @@ function RequirementManager() {
   const filteredReqs = requirements.filter((r: any) => {
     if (selPAId) return r.processAreaId === selPAId;
     if (selStandardId) {
-      // Filter by ProcessArea.standardId matching selected Standard
-      const paIds = new Set(getPAsForStandard(selStandardId).map(pa => pa.id));
+      const paIds = new Set(getPAsForStandard(selStandardId, selCompanyId).map(pa => pa.id));
       return r.processAreaId && paIds.has(r.processAreaId);
     }
+    if (selCompanyId) return r.companyId === selCompanyId;
     return true;
   });
 
@@ -1458,6 +1460,7 @@ function RequirementManager() {
     return pa ? pa.name : req.pId;
   };
   // ── Breadcrumb labels ──────────────────────────────────────────────
+  const selCoName = selCompanyId ? getCoName(selCompanyId) : "";
   const selPAName = selPAId ? (processAreas.find(p => p.id === selPAId)?.name || selPAId) : "";
 
   // ── Edit helpers ───────────────────────────────────────────────────
@@ -1556,21 +1559,22 @@ function RequirementManager() {
         if (!res.ok) throw new Error((await res.json()).error || "Save failed");
         setMsg({ type: "ok", text: "Requirement updated." });
       }
-      const r = await fetch("/api/admin/table/Requirement/data?perPage=2000");
+      const r = await fetch("/api/admin/table/Requirement/data?perPage=5000");
       setRequirements((await r.json()).rows || []);
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
     finally { setSaving(false); }
   };
 
   const clearAll = () => {
-    setSelStandardId(""); setSelPAId("");
+    setSelCompanyId(""); setSelStandardId(""); setSelPAId("");
+    setExpandedCompanies(new Set());
     setExpandedStandards(new Set());
     setExpandedReqId(null); setEditForm({}); setIsAdding(false); setPage(1);
   };
 
   const addNew = () => {
     if (!selPAId) {
-      alert("Please select a Process Area in the tree first.\n\nNavigate: Standard ▶ ProcessArea, then click a Process Area to select it.");
+      alert("Please select a Process Area in the tree first.\n\nNavigate: Company ▶ Standard ▶ ProcessArea, then click a Process Area to select it.");
       return;
     }
     const pa = processAreas.find((p: any) => p.id === selPAId);
@@ -1612,55 +1616,78 @@ function RequirementManager() {
       </div>
       <div className="flex flex-1 overflow-hidden">
         {/* ═════════ LEFT PANEL — Tree View ═════════ */}
-        <div className="w-60 border-r border-slate-200 flex flex-col overflow-y-auto bg-white">
+        <div className="w-64 border-r border-slate-200 flex flex-col overflow-y-auto bg-white">
           <div className="px-3 py-2 border-b border-slate-100">
-            <span className="text-2xs font-semibold text-slate-400 uppercase tracking-wide">Standards</span>
+            <span className="text-2xs font-semibold text-slate-400 uppercase tracking-wide">Company › Standard › PA</span>
           </div>
           <div className="flex-1 overflow-y-auto">
-            {/* "All Standards" root */}
+            {/* "All" root */}
             <button
               onClick={clearAll}
-              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${!selStandardId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+              className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${!selCompanyId ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
             >
               <span className="w-4 text-center text-2xs">📂</span>
-              <span className="truncate">All Standards</span>
+              <span className="truncate">All Companies</span>
               <span className="ml-auto text-2xs text-slate-400">{requirements.length}</span>
             </button>
 
-            {standards.map(std => {
-              const pas = getPAsForStandard(std.id);
-              const isExpanded = expandedStandards.has(std.id);
-              const isSelected = selStandardId === std.id && !selPAId;
-              // Count requirements under this standard via its PAs
-              const pasUnderStd = new Set(pas.map(pa => pa.id));
-              const reqCount = requirements.filter((r: any) => r.processAreaId && pasUnderStd.has(r.processAreaId)).length;
+            {companies.map(co => {
+              const coId = co.id;
+              const coStds = getStandardsForCompany(coId);
+              const isCoExpanded = expandedCompanies.has(coId);
+              const isCoSelected = selCompanyId === coId && !selStandardId;
+              const coReqCount = requirements.filter((r: any) => r.companyId === coId).length;
+              if (coStds.length === 0 && coReqCount === 0) return null;
 
               return (
-                <div key={std.id}>
-                  {/* Standard row */}
+                <div key={coId}>
+                  {/* Company row */}
                   <button
-                    onClick={() => toggleStandard(std.id)}
-                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-700"}`}
+                    onClick={() => toggleCompany(coId)}
+                    className={`w-full text-left px-3 py-1.5 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isCoSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-700"}`}
                   >
-                    <span className="w-4 text-center text-2xs">{isExpanded ? "▼" : "▶"}</span>
-                    <span className="truncate">{std.standard}</span>
-                    <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{reqCount}</span>
+                    <span className="w-4 text-center text-2xs">{isCoExpanded ? "▼" : "▶"}</span>
+                    <span className="truncate font-medium">{co.companyName || co.companyID || coId}</span>
+                    <span className="ml-auto text-2xs text-slate-400 shrink-0">{coReqCount}</span>
                   </button>
 
-                  {/* Process Areas (children of standard) */}
-                  {isExpanded && pas.map(pa => {
-                    const isPASelected = selPAId === pa.id;
-                    const paReqCount = requirements.filter((r: any) => r.processAreaId === pa.id).length;
+                  {/* Standards (children of company) */}
+                  {isCoExpanded && coStds.map(std => {
+                    const pas = getPAsForStandard(std.id, coId);
+                    const isStdExpanded = expandedStandards.has(std.id);
+                    const isStdSelected = selStandardId === std.id && selCompanyId === coId && !selPAId;
+                    const pasUnderStd = new Set(pas.map(pa => pa.id));
+                    const reqCount = requirements.filter((r: any) => r.companyId === coId && r.processAreaId && pasUnderStd.has(r.processAreaId)).length;
 
                     return (
-                      <button
-                        key={pa.id}
-                        onClick={() => selectPA(pa.id, std.id)}
-                        className={`w-full text-left pl-8 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
-                      >
-                        <span className="truncate">{pa.name}</span>
-                        <span className="ml-auto text-2xs text-slate-400 flex-shrink-0">{paReqCount}</span>
-                      </button>
+                      <div key={std.id}>
+                        {/* Standard row */}
+                        <button
+                          onClick={() => toggleStandard(std.id, coId)}
+                          className={`w-full text-left pl-7 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isStdSelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-600"}`}
+                        >
+                          <span className="w-3 text-center text-2xs">{isStdExpanded ? "▼" : "▶"}</span>
+                          <span className="truncate">{std.standard}</span>
+                          <span className="ml-auto text-2xs text-slate-400 shrink-0">{reqCount}</span>
+                        </button>
+
+                        {/* Process Areas (children of standard) */}
+                        {isStdExpanded && pas.map(pa => {
+                          const isPASelected = selPAId === pa.id;
+                          const paReqCount = requirements.filter((r: any) => r.processAreaId === pa.id).length;
+
+                          return (
+                            <button
+                              key={pa.id}
+                              onClick={() => selectPA(pa.id, std.id, coId)}
+                              className={`w-full text-left pl-12 pr-3 py-1 text-xs flex items-center gap-1.5 hover:bg-slate-50 ${isPASelected ? "bg-blue-50 font-medium text-blue-700" : "text-slate-500"}`}
+                            >
+                              <span className="truncate">{pa.name}</span>
+                              <span className="ml-auto text-2xs text-slate-400 shrink-0">{paReqCount}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     );
                   })}
                 </div>
@@ -1672,8 +1699,17 @@ function RequirementManager() {
         {/* ═════════ RIGHT PANEL — Breadcrumb + Table ═════════ */}
         <div className="flex-1 flex flex-col overflow-hidden">
           {/* Breadcrumb */}
-          <div className="px-4 py-2 border-b border-slate-200 bg-slate-50/50 flex items-center gap-1.5 text-xs text-slate-500 flex-shrink-0">
+          <div className="px-4 py-2 border-b border-slate-200 bg-slate-50/50 flex items-center gap-1.5 text-xs text-slate-500 shrink-0">
             <button onClick={clearAll} className="hover:text-blue-600 hover:underline">📋 All</button>
+            {selCompanyId && (
+              <>
+                <span className="text-slate-300">›</span>
+                <button onClick={() => { setSelStandardId(""); setSelPAId(""); setPage(1); }}
+                  className={`hover:text-blue-600 hover:underline ${!selStandardId ? "font-medium text-slate-700" : ""}`}>
+                  {(() => { const n = selCoName; return n.length > 25 ? n.substring(0, 25) + "..." : n; })()}
+                </button>
+              </>
+            )}
             {selStandardId && (
               <>
                 <span className="text-slate-300">›</span>
