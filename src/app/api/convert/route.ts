@@ -112,7 +112,7 @@ async function isOcrAvailable(): Promise<boolean> {
     await worker.terminate();
 
     _ocrAvailable = data.text.trim().length > 0;
-  } catch {
+  } catch (_e) {
     _ocrAvailable = false;
   }
   return _ocrAvailable;
@@ -309,7 +309,7 @@ export async function POST(request: Request) {
         try {
           const cookieStore = await cookies();
           companyId = cookieStore.get("selectedCompanyId")?.value || null;
-        } catch { /* cookies() may throw */ }
+        } catch (_e) { /* cookies() may throw */ }
       }
       const processAreaId: string | null = formData.get("processAreaId")?.toString() || null;
       const newId = `kb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
