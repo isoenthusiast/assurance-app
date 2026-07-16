@@ -30,6 +30,12 @@
 			"type": "shell",
 			"command": "cd ..; git add -A; git commit -m 'docs: APP_DESIGN v2.6.5, full DB backup 20260716' --allow-empty; git push",
 			"group": "none"
+		},
+		{
+			"label": "Commit parent docs",
+			"type": "shell",
+			"command": "cd ..; git add -A; git commit -m 'docs: APP_DESIGN v2.7.0 — full audit, 45 models, 49 routes, 29 pages, 9 components' --allow-empty; git push",
+			"group": "none"
 		}
 	]
 }

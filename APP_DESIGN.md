@@ -2,7 +2,8 @@
 
 **Last Updated:** July 16, 2026 (v2.7.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
-**Code Name:** "CONAN PROJECT"
+**Code Name:** "CONAN PROJECT"  
+**Companion:** `APP_DESIGN_PowerPlatform.md` — Power Platform (PowerApps/Power Automate/PowerBI/SharePoint) for tablet & mobile field use. Review when updating this document.
 
 > **v2.7.0 — Dashboard, Actions & Deployment Hardening:** Added Outstanding Actions collapsible section to FLA dashboard with sortable/resizable columns, click-to-view modal with finding + action details, inline edit mode (admin/actionParty/auditee gated), and AttachmentList integration. Added `actionId` column (ACTID-XXXXXX) to Action model with backfill. Fixed 3 deploy-blocking issues: TypeScript type error in cleanTemplates (Lesson #26), Requirement unique index violation from Unmapped Controls catch-all duplicates (Lesson #27), and sync-schema.ts dedup-before-index pattern. Created `DEPLOYMENT_CHECKLIST.md` 6-step audit. All 3 companies (SAMS001, SMDS, OGP) verified 1:1 with 1,048 controls/1,048 mappings each.
 
