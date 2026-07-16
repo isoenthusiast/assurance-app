@@ -279,7 +279,6 @@ export async function POST(request: Request) {
         // .txt — wrap in markdown code block to preserve formatting
         markdown = "```\n" + buffer.toString("utf-8") + "\n```";
       }
-      }
     } catch (convError: any) {
       console.error("Conversion error:", convError);
       return NextResponse.json(
