@@ -226,6 +226,7 @@ export default function ProcessDetailsClient({
   // ── Bulk Map Controls to Requirements ──
   const [cfProcessAreas, setCfProcessAreas] = useState<{ id: string; name: string }[]>([]);
   const [cfSubProcesses, setCfSubProcesses] = useState<{ id: string; name: string; processAreaId: string }[]>([]);
+  const [cfEditing, setCfEditing] = useState<any>(null);
   const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
   const [bulkMapPA, setBulkMapPA] = useState(processArea.id);
 
@@ -239,6 +240,14 @@ export default function ProcessDetailsClient({
   const [kbEditContent, setKbEditContent] = useState("");
   const [kbEditSaving, setKbEditSaving] = useState(false);
   const kbFileRef = useRef<HTMLInputElement>(null);
+
+  // ── Chat state ──
+  type ChatMsg = { role: "user" | "assistant"; content: string; controls?: Array<{ name: string; statement: string; controlType: string }> };
+  const [chatMessages, setChatMessages] = useState<ChatMsg[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatSending, setChatSending] = useState(false);
+  const [chatApproving, setChatApproving] = useState<Record<number, boolean>>({});
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const [bulkMapSP, setBulkMapSP] = useState("");
   const [bulkMapCheckedControls, setBulkMapCheckedControls] = useState<Set<string>>(new Set());
   const [bulkMapTargetReqId, setBulkMapTargetReqId] = useState<number | null>(null);
@@ -924,6 +933,101 @@ export default function ProcessDetailsClient({
     }
   };
 
+  // ── Chat handlers ──
+  const handleChatSend = async () => {
+    const msg = chatInput.trim();
+    if (!msg || chatSending) return;
+    setChatInput("");
+    const userMsg: ChatMsg = { role: "user", content: msg };
+    setChatMessages(prev => [...prev, userMsg]);
+    setChatSending(true);
+    try {
+      const res = await fetch("/api/chat/knowledge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: msg,
+          processAreaId: processArea.id,
+          companyId: companyId || "SAMS001",
+          history: chatMessages.map(m => ({ role: m.role, content: m.content })),
+        }),
+      });
+      const data = await res.json();
+      const reply = data.reply || "Sorry, something went wrong.";
+      const aiMsg: ChatMsg = { role: "assistant", content: reply, controls: data.controls || [] };
+      setChatMessages(prev => [...prev, aiMsg]);
+    } catch (_e) {
+      setChatMessages(prev => [...prev, { role: "assistant", content: "Network error. Please try again." }]);
+    } finally {
+      setChatSending(false);
+    }
+  };
+
+  const handleChatApprove = async (idx: number, ctrlIdx: number) => {
+    const msg = chatMessages[idx];
+    if (!msg?.controls?.[ctrlIdx]) return;
+    const ctrl = msg.controls[ctrlIdx];
+    const key = idx * 100 + ctrlIdx;
+    setChatApproving(prev => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch("/api/chat/update-control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: ctrl.name,
+          statement: ctrl.statement,
+          controlType: ctrl.controlType,
+          processAreaId: processArea.id,
+          companyId: companyId || null,
+        }),
+      });
+      if (res.ok) {
+        setChatMessages(prev => prev.map((m, i) => {
+          if (i !== idx) return m;
+          const updated = [...(m.controls || [])];
+          updated[ctrlIdx] = { ...updated[ctrlIdx], _approved: true } as any;
+          return { ...m, controls: updated };
+        }));
+      }
+    } catch (_e) { /* ignore */ }
+    finally { setChatApproving(prev => ({ ...prev, [key]: false })); }
+  };
+
+  const handleChatSaveToKb = async (content: string) => {
+    if (!content) return;
+    setKbUploading(true);
+    try {
+      const coMatch = document.cookie.match(/(?:^|;\\s*)selectedCompanyId=([^;]*)/);
+      const coId = companyId || coMatch?.[1] || null;
+      const res = await fetch("/api/admin/table/Knowledgebase/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kID: `kb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+          knowledgeName: `AI Chat - ${new Date().toLocaleDateString()}`,
+          knowledgeContent: content,
+          remarks: "Saved from AI chat",
+          addedBy: currentUserName || "unknown",
+          companyId: coId,
+          processAreaId: processArea.id,
+          createdDate: new Date().toISOString(),
+        }),
+      });
+      if (res.ok) {
+        setKbMsg({ type: "ok", text: "AI response saved to Knowledgebase." });
+        router.refresh();
+      } else {
+        setKbMsg({ type: "err", text: "Failed to save." });
+      }
+    } catch (_e) { setKbMsg({ type: "err", text: "Failed to save to Knowledgebase." }); }
+    finally { setKbUploading(false); }
+  };
+
+  // Auto-scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       {/* Breadcrumb */}
@@ -1563,7 +1667,7 @@ export default function ProcessDetailsClient({
 
       {activeTab === "knowledgebase" && (
         <div className="mt-6 flex gap-4 h-[calc(100vh-280px)] min-h-[400px]">
-          {/* LEFT PANEL — Menu + Entry List */}
+          {/* LEFT PANEL — Menu + Entry List + Chat */}
           <div className="w-64 flex-shrink-0 rounded-lg border border-slate-200 bg-white flex flex-col overflow-hidden">
             <div className="px-3 py-2 border-b border-slate-100 bg-slate-50">
               <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Knowledgebase</span>
@@ -1577,8 +1681,8 @@ export default function ProcessDetailsClient({
             >
               <span>＋</span> Add Knowledge
             </button>
-            {/* Entry list */}
-            <div className="flex-1 overflow-y-auto">
+            {/* Entry list — top half */}
+            <div className="flex-1 overflow-y-auto" style={{ maxHeight: "45%" }}>
               {kbEntries.length === 0 ? (
                 <div className="px-3 py-4 text-xs text-slate-400 text-center">
                   No knowledge entries for this process area.
@@ -1602,6 +1706,89 @@ export default function ProcessDetailsClient({
                   );
                 })
               )}
+            </div>
+
+            {/* ── Chatbox ──────────────────────────────────────────────── */}
+            <div className="border-t border-slate-200 flex flex-col flex-1" style={{ minHeight: "40%" }}>
+              <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100">
+                <span className="text-2xs font-semibold text-slate-400 uppercase tracking-wide">💬 AI Assistant</span>
+              </div>
+              {/* Messages */}
+              <div className="flex-1 overflow-y-auto px-2 py-2 space-y-2">
+                {chatMessages.length === 0 && (
+                  <div className="text-xs text-slate-400 text-center py-4">
+                    Ask questions about this process area and its knowledgebase.
+                  </div>
+                )}
+                {chatMessages.map((m, i) => (
+                  <div key={i} className={`text-xs ${m.role === "user" ? "text-right" : "text-left"}`}>
+                    <div className={`inline-block max-w-[95%] rounded-lg px-2.5 py-1.5 ${
+                      m.role === "user" ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"
+                    }`}>
+                      <div className="whitespace-pre-wrap break-words">{m.content}</div>
+                    </div>
+                    {/* Control suggestions */}
+                    {m.controls && m.controls.length > 0 && (
+                      <div className="mt-2 space-y-1.5">
+                        {m.controls.map((ctrl, ci) => {
+                          const isApproved = (ctrl as any)._approved;
+                          return (
+                            <div key={ci} className="bg-white border border-green-200 rounded p-2 text-left">
+                              <div className="font-medium text-slate-800 text-2xs">{ctrl.name}</div>
+                              <div className="text-slate-500 text-2xs mt-0.5 line-clamp-2">{ctrl.statement}</div>
+                              <div className="flex gap-1.5 mt-1.5">
+                                {!isApproved ? (
+                                  <button
+                                    onClick={() => handleChatApprove(i, ci)}
+                                    disabled={chatApproving[i * 100 + ci]}
+                                    className="rounded bg-green-600 px-2 py-0.5 text-2xs text-white hover:bg-green-700 disabled:opacity-50"
+                                  >
+                                    {chatApproving[i * 100 + ci] ? "..." : "✓ Approve"}
+                                  </button>
+                                ) : (
+                                  <span className="text-2xs text-green-600 font-medium">✓ Added</span>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {/* Save to KB button for assistant messages */}
+                    {m.role === "assistant" && m.content && (
+                      <div className="mt-1 text-left">
+                        <button
+                          onClick={() => handleChatSaveToKb(m.content)}
+                          disabled={kbUploading}
+                          className="text-2xs text-blue-500 hover:underline disabled:opacity-50"
+                        >
+                          💾 Save to Knowledgebase
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+                <div ref={chatEndRef} />
+              </div>
+              {/* Input */}
+              <div className="border-t border-slate-200 px-2 py-2 flex gap-1.5">
+                <input
+                  type="text"
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") handleChatSend(); }}
+                  placeholder="Ask about this process..."
+                  className="flex-1 rounded border border-slate-300 px-2 py-1 text-xs focus:border-blue-500 focus:outline-none"
+                  disabled={chatSending}
+                />
+                <button
+                  onClick={handleChatSend}
+                  disabled={chatSending || !chatInput.trim()}
+                  className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {chatSending ? "..." : "Send"}
+                </button>
+              </div>
             </div>
           </div>
 
