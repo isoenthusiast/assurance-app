@@ -223,6 +223,7 @@ async function pdfToMarkdown(buffer: Buffer): Promise<string> {
 }
 
 // ── POST handler ─────────────────────────────────────────────────────
+// Supported: .docx (mammoth), .pdf (pdfjs-dist + OCR), .md (passthrough), .csv (table), .txt (code block)
 
 export async function POST(request: Request) {
   try {

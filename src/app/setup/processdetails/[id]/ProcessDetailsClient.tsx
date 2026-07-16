@@ -2272,6 +2272,7 @@ export default function ProcessDetailsClient({
       )}
 
       {/* ─── FULL CONTROL FORM (Add/Edit via ControlForm) ──────────────── */}
+      {activeTab !== "knowledgebase" && (
       <ControlForm
         key={cfEditing?.id || "new"}
         processAreas={cfProcessAreas}
@@ -2300,6 +2301,7 @@ export default function ProcessDetailsClient({
           router.refresh();
         }}
       />
+      )}
     </div>
   );
 }
