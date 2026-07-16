@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ControlForm from "../../controls/ControlForm";
@@ -150,7 +150,7 @@ export default function ProcessDetailsClient({
   requirementStats,
   reqWithControls,
 }: Props) {
-  const [activeTab, setActiveTab] = useState<"overview" | "subprocesses" | "assessments">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "subprocesses" | "assessments" | "knowledgebase">("overview");
   const router = useRouter();
 
   // ── Tab 3: New Assessment modal state ──
@@ -213,6 +213,13 @@ export default function ProcessDetailsClient({
   // ── Bulk Map Controls to Requirements ──
   const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
   const [bulkMapPA, setBulkMapPA] = useState(processArea.id);
+
+  // ── Knowledgebase upload state ──
+  const [kbUploading, setKbUploading] = useState(false);
+  const [kbMsg, setKbMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [kbRemarks, setKbRemarks] = useState("");
+  const [kbDragOver, setKbDragOver] = useState(false);
+  const kbFileRef = useRef<HTMLInputElement>(null);
   const [bulkMapSP, setBulkMapSP] = useState("");
   const [bulkMapCheckedControls, setBulkMapCheckedControls] = useState<Set<string>>(new Set());
   const [bulkMapTargetReqId, setBulkMapTargetReqId] = useState<number | null>(null);
@@ -842,6 +849,40 @@ export default function ProcessDetailsClient({
     }
   };
 
+  // ── Knowledgebase file upload handler ──
+  const handleKbFile = async (file: File) => {
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["docx", "pdf", "md", "txt", "csv"].includes(ext || "")) {
+      setKbMsg({ type: "err", text: "Only .docx, .pdf, .md, .txt, .csv files are supported." });
+      return;
+    }
+    setKbUploading(true);
+    setKbMsg(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("saveToKnowledgebase", "true");
+      if (kbRemarks) formData.append("remarks", kbRemarks);
+      formData.append("processAreaId", processArea.id);
+      // Read companyId from cookie
+      const coMatch = document.cookie.match(/(?:^|;\\s*)selectedCompanyId=([^;]*)/);
+      if (coMatch) formData.append("companyId", coMatch[1]);
+
+      const res = await fetch("/api/convert", { method: "POST", body: formData });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
+      }
+      const data = await res.json();
+      setKbMsg({ type: "ok", text: `"${file.name}" saved to Knowledgebase.` });
+      setKbRemarks("");
+    } catch (e: any) {
+      setKbMsg({ type: "err", text: e.message });
+    } finally {
+      setKbUploading(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl px-6 py-8">
       {/* Breadcrumb */}
@@ -875,6 +916,9 @@ export default function ProcessDetailsClient({
         </button>
         <button onClick={() => setActiveTab("assessments")} className={tabStyles(activeTab === "assessments")}>
           Assessments
+        </button>
+        <button onClick={() => setActiveTab("knowledgebase")} className={tabStyles(activeTab === "knowledgebase")}>
+          Knowledgebase
         </button>
       </div>
 
@@ -1460,6 +1504,61 @@ export default function ProcessDetailsClient({
               No assessments yet. Click &quot;+ Add Assessment&quot; to create one with all controls pre-selected.
             </div>
           )}
+        </div>
+      )}
+
+      {/* ─── TAB 4: Knowledgebase ──────────────────────────────────────── */}
+
+      {activeTab === "knowledgebase" && (
+        <div className="mt-6 space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-white p-6">
+            <h2 className="text-lg font-semibold text-slate-900 mb-4">📚 Knowledgebase — Upload Document</h2>
+            <p className="text-xs text-slate-500 mb-4">
+              Upload a document (.docx, .pdf, .md, .txt, .csv) to convert and save to the Knowledgebase for this process area.
+            </p>
+
+            {/* Upload zone */}
+            <div
+              className={`rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                kbDragOver ? "border-blue-500 bg-blue-50" : "border-slate-300 bg-white"
+              }`}
+              onDragOver={(e) => { e.preventDefault(); setKbDragOver(true); }}
+              onDragLeave={() => setKbDragOver(false)}
+              onDrop={(e) => { e.preventDefault(); setKbDragOver(false); const f = e.dataTransfer.files?.[0]; if (f) handleKbFile(f); }}
+            >
+              <div className="text-3xl mb-2">📄</div>
+              <div className="text-sm text-slate-600 mb-1">Drop file here</div>
+              <div className="text-xs text-slate-400 mb-3">.docx · .pdf · .md · .txt · .csv</div>
+              <button
+                onClick={() => kbFileRef.current?.click()}
+                disabled={kbUploading}
+                className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {kbUploading ? "Converting..." : "Browse Files"}
+              </button>
+              <input ref={kbFileRef} type="file" accept=".docx,.pdf,.md,.txt,.csv" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleKbFile(f); }} />
+            </div>
+
+            {/* Remarks */}
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-slate-600 mb-1">Remarks (optional)</label>
+              <input
+                type="text" value={kbRemarks} onChange={(e) => setKbRemarks(e.target.value)}
+                placeholder="e.g., Extracted from HSSE manual v3..."
+                className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              />
+            </div>
+
+            {/* Status message */}
+            {kbMsg && (
+              <div className={`mt-4 rounded px-3 py-2 text-sm ${
+                kbMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"
+              }`}>
+                {kbMsg.text}
+              </div>
+            )}
+          </div>
         </div>
       )}
 

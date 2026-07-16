@@ -645,12 +645,14 @@ model Knowledgebase {
   createdDate      DateTime @default(now())
   addedBy          String
   companyId        String?
+  processAreaId    String?
 
   @@unique([knowledgeName, companyId])
   @@index([knowledgeName])
   @@index([createdDate])
   @@index([addedBy])
   @@index([companyId])
+  @@index([processAreaId])
 }
 
 model MapArt2Know {

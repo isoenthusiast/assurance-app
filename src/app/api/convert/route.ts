@@ -284,7 +284,7 @@ export async function POST(request: Request) {
     let kbRecord = null;
     if (saveToKB) {
       const username = (session.user as { name?: string }).name || "unknown";
-      // Use explicit companyId from formData, fall back to cookie
+      // Use explicit companyId/processAreaId from formData, fall back to cookie
       let companyId: string | null = formData.get("companyId")?.toString() || null;
       if (!companyId) {
         try {
@@ -292,6 +292,7 @@ export async function POST(request: Request) {
           companyId = cookieStore.get("selectedCompanyId")?.value || null;
         } catch { /* cookies() may throw */ }
       }
+      const processAreaId: string | null = formData.get("processAreaId")?.toString() || null;
       kbRecord = await prisma.knowledgebase.create({
         data: {
           knowledgeName: originalName,
@@ -299,6 +300,7 @@ export async function POST(request: Request) {
           remarks,
           addedBy: username,
           companyId,
+          processAreaId,
         },
       });
     }

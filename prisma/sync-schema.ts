@@ -181,6 +181,11 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Knowledgebase_companyId_idx" ON "Knowledgebase"("companyId")`);
   console.log("✅ Added companyId to Knowledgebase");
 
+  // ── Knowledgebase: add processAreaId column ────────────────────────
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Knowledgebase" ADD COLUMN IF NOT EXISTS "processAreaId" TEXT`);
+  await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Knowledgebase_processAreaId_idx" ON "Knowledgebase"("processAreaId")`);
+  console.log("✅ Added processAreaId to Knowledgebase");
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }

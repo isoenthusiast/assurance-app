@@ -97,6 +97,16 @@ const FALLBACK_SCHEMAS: Record<
     "actionClosureEffective": { type: "Boolean",  required: true,  isId: false },
     "actionClosureApprovedBy":{ type: "String",   required: false, isId: false },
   },
+  "Knowledgebase": {
+    "kID":              { type: "String",   required: true,  isId: true },
+    "knowledgeName":    { type: "String",   required: true,  isId: false },
+    "knowledgeContent": { type: "String",   required: true,  isId: false },
+    "remarks":          { type: "String",   required: false, isId: false },
+    "createdDate":      { type: "DateTime", required: true,  isId: false },
+    "addedBy":          { type: "String",   required: true,  isId: false },
+    "companyId":        { type: "String",   required: false, isId: false },
+    "processAreaId":    { type: "String",   required: false, isId: false },
+  },
 };
 
 /**
