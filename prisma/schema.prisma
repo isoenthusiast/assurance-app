@@ -749,7 +749,7 @@ model Requirement {
 
   @@map("Requirement")
   @@index([processAreaId])
-  @@unique([requirementId, standard, companyId])
+  @@unique([requirementId, processAreaId, companyId])
 }
 
 // ── MapControl2Requirement — M2M: Control ⟷ Requirement ──────────────

@@ -159,9 +159,9 @@ async function main() {
   await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Control_name_companyId_key" ON "Control"("name", "companyId")`);
   console.log("✅ Added unique constraint: Control(name, companyId)");
 
-  // Requirement: prevents duplicate requirements within a company.
+  // Requirement: prevents duplicate requirements within a company per process area.
   // Dedup first — "Unmapped Controls" catch-all requirements may share the same
-  // (requirementId, standard, companyId) if created one per ProcessArea.
+  // (requirementId, standard, companyId) if created one per standard.
   const reqDedup = await prisma.$executeRawUnsafe(`
     DELETE FROM "Requirement" r1
     USING "Requirement" r2
@@ -172,8 +172,13 @@ async function main() {
   `);
   if (reqDedup > 0) console.log(`✅ Deduplicated Requirement table: ${reqDedup} rows removed`);
 
-  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Requirement_requirementId_standard_companyId_key" ON "Requirement"("requirementId", "standard", "companyId")`);
-  console.log("✅ Added unique constraint: Requirement(requirementId, standard, companyId)");
+  // Drop old unique index (requirementId, standard, companyId)
+  await prisma.$executeRawUnsafe(`DROP INDEX IF EXISTS "Requirement_requirementId_standard_companyId_key"`);
+  console.log("✅ Dropped old unique constraint: Requirement(requirementId, standard, companyId)");
+
+  // Create new unique index (requirementId, processAreaId, companyId)
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Requirement_requirementId_processAreaId_companyId_key" ON "Requirement"("requirementId", "processAreaId", "companyId")`);
+  console.log("✅ Added unique constraint: Requirement(requirementId, processAreaId, companyId)");
 
   // ── Knowledgebase: add companyId column + unique index ────────────
   await prisma.$executeRawUnsafe(`ALTER TABLE "Knowledgebase" ADD COLUMN IF NOT EXISTS "companyId" TEXT`);
