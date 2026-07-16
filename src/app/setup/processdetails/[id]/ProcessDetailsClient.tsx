@@ -224,6 +224,8 @@ export default function ProcessDetailsClient({
   const [showLinkedList, setShowLinkedList] = useState(false);
 
   // ── Bulk Map Controls to Requirements ──
+  const [cfProcessAreas, setCfProcessAreas] = useState<{ id: string; name: string }[]>([]);
+  const [cfSubProcesses, setCfSubProcesses] = useState<{ id: string; name: string; processAreaId: string }[]>([]);
   const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
   const [bulkMapPA, setBulkMapPA] = useState(processArea.id);
 
@@ -1341,7 +1343,18 @@ export default function ProcessDetailsClient({
         <div className="mt-8 border border-slate-200 rounded-lg overflow-hidden">
           <button
             type="button"
-            onClick={() => setBulkMapExpanded(!bulkMapExpanded)}
+            onClick={async () => {
+              const expanding = !bulkMapExpanded;
+              setBulkMapExpanded(expanding);
+              if (expanding && cfProcessAreas.length === 0) {
+                const [paRes, spRes] = await Promise.all([
+                  fetch("/api/admin/table/ProcessArea/data?perPage=500"),
+                  fetch("/api/admin/table/SubProcess/data?perPage=5000"),
+                ]);
+                if (paRes.ok) { const d = await paRes.json(); setCfProcessAreas(d.rows || []); }
+                if (spRes.ok) { const d = await spRes.json(); setCfSubProcesses(d.rows || []); }
+              }
+            }}
             className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
           >
             <span className="text-sm font-semibold text-slate-700">
