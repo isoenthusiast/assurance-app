@@ -1,6 +1,14 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 16, 2026 (v2.8.0)  
+**Last Updated:** July 17, 2026 (v2.8.1)
+
+> **v2.8.1 — Unmapped Controls Cleanup & Natural Sort:**
+> - Duplicate detection and cleanup: 1,779 controls removed from Unmapped Controls where they already appeared in a specific requirement for the same PA. Each control now maps uniquely per company→process area.
+> - Fixed sync-schema.ts dedup to use `processAreaId` instead of `standard` (was a deploy-time bomb).
+> - All 3 companies verified: 65/65 PAs have their own Unmapped Controls with per-PA control mappings.
+> - CompanySelector now sets `selectedCompanyId` cookie on mount for users with limited company access.
+> - Requirement IDs sort naturally (1, 2, 3... 10, 11) instead of lexicographically (1, 10, 11, 2, 3).
+> - Fixed Railway build: added missing `import { cookies }` in convert route.  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"  
 **Companion:** `APP_DESIGN_PowerPlatform.md` — Power Platform (PowerApps/Power Automate/PowerBI/SharePoint) for tablet & mobile field use. Review when updating this document.
