@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type CompanyOption = {
@@ -17,6 +17,17 @@ export default function CompanySelector({
 }) {
   const router = useRouter();
   const [current, setCurrent] = useState(selectedId || "");
+
+  // Set cookie on mount so dashboard loads with company filter immediately
+  useEffect(() => {
+    if (selectedId) {
+      const match = document.cookie.match(/(?:^|;\s*)selectedCompanyId=([^;]*)/);
+      if (!match) {
+        document.cookie = `selectedCompanyId=${selectedId}; path=/; max-age=86400; SameSite=Lax`;
+        router.refresh();
+      }
+    }
+  }, [selectedId, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
