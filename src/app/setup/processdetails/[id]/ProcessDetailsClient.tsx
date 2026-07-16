@@ -893,7 +893,7 @@ export default function ProcessDetailsClient({
           {/* Process Health */}
           <div className="rounded-lg border border-slate-200 bg-white p-6">
             <h2 className="text-lg font-semibold text-slate-900 mb-4">📊 Process Health</h2>
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <h3 className="text-sm font-medium text-slate-600 mb-3">Control Effectiveness</h3>
                 <div className="space-y-3">
