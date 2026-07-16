@@ -166,8 +166,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="flex h-[calc(100vh-140px)] gap-3">
-      {/* LEFT: Nav + Table List */}
-      <div className="w-56 flex-shrink-0 rounded-lg border border-slate-200 bg-white flex flex-col">
+      {/* LEFT: Nav + Table List — hidden on mobile unless tables view active */}
+      <div className="hidden lg:flex w-56 flex-shrink-0 rounded-lg border border-slate-200 bg-white flex-col">
         {/* Navigation Menu */}
         <div className="px-3 py-2.5 border-b border-slate-200">
           <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Admin Menu</div>
@@ -200,6 +200,24 @@ export default function AdminDashboard() {
 
       {/* RIGHT: Detail */}
       <div className="flex-1 rounded-lg border border-slate-200 bg-white flex flex-col min-w-0 overflow-y-auto">
+        {/* Mobile tab bar (visible only on mobile since sidebar is hidden) */}
+        <div className="lg:hidden flex overflow-x-auto gap-0.5 p-1.5 border-b border-slate-200 bg-slate-50">
+          {[
+            { key: "tables", label: "📊 Tables" },
+            { key: "badges", label: "🏆 Badges" },
+            { key: "templates", label: "📋 Templates" },
+            { key: "users", label: "👤 Users" },
+            { key: "knowledgebase", label: "📚 KB" },
+            { key: "documentControls", label: "📄 Docs" },
+            { key: "requirements", label: "📋 Reqs" },
+            { key: "activityLog", label: "📜 Log" },
+          ].map(tab => (
+            <button key={tab.key} onClick={() => setView(tab.key as any)}
+              className={`flex-shrink-0 px-3 py-1.5 text-xs rounded whitespace-nowrap ${view === tab.key ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
         {view === "badges" ? (
           <iframe src="/setup/badges" className="w-full h-full border-0" title="Badge Management" />
         ) : view === "templates" ? (

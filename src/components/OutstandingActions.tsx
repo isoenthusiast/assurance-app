@@ -185,7 +185,7 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
         <span className="text-slate-400 text-xs">{collapsed ? "▶" : "▼"}</span>
       </button>
       {!collapsed && (
-        <div className="overflow-x-auto" style={{ userSelect: resizing ? "none" : undefined }}>
+        <div className="overflow-x-auto -mx-4 md:mx-0" style={{ userSelect: resizing ? "none" : undefined }}>
           <table className="w-full text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-200">
@@ -234,7 +234,7 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
       {/* ── Action Detail Modal ── */}
       {selectedAction && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setSelectedAction(null); setEditMode(false); }}>
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[85vh] overflow-y-auto mx-4" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-lg md:rounded-xl shadow-xl w-full max-w-2xl max-h-[85vh] md:max-h-[85vh] overflow-y-auto mx-0 md:mx-4 rounded-none md:rounded-lg" onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-3 flex items-center justify-between rounded-t-lg">
               <h3 className="text-sm font-semibold text-slate-800">

@@ -78,12 +78,12 @@ export default async function FlaDashboardPage() {
   });
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <h1 className="text-2xl font-semibold text-slate-900 mb-6">Assurance Management Dashboard</h1>
+    <div className="mx-auto max-w-7xl px-3 md:px-6 py-4 md:py-8">
+      <h1 className="text-xl md:text-2xl font-semibold text-slate-900 mb-4 md:mb-6">Assurance Management Dashboard</h1>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
         {/* Main content */}
-        <div className="col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-4 md:space-y-6">
           <ProcessHealthDashboard processes={processHealth} assessments={assessmentsInProgress} />
           <OutstandingActions actions={outstandingActions.map(a => ({
             id: a.id,

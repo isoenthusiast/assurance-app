@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { MASTER_COMPANY_ID } from "@/lib/company-context";
 import SignOutButton from "./SignOutButton";
 import CompanySelector from "./CompanySelector";
+import MobileNav from "./MobileNav";
 
 export default async function NavBar() {
   let session;
@@ -45,40 +46,30 @@ export default async function NavBar() {
 
   return (
     <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-        <div className="flex items-center gap-6">
-          <Link href="/" className="font-semibold text-slate-900">
+      <div className="mx-auto flex max-w-6xl items-center justify-between px-3 md:px-6 py-2 md:py-3 relative">
+        <div className="flex items-center gap-3 md:gap-6">
+          <Link href="/" className="font-semibold text-slate-900 text-sm md:text-base whitespace-nowrap">
             CONAN PROJECT
           </Link>
           {session && companies.length > 0 && (
             <CompanySelector companies={companies} selectedId={selectedCompanyId} />
           )}
           {session && (
-            <nav className="flex gap-4 text-sm text-slate-600">
-              <Link href="/fla" className="hover:text-slate-900">
-                Dashboard
-              </Link>
-              <Link href="/setup/assessments" className="hover:text-slate-900">
-                Assessments
-              </Link>
-              <Link href="/setup/process-areas" className="hover:text-slate-900">
-                Process Area
-              </Link>
-              <Link href="/setup/controls" className="hover:text-slate-900">
-                Controls
-              </Link>
-              {role === "Admin" && (
-                <Link href="/admin" className="hover:text-slate-900">
-                  Admin
-                </Link>
-              )}
-            </nav>
+            <MobileNav role={role}>
+              <nav className="flex gap-4 text-sm text-slate-600">
+                <Link href="/fla" className="hover:text-slate-900">Dashboard</Link>
+                <Link href="/setup/assessments" className="hover:text-slate-900">Assessments</Link>
+                <Link href="/setup/process-areas" className="hover:text-slate-900">Process Area</Link>
+                <Link href="/setup/controls" className="hover:text-slate-900">Controls</Link>
+                {role === "Admin" && <Link href="/admin" className="hover:text-slate-900">Admin</Link>}
+              </nav>
+            </MobileNav>
           )}
         </div>
-        <div className="flex items-center gap-3 text-sm text-slate-500">
+        <div className="flex items-center gap-2 md:gap-3 text-xs md:text-sm text-slate-500">
           {session ? (
             <>
-              <span>
+              <span className="hidden sm:inline">
                 {session.user?.name} ({(session.user as { role?: string })?.role})
               </span>
               <SignOutButton />
