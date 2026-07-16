@@ -300,11 +300,10 @@ export async function POST(request: Request) {
     const originalName = file.name.replace(ext, "");
     const mdFileName = `${originalName}.md`;
 
-    // Optionally save to Knowledgebase
-    let kbRecord = null;
+    // Optionally save to Knowledgebase (raw SQL — Prisma 7.8 runtime delegate not available)
+    let kbRecord: { kID: string } | null = null;
     if (saveToKB) {
       const username = (session.user as { name?: string }).name || "unknown";
-      // Use explicit companyId/processAreaId from formData, fall back to cookie
       let companyId: string | null = formData.get("companyId")?.toString() || null;
       if (!companyId) {
         try {
@@ -313,16 +312,13 @@ export async function POST(request: Request) {
         } catch { /* cookies() may throw */ }
       }
       const processAreaId: string | null = formData.get("processAreaId")?.toString() || null;
-      kbRecord = await prisma.knowledgebase.create({
-        data: {
-          knowledgeName: originalName,
-          knowledgeContent: markdown,
-          remarks,
-          addedBy: username,
-          companyId,
-          processAreaId,
-        },
-      });
+      const newId = `kb_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      await prisma.$queryRawUnsafe(
+        `INSERT INTO "Knowledgebase" ("kID", "knowledgeName", "knowledgeContent", "remarks", "createdDate", "addedBy", "companyId", "processAreaId")
+         VALUES ($1, $2, $3, $4, NOW(), $5, $6, $7)`,
+        newId, originalName, markdown, remarks, username, companyId, processAreaId
+      );
+      kbRecord = { kID: newId };
     }
 
     return NextResponse.json({
