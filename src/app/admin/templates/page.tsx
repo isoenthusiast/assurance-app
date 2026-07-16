@@ -17,7 +17,7 @@ interface ProcessArea {
   name: string;
 }
 
-export default function TemplatesPage() {
+export default function TemplatesPage({ embedded }: { embedded?: boolean }) {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [processAreas, setProcessAreas] = useState<ProcessArea[]>([]);
   const [selectedProcessAreaId, setSelectedProcessAreaId] = useState<string>('all');
@@ -104,18 +104,25 @@ export default function TemplatesPage() {
       );
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8">
-      <Link href="/admin" className="mb-6 inline-flex items-center gap-2 text-blue-600 hover:underline">
-        ← Back to Admin Dashboard
-      </Link>
+    <div className={embedded ? "p-4" : "mx-auto max-w-6xl px-6 py-8"}>
+      {!embedded && (
+        <Link href="/admin" className="mb-6 inline-flex items-center gap-2 text-blue-600 hover:underline">
+          ← Back to Admin Dashboard
+        </Link>
+      )}
 
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900">📋 Assessment Templates</h1>
-          <p className="mt-1 text-slate-600">
-            Create and manage assessment templates to quickly set up assessments
-          </p>
-        </div>
+      <div className={embedded ? "flex items-center justify-between mb-4" : "mb-8 flex items-center justify-between"}>
+        {!embedded && (
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">📋 Assessment Templates</h1>
+            <p className="mt-1 text-slate-600">
+              Create and manage assessment templates to quickly set up assessments
+            </p>
+          </div>
+        )}
+        {embedded && (
+          <h2 className="text-lg font-semibold text-slate-800">📋 Assessment Templates</h2>
+        )}
         <Link
           href="/admin/templates/new"
           className="rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700 transition-colors"

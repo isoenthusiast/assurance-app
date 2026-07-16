@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback, useRef } from "react";
 import { KnowledgebaseManager } from "./knowledgebase/page";
 import { DocumentControlsManager } from "./document-controls/page";
+import TemplatesPage from "./templates/page";
 
 interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
@@ -198,11 +199,11 @@ export default function AdminDashboard() {
       </div>
 
       {/* RIGHT: Detail */}
-      <div className="flex-1 rounded-lg border border-slate-200 bg-white flex flex-col min-w-0">
+      <div className="flex-1 rounded-lg border border-slate-200 bg-white flex flex-col min-w-0 overflow-y-auto">
         {view === "badges" ? (
           <iframe src="/setup/badges" className="w-full h-full border-0" title="Badge Management" />
         ) : view === "templates" ? (
-          <iframe src="/admin/templates" className="w-full h-full border-0" title="Assessment Templates" />
+          <TemplatesPage embedded />
         ) : view === "users" ? (
           <UserManager />
         ) : view === "knowledgebase" ? (
