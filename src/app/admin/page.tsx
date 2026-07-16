@@ -832,6 +832,7 @@ function ManageCompany({ users }: { users: any[] }) {
   const [form, setForm] = useState({ companyID: "", companyName: "", referenceID: "", shortName: "" });
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [adopting, setAdopting] = useState(false);
+  const [cleaning, setCleaning] = useState(false);
   const [submode, setSubmode] = useState<"select" | "add">("select");
   // UserCompany assignments for selected company
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -951,6 +952,19 @@ function ManageCompany({ users }: { users: any[] }) {
     finally { setAdopting(false); }
   };
 
+  const cleanTemplates = async () => {
+    if (!selectedCompanyId) return;
+    if (!confirm("⚠️ Delete ALL template data for this company?\n\nTables: Standard, ProcessArea, SubProcess, Requirement, Control, AssessmentTemplate + all junction tables.\n\nThis CANNOT be undone. Continue?")) return;
+    setCleaning(true); setMsg(null);
+    try {
+      const res = await fetch(`/api/admin/company/${selectedCompanyId}/clean-templates`, { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      setMsg({ type: "ok", text: `Cleaned template data. ${Object.values(data.results || {}).reduce((a:number,b:number)=>a+b,0)} rows deleted.` });
+    } catch (e: any) { setMsg({ type: "err", text: e.message }); }
+    finally { setCleaning(false); }
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="px-4 py-2.5 border-b border-slate-200 font-semibold text-slate-900 text-sm">🏢 Manage Company</div>
@@ -1049,10 +1063,16 @@ function ManageCompany({ users }: { users: any[] }) {
                   {submode === "add" ? "Create Company" : "Save Changes"}
                 </button>
                 {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && (
-                  <button onClick={adoptTemplates} disabled={adopting}
-                    className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
-                    {adopting ? "Adopting…" : "📋 Adopt Templates"}
-                  </button>
+                  <>
+                    <button onClick={adoptTemplates} disabled={adopting || cleaning}
+                      className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
+                      {adopting ? "Adopting…" : "📋 Adopt Templates"}
+                    </button>
+                    <button onClick={cleanTemplates} disabled={adopting || cleaning}
+                      className="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                      {cleaning ? "Cleaning…" : "🧹 Clean Templates"}
+                    </button>
+                  </>
                 )}
                 {submode === "select" && (
                   <button onClick={() => { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }}

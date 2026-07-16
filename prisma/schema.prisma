@@ -184,6 +184,7 @@ model Control {
   processArea        ProcessArea                        @relation(fields: [processAreaId], references: [id])
 
   @@index([controlRef])
+  @@unique([name, companyId])
 }
 
 model AssessmentTemplate {
@@ -742,6 +743,7 @@ model Requirement {
 
   @@map("Requirement")
   @@index([processAreaId])
+  @@unique([requirementId, standard, companyId])
 }
 
 // ── MapControl2Requirement — M2M: Control ⟷ Requirement ──────────────

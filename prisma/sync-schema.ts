@@ -162,6 +162,15 @@ async function main() {
   `);
   console.log(`✅ Backfilled ProcessArea.StandardID: ${paStdBackfill} rows`);
 
+  // Add composite unique constraints for multi-company dedup protection
+  // Control: prevents duplicate control names within a company (defends against double Adopt Templates)
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Control_name_companyId_key" ON "Control"("name", "companyId")`);
+  console.log("✅ Added unique constraint: Control(name, companyId)");
+
+  // Requirement: prevents duplicate requirements within a company
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Requirement_requirementId_standard_companyId_key" ON "Requirement"("requirementId", "standard", "companyId")`);
+  console.log("✅ Added unique constraint: Requirement(requirementId, standard, companyId)");
+
   await prisma.$disconnect();
   console.log("Schema sync complete.");
 }
