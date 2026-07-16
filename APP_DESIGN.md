@@ -1,22 +1,24 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 16, 2026 (v2.6.5)  
+**Last Updated:** July 16, 2026 (v2.7.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
-> **v2.6.5 — Admin UX Hardening & Company-Aware Templates:** Added Proceed/Cancel confirmation step for Adopt Templates and Clean Templates — both now require explicit ✅ Proceed click after warning message. Both buttons gated to username "Admin" only (not just Admin role). Fixed Assessment Templates page: now company-aware via `selectedCompanyId` cookie polling — templates list and process area filter update when company selector changes. API endpoint `GET /api/admin/assessment-templates` now reads `selectedCompanyId` cookie and filters by `companyId`. Added `POST /api/admin/company/[id]/clean-templates` with Admin-only gating. Added `🧹 Clean Templates` button in admin Manage Company UI. OGP adoption verified 1,048 controls / 1,048 mappings (matches SAMS001 and SMDS).
+> **v2.7.0 — Dashboard, Actions & Deployment Hardening:** Added Outstanding Actions collapsible section to FLA dashboard with sortable/resizable columns, click-to-view modal with finding + action details, inline edit mode (admin/actionParty/auditee gated), and AttachmentList integration. Added `actionId` column (ACTID-XXXXXX) to Action model with backfill. Fixed 3 deploy-blocking issues: TypeScript type error in cleanTemplates (Lesson #26), Requirement unique index violation from Unmapped Controls catch-all duplicates (Lesson #27), and sync-schema.ts dedup-before-index pattern. Created `DEPLOYMENT_CHECKLIST.md` 6-step audit. All 3 companies (SAMS001, SMDS, OGP) verified 1:1 with 1,048 controls/1,048 mappings each.
 
-> **v2.6.4 — Adopt Templates Idempotency & Orphan Prevention:** Added `@@unique([name, companyId])` to **Control** and `@@unique([requirementId, standard, companyId])` to **Requirement** — completing business-key unique constraints on all 10 adopt-template tables. Removed Standard NULL-companyId backfill from `sync-schema.ts`. Created `DEPLOYMENT_CHECKLIST.md` with 6-step pre-deployment audit. Added `orphan_analysis.py` and `full_db_backup.py`. SMDS adoption verified 1:1 with SAMS001 (1,048 controls, 1,048 mappings); second Adopt click returns 409 Conflict.
+> **v2.6.5 — Admin UX Hardening & Company-Aware Templates:** Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. `GET /api/admin/assessment-templates` filtered by companyId. Clean Templates API + button.
 
-> **v2.6.3 — Deploy Fix: sync-schema.ts ON CONFLICT Constraint Mismatch:** Fixed `P2010`/`42P10` deploy crash. Removed ON CONFLICT, added composite unique index.
+> **v2.6.4 — Adopt Templates Idempotency:** Added `@@unique` to Control + Requirement. Removed Standard NULL-companyId backfill. `orphan_analysis.py`, `full_db_backup.py`. SMDS 1:1 verified.
 
-> **v2.6.2 — Admin Data API Fix & StatusBar Component:** Fixed 404 on `/api/admin/table/[table]/data` (stale Turbopack). Fixed `/api/admin/tables` row counts (ANALYZE). Added `StatusBar` component with `status_message` cookie polling. Wired adopt-templates status cookie.
+> **v2.6.3 — Deploy Fix: ON CONFLICT Mismatch:** Fixed P2010/42P10 in sync-schema.ts.
 
-> **v2.6.1 — Composite Unique Constraints & Template Adoption Fixes:** Changed 4 single-column `@unique` to `@@unique([field, companyId])`. Added `ON CONFLICT DO NOTHING` to all 10 adopt-template INSERTs.
+> **v2.6.2 — Admin API Fix & StatusBar:** 404 fix, ANALYZE table counts, StatusBar component.
 
-> **v2.6.0 — Multi-Company Isolation & Template Adoption:** Full company-scoped data isolation. `POST /api/admin/company/[id]/adopt-templates`. Admin: "📋 Adopt Templates" button.
+> **v2.6.1 — Composite Unique Constraints:** 4 tables changed to @@unique([field, companyId]), 10 ON CONFLICT DO NOTHING.
 
-> **v2.5.4 — Design Doc Audit, Mapping Activity Log:** Full codebase audit (45 models, 47 route files, 35 pages). Mapping Activity Log with revert.","newString":"**Last Updated:** July 15, 2026 (v2.6.0)"  
+> **v2.6.0 — Multi-Company Isolation:** Full company-scoped data isolation, Adopt Templates, CompanySelector.
+
+> **v2.5.4 — Design Doc Audit:** Full codebase audit (45 models, 49 routes, 29 pages). Mapping Activity Log.","newString":"**Last Updated:** July 15, 2026 (v2.6.0)"  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
@@ -270,7 +272,7 @@ seam-assurance-app/
 - JWT callbacks inject id and role into session
 - BCrypt password hashing
 
-## 6. API Routes (~80 HTTP endpoints across 47 route files)
+## 6. API Routes (~90 HTTP endpoints across 49 route files)
 
 ### Assessments
 GET/POST `/api/admin/assessments`, GET/PUT/DELETE `/[id]`
@@ -422,6 +424,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.7.0 | 2026-07-16 | Outstanding Actions dashboard (sortable/resizable, modal with attachments). actionId ACTID-XXXXXX. 3 deploy fixes. All companies verified 1:1. 45 models, 10 enums, 49 routes, 29 pages, 9 components. |
 | v2.6.5 | 2026-07-16 | Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. GET /api/admin/assessment-templates now filtered by companyId. OGP verified 1:1. |
 | v2.6.4 | 2026-07-16 | Added @@unique to Control + Requirement. Clean-templates API + Clean button. Removed Standard NULL-companyId backfill. DEPLOYMENT_CHECKLIST.md. SMDS verified 1:1. |
 | v2.6.3 | 2026-07-16 | Fixed sync-schema.ts P2010/42P10 deploy crash. Removed ON CONFLICT, added companyId column + composite unique index. |
