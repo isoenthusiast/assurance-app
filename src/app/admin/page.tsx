@@ -833,6 +833,8 @@ function ManageCompany({ users }: { users: any[] }) {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [adopting, setAdopting] = useState(false);
   const [cleaning, setCleaning] = useState(false);
+  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
+  const [confirmAction, setConfirmAction] = useState<"adopt" | "clean" | null>(null);
   const [submode, setSubmode] = useState<"select" | "add">("select");
   // UserCompany assignments for selected company
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -852,6 +854,13 @@ function ManageCompany({ users }: { users: any[] }) {
   }, []);
 
   useEffect(() => { loadCompanies(); }, [loadCompanies]);
+
+  // Fetch current user's username for Admin-only button gating
+  useEffect(() => {
+    fetch("/api/auth/session").then(r => r.json()).then(s => {
+      setCurrentUserName(s?.user?.name || null);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (selectedCompanyId) {
@@ -941,7 +950,12 @@ function ManageCompany({ users }: { users: any[] }) {
 
   const adoptTemplates = async () => {
     if (!selectedCompanyId) return;
-    if (!confirm("Copy ALL master templates from SAMS001 into this company?\n\nTables: Standard, ProcessArea, SubProcess, Requirement, Control, AssessmentTemplate\n\nThis may take a moment. Continue?")) return;
+    setConfirmAction("adopt");
+  };
+
+  const executeAdopt = async () => {
+    if (!selectedCompanyId) return;
+    setConfirmAction(null);
     setAdopting(true); setMsg(null);
     try {
       const res = await fetch(`/api/admin/company/${selectedCompanyId}/adopt-templates`, { method: "POST" });
@@ -954,7 +968,12 @@ function ManageCompany({ users }: { users: any[] }) {
 
   const cleanTemplates = async () => {
     if (!selectedCompanyId) return;
-    if (!confirm("⚠️ Delete ALL template data for this company?\n\nTables: Standard, ProcessArea, SubProcess, Requirement, Control, AssessmentTemplate + all junction tables.\n\nThis CANNOT be undone. Continue?")) return;
+    setConfirmAction("clean");
+  };
+
+  const executeClean = async () => {
+    if (!selectedCompanyId) return;
+    setConfirmAction(null);
     setCleaning(true); setMsg(null);
     try {
       const res = await fetch(`/api/admin/company/${selectedCompanyId}/clean-templates`, { method: "POST" });
@@ -1062,20 +1081,36 @@ function ManageCompany({ users }: { users: any[] }) {
                 <button onClick={saveCompany} className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
                   {submode === "add" ? "Create Company" : "Save Changes"}
                 </button>
-                {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && (
-                  <>
-                    <button onClick={adoptTemplates} disabled={adopting || cleaning}
-                      className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
-                      {adopting ? "Adopting…" : "📋 Adopt Templates"}
-                    </button>
-                    <button onClick={cleanTemplates} disabled={adopting || cleaning}
-                      className="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50">
-                      {cleaning ? "Cleaning…" : "🧹 Clean Templates"}
-                    </button>
-                  </>
+                {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && currentUserName === "Admin" && (
+                  confirmAction ? (
+                    <>
+                      <span className="text-xs text-red-600 font-medium self-center">
+                        {confirmAction === "adopt" ? "⚠️ This will overwrite ALL template data. Proceed?" : "⚠️ This will DELETE ALL template data. This CANNOT be undone. Proceed?"}
+                      </span>
+                      <button onClick={confirmAction === "adopt" ? executeAdopt : executeClean}
+                        className="rounded bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700">
+                        ✅ Proceed
+                      </button>
+                      <button onClick={() => setConfirmAction(null)}
+                        className="rounded border px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">
+                        ❌ Cancel
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button onClick={adoptTemplates} disabled={adopting || cleaning}
+                        className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50">
+                        {adopting ? "Adopting…" : "📋 Adopt Templates"}
+                      </button>
+                      <button onClick={cleanTemplates} disabled={adopting || cleaning}
+                        className="rounded bg-red-600 px-3 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50">
+                        {cleaning ? "Cleaning…" : "🧹 Clean Templates"}
+                      </button>
+                    </>
+                  )
                 )}
                 {submode === "select" && (
-                  <button onClick={() => { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); }}
+                  <button onClick={() => { setSelectedCompanyId(""); setForm({ companyID: "", companyName: "", referenceID: "", shortName: "" }); setConfirmAction(null); }}
                     className="rounded border px-3 py-1 text-xs text-slate-600 hover:bg-slate-50">Cancel</button>
                 )}
               </div>

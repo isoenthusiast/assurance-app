@@ -18,6 +18,12 @@
 			"type": "shell",
 			"command": "node node_modules/prisma/build/index.js db push --accept-data-loss",
 			"group": "none"
+		},
+		{
+			"label": "Push parent repo",
+			"type": "shell",
+			"command": "cd ..; git add -A; git commit -m 'docs: APP_DESIGN v2.6.4 — adopt-templates idempotency, orphan prevention, deployment checklist' --allow-empty; git push",
+			"group": "none"
 		}
 	]
 }
