@@ -3,14 +3,14 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 
 interface OutstandingAction {
-  id: string;
+  actionId: string | null;
   actionDescription: string;
   actionParty: string | null;
   targetDate: string | null;
   findingDescription: string;
 }
 
-type SortField = "id" | "findingDescription" | "actionDescription" | "actionParty" | "targetDate";
+type SortField = "actionId" | "findingDescription" | "actionDescription" | "actionParty" | "targetDate";
 type SortDir = "asc" | "desc";
 
 interface ColumnDef {
@@ -20,7 +20,7 @@ interface ColumnDef {
 }
 
 const COLUMNS: ColumnDef[] = [
-  { field: "id", label: "Action ID", defaultWidth: 140 },
+  { field: "actionId", label: "Action ID", defaultWidth: 140 },
   { field: "findingDescription", label: "Finding Description", defaultWidth: 280 },
   { field: "actionDescription", label: "Action Description", defaultWidth: 300 },
   { field: "actionParty", label: "Action Party", defaultWidth: 140 },
@@ -122,9 +122,9 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
             </thead>
             <tbody>
               {sorted.map(a => (
-                <tr key={a.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="px-3 py-1.5 font-mono text-2xs text-slate-500 truncate" style={{ maxWidth: colWidths.id }} title={a.id}>
-                    {a.id.length > 14 ? a.id.slice(-14) : a.id}
+                <tr key={a.actionId} className="border-b border-slate-100 hover:bg-slate-50">
+                  <td className="px-3 py-1.5 font-mono text-2xs text-slate-500 whitespace-nowrap">
+                    {a.actionId || "—"}
                   </td>
                   <td className="px-3 py-1.5 text-slate-700 truncate" style={{ maxWidth: colWidths.findingDescription }} title={a.findingDescription}>
                     {a.findingDescription}

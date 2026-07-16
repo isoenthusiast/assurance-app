@@ -80,6 +80,23 @@ const FALLBACK_SCHEMAS: Record<
     "Requirements":     { type: "String",   required: false, isId: false },
     "companyId":        { type: "String",   required: false, isId: false },
   },
+  "Action": {
+    "id":                     { type: "String",   required: true,  isId: true },
+    "actionId":               { type: "String",   required: false, isId: false },
+    "findingId":              { type: "String",   required: true,  isId: false },
+    "actionDescription":      { type: "String",   required: true,  isId: false },
+    "actionDetails":          { type: "String",   required: false, isId: false },
+    "actionTaken":            { type: "String",   required: false, isId: false },
+    "actionParty":            { type: "String",   required: false, isId: false },
+    "auditee":                { type: "String",   required: false, isId: false },
+    "createdDate":            { type: "DateTime", required: true,  isId: false },
+    "targetDate":             { type: "DateTime", required: false, isId: false },
+    "apAgreed":               { type: "Boolean",  required: true,  isId: false },
+    "originalTargetDate":     { type: "DateTime", required: false, isId: false },
+    "numberOfExtensions":     { type: "Int",      required: true,  isId: false },
+    "actionClosureEffective": { type: "Boolean",  required: true,  isId: false },
+    "actionClosureApprovedBy":{ type: "String",   required: false, isId: false },
+  },
 };
 
 /**

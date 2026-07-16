@@ -328,6 +328,7 @@ model Finding {
 // An Action is a remediation item tied to exactly one Finding.
 model Action {
   id                      String    @id @default(cuid())
+  actionId                String?   @unique
   findingId               String
   actionDescription       String
   actionDetails           String?

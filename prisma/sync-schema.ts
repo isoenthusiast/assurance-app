@@ -46,6 +46,11 @@ async function main() {
   }
   console.log("✅ Added companyId column to ProcessArea, SubProcess, Requirement, Assessment, Attachment, AssessmentTemplate, UserRole");
 
+  // Add actionId column to Action (business ID: ACTID-XXXXXX)
+  await prisma.$executeRawUnsafe(`ALTER TABLE "Action" ADD COLUMN IF NOT EXISTS "actionId" TEXT`);
+  await prisma.$executeRawUnsafe(`CREATE UNIQUE INDEX IF NOT EXISTS "Action_actionId_key" ON "Action"("actionId")`);
+  console.log("✅ Added actionId column to Action");
+
   // Create UserCompany junction table (M2M: User ⟷ Company access control)
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "UserCompany" (

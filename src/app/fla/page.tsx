@@ -67,7 +67,11 @@ export default async function FlaDashboardPage() {
       ...(companyId ? { finding: { assessment: { companyId } } } : {}),
     },
     orderBy: { targetDate: "asc" },
-    include: {
+    select: {
+      actionId: true,
+      actionDescription: true,
+      actionParty: true,
+      targetDate: true,
       finding: { select: { description: true } },
     },
   });
@@ -81,7 +85,7 @@ export default async function FlaDashboardPage() {
         <div className="col-span-2 space-y-6">
           <ProcessHealthDashboard processes={processHealth} assessments={assessmentsInProgress} />
           <OutstandingActions actions={outstandingActions.map(a => ({
-            id: a.id,
+            actionId: a.actionId,
             actionDescription: a.actionDescription,
             actionParty: a.actionParty,
             targetDate: a.targetDate?.toISOString() ?? null,
