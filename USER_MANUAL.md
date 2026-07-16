@@ -1,6 +1,8 @@
 # CONAN PROJECT — User Manual (Draft Skeleton)
 
-**Version:** v2.8.1 | **Last Updated:** July 17, 2026
+**Version:** v2.8.2 | **Last Updated:** July 17, 2026
+
+> 💡 **Looking for quick help?** An in-app user manual with annotated screenshots is available at **Help** in the navigation bar (or navigate to `/help`). This document provides the complete reference.
 
 ---
 
