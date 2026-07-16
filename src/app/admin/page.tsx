@@ -980,7 +980,7 @@ function ManageCompany({ users }: { users: any[] }) {
       const res = await fetch(`/api/admin/company/${selectedCompanyId}/clean-templates`, { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
-      setMsg({ type: "ok", text: `Cleaned template data. ${Object.values(data.results || {}).reduce((a:number,b:number)=>a+b,0)} rows deleted.` });
+      setMsg({ type: "ok", text: `Cleaned template data. ${(Object.values(data.results || {}) as number[]).reduce((a, b) => a + b, 0)} rows deleted.` });
     } catch (e: any) { setMsg({ type: "err", text: e.message }); }
     finally { setCleaning(false); }
   };

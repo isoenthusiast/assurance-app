@@ -42,10 +42,14 @@ Run through this BEFORE every `git push` that changes the data model or API rout
   - If 404: touch the route file, save a minimal version, verify it works, restore full code
   - Stale Turbopack compilation is the #1 cause of phantom 404s
 
-## 5. Pre-Push Verification
-- [ ] `npx next build` succeeds locally? _(catches TypeScript errors Turbopack misses)_
+## 5. Pre-Push Verification ⚠️ CRITICAL — skip this and deploy WILL fail
+- [ ] **`npx next build` succeeds locally?** — Railway runs full TypeScript checking; Turbopack dev mode skips many type errors
+  - Common failures: type mismatches in `.reduce()`, missing imports, wrong generic params
+  - If build fails: fix ALL type errors before pushing. The dev server showing no errors is NOT sufficient
 - [ ] `git diff --stat` reviewed → commit message describes actual changes?
   - Never use generic messages like "chore: sync" or "chore: trigger deploy"
+- [ ] All changed files explicitly staged and committed? _(no lingering uncommitted changes)_
+- [ ] Prisma client regenerated if `schema.prisma` changed? (`npx prisma generate`)
 
 ## 6. Post-Deploy Verification
 - [ ] Railway deploy logs show no `P2010` / `42P10` errors?
