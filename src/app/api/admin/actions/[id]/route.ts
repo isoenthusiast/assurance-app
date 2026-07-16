@@ -2,6 +2,50 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+export async function GET(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    }
+
+    const { id } = await params;
+
+    const action = await prisma.action.findUnique({
+      where: { id },
+      include: {
+        finding: {
+          select: {
+            id: true,
+            description: true,
+            details: true,
+            severity: true,
+            risks: true,
+            controlIds: true,
+            assessmentId: true,
+            assessment: { select: { id: true, name: true, companyId: true } },
+          },
+        },
+      },
+    });
+
+    if (!action) {
+      return NextResponse.json({ error: "Action not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(action);
+  } catch (error) {
+    console.error("Error fetching action:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch action" },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
