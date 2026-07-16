@@ -161,6 +161,35 @@ export async function POST(
         `SELECT COUNT(*)::int as cnt FROM "Requirement" WHERE "companyId" = $1`, targetCompanyId
       ))[0].cnt;
 
+      // ── 4b. Create "Unmapped Controls" catch-all requirement per ProcessArea ──
+      // Each PA needs an "Unmapped Controls" bucket for controls not yet mapped to a specific requirement.
+      // This runs after regular requirement copy so it fills gaps where the JOIN may have missed them.
+      await (prisma as any).$queryRawUnsafe(`
+        INSERT INTO "Requirement" ("rID", "requirementId", "clauseContent", "intentOutcome",
+          "clauseApplicability", "references", "applicable", "standard", "pID", "processAreaId", "companyId", "createdAt")
+        SELECT
+          (SELECT COALESCE(MAX("rID"), 0) FROM "Requirement") + ROW_NUMBER() OVER (ORDER BY pa."id"),
+          'Unmapped Controls',
+          'Controls not yet mapped to a specific requirement for this process area.',
+          'These controls need to be reviewed and assigned to the correct requirement.',
+          'All controls',
+          '',
+          true,
+          pa."standard",
+          pa."pId",
+          pa."id",
+          $1,
+          NOW()
+        FROM "ProcessArea" pa
+        WHERE pa."companyId" = $1
+          AND NOT EXISTS (
+            SELECT 1 FROM "Requirement" r
+            WHERE r."processAreaId" = pa."id"
+              AND r."requirementId" = 'Unmapped Controls'
+              AND r."companyId" = $1
+          )
+      `, targetCompanyId);
+
       // ── 5. Copy Controls ──
       await (prisma as any).$queryRawUnsafe(`
         INSERT INTO "Control" ("id", "name", "statement", "controlType", "processAreaId", "companyId",
