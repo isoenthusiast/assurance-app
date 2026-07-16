@@ -54,15 +54,17 @@ export default async function ProcessDetailsPage({
   });
 
   // --- Requirements linked to this process area (fetch first to get their control IDs) ---
-  const requirements = await prisma.requirement.findMany({
+  const requirementsUnsorted = await prisma.requirement.findMany({
     where: { processAreaId: id },
-    orderBy: { requirementId: "asc" },
     include: {
       controlMappings: {
         select: { controlId: true },
       },
     },
   });
+  const requirements = [...requirementsUnsorted].sort((a, b) =>
+    a.requirementId.localeCompare(b.requirementId, undefined, { numeric: true })
+  );
 
   // Collect ALL control IDs: from subprocesses AND from requirement mappings
   const spControlIds = mergedSubProcesses.flatMap((sp) => sp.controls.map((c) => c.id));
@@ -162,9 +164,8 @@ export default async function ProcessDetailsPage({
   }));
 
   // --- Requirements with full control data (for Tab 2: Requirements & Controls) ---
-  const requirementsWithControls = await prisma.requirement.findMany({
+  const requirementsWithControlsUnsorted = await prisma.requirement.findMany({
     where: { processAreaId: id },
-    orderBy: { requirementId: "asc" },
     include: {
       controlMappings: {
         include: {
@@ -178,7 +179,9 @@ export default async function ProcessDetailsPage({
     },
   });
 
-  const reqWithControls = requirementsWithControls.map((req) => ({
+  const reqWithControls = [...requirementsWithControlsUnsorted]
+    .sort((a, b) => a.requirementId.localeCompare(b.requirementId, undefined, { numeric: true }))
+    .map((req) => ({
     rId: req.rId,
     requirementId: req.requirementId,
     clauseContent: req.clauseContent,
