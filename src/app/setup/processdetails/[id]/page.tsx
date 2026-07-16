@@ -64,9 +64,29 @@ export default async function ProcessDetailsPage({
     },
   });
 
+  // Fetch "Unmapped Controls" requirement for the same standard+company, even if on a different PA
+  const unmappedReq = companyId
+    ? await prisma.requirement.findFirst({
+        where: {
+          requirementId: "Unmapped Controls",
+          standard: processArea.standard,
+          companyId,
+          processAreaId: { not: id }, // exclude if already fetched above
+        },
+        include: {
+          controlMappings: { select: { controlId: true } },
+        },
+      })
+    : null;
+
+  // Merge unmapped controls requirement into the list (if found and not already present)
+  const allRequirements = unmappedReq
+    ? [...requirements, unmappedReq]
+    : requirements;
+
   // Collect ALL control IDs: from subprocesses AND from requirement mappings
   const spControlIds = mergedSubProcesses.flatMap((sp) => sp.controls.map((c) => c.id));
-  const reqControlIds = requirements.flatMap((r) => r.controlMappings.map((m) => m.controlId));
+  const reqControlIds = allRequirements.flatMap((r) => r.controlMappings.map((m) => m.controlId));
   const allControlIds = [...new Set([...spControlIds, ...reqControlIds])];
 
   // --- Assessments that use controls from this process area ---
@@ -123,7 +143,7 @@ export default async function ProcessDetailsPage({
 
   // Calculate health per requirement: % of linked controls that are effective
   // (requirements already fetched above with controlMappings; controlAssignments now covers all their control IDs)
-  const requirementStats = requirements.map((req) => {
+  const requirementStats = allRequirements.map((req) => {
     const linkedControlIds = req.controlMappings.map((m) => m.controlId);
     const linkedAssignments = controlAssignments.filter((ca) =>
       linkedControlIds.includes(ca.controlId)
@@ -178,7 +198,27 @@ export default async function ProcessDetailsPage({
     },
   });
 
-  const reqWithControls = requirementsWithControls.map((req) => ({
+  // Also fetch Unmapped Controls with full control data, if on a different PA
+  const unmappedWithControls = unmappedReq
+    ? await prisma.requirement.findUnique({
+        where: { rId: unmappedReq.rId },
+        include: {
+          controlMappings: {
+            include: {
+              control: {
+                include: { _count: { select: { controlAssignments: true } } },
+              },
+            },
+          },
+        },
+      })
+    : null;
+
+  const allReqsWithControls = unmappedWithControls
+    ? [...requirementsWithControls, unmappedWithControls]
+    : requirementsWithControls;
+
+  const reqWithControls = allReqsWithControls.map((req) => ({
     rId: req.rId,
     requirementId: req.requirementId,
     clauseContent: req.clauseContent,
