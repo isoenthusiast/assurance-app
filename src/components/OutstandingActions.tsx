@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import AttachmentList from "@/components/AttachmentList";
 
 interface OutstandingAction {
   id: string;
@@ -344,6 +345,12 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
                     <div className="text-2xs text-slate-400">Created: {formatDate(selectedAction.createdDate)} · ID: {selectedAction.id}</div>
                   </div>
                 )}
+              </div>
+
+              {/* ── Attachments ── */}
+              <div>
+                <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Attachments</h4>
+                <AttachmentList destTable="Action" recId={selectedAction.id} />
               </div>
             </div>
           </div>
