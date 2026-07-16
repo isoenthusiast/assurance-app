@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import path from "path";
 import mammoth from "mammoth";
 import { createWorker } from "tesseract.js";
