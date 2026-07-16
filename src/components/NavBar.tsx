@@ -62,6 +62,7 @@ export default async function NavBar() {
                 <Link href="/setup/process-areas" className="hover:text-slate-900">Process Area</Link>
                 <Link href="/setup/controls" className="hover:text-slate-900">Controls</Link>
                 {role === "Admin" && <Link href="/admin" className="hover:text-slate-900">Admin</Link>}
+                <Link href="/help" className="hover:text-slate-900">Help</Link>
               </nav>
             </MobileNav>
           )}

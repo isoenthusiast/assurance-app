@@ -1,6 +1,12 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 17, 2026 (v2.8.1)
+**Last Updated:** July 17, 2026 (v2.8.2)
+
+> **v2.8.2 — In-App Help Page & Screenshots:**
+> - New `/help` page with 8-section sidebar (Dashboard, Process Overview, Requirements & Controls, Knowledgebase & AI Chat, Assessments, Admin, Gamification, FAQ) featuring annotated screenshots and usage tips.
+> - Screenshots captured for all key pages: dashboard-health.png, process-overview.png, requirements-controls.png, knowledgebase-chat.png, assessment-detail.png, admin-requirements.png.
+> - "Help" link added to NavBar for all authenticated users.
+> - Image zoom on click for detail viewing.
 
 > **v2.8.1 — Unmapped Controls Cleanup & Natural Sort:**
 > - Duplicate detection and cleanup: 1,779 controls removed from Unmapped Controls where they already appeared in a specific requirement for the same PA. Each control now maps uniquely per company→process area.
@@ -274,8 +280,9 @@ seam-assurance-app/
 │   │   ├── fla/     # Dashboard, Create, Detail workflow with tabbed layout
 │   │   ├── setup/   # Process Areas, Controls, Sub-Processes, Activity Types, Badges
 │   │   ├── admin/   # Admin dashboard, templates, knowledgebase, generic table editor, CSV, user/role/company management
+│   │   ├── help/    # In-app user manual with annotated screenshots, 8-section sidebar nav
 │   │   └── api/     # 70+ API routes
-│   ├── components/  # NavBar, SignOutButton, GamificationDashboard, DeleteButton, AttachmentList, UserSearchSelect, CompanySelector
+│   ├── components/  # NavBar (with Help link), SignOutButton, GamificationDashboard, DeleteButton, AttachmentList, UserSearchSelect, CompanySelector
 │   ├── lib/         # prisma.ts, gamification.ts, activity-log.ts, findings.ts, schema-introspection.ts, fallback-schemas.ts, formatDate.ts
 │   ├── outputs/     # Export output directory
 │   ├── proxy.ts     # Prisma Proxy pattern for lazy client init
