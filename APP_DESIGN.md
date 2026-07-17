@@ -8,8 +8,8 @@
 > **v2.8.2 — In-App Help Page & Screenshots:**
 > - New `/help` page with 8-section sidebar (Dashboard, Process Overview, Requirements & Controls, Knowledgebase & AI Chat, Assessments, Admin, Gamification, FAQ) featuring annotated screenshots and usage tips.
 > - Screenshots captured for all key pages: dashboard-health.png, process-overview.png, requirements-controls.png, knowledgebase-chat.png, assessment-detail.png, admin-requirements.png.
-> - "Help" link added to NavBar for all authenticated users.
-> - Image zoom on click for detail viewing.
+> - "Help" link added to NavBar for all authenticated users. Image zoom on click for detail viewing.
+> - **Fixes:** JSX escaped single-quote parse error (Turbopack) + `next/Image` 400 error on static PNGs — replaced with plain `<img>` tags.
 
 > **v2.8.1 — Unmapped Controls Cleanup & Natural Sort:**
 > - Duplicate detection and cleanup: 1,779 controls removed from Unmapped Controls where they already appeared in a specific requirement for the same PA. Each control now maps uniquely per company→process area.
@@ -426,7 +426,7 @@ startCommand = "npm run start"
 
 - Railway PostgreSQL plugin auto-provisions database
 - Internal: `postgres.railway.internal:5432`, Public: `hayabusa.proxy.rlwy.net:54471`
-- **`preDeployCommand` removed (v2.8.2):** Schema sync, seeding, and activity log type seeding were one-time operations. They no longer run on every deploy. If schema changes are needed, run `npx tsx prisma/sync-schema.ts` manually or via a dedicated one-time script.
+- **`preDeployCommand` removed (v2.9.0):** Schema sync, seeding, and activity log type seeding were one-time operations. They no longer run on every deploy. If schema changes are needed, run `npx tsx prisma/sync-schema.ts` manually or via a dedicated one-time script.
 - Schema changes use direct SQL (ALTER/CREATE IF NOT EXISTS) in `prisma/sync-schema.ts` — **not** Prisma Migrate (no `_prisma_migrations` table).
 
 ## 12. Known Architectural Debt & Risks

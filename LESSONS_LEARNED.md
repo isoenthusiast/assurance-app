@@ -200,3 +200,39 @@ node node_modules/prisma/build/index.js generate
 **Fix:** Always write Python scripts to `.py` files and run them. Never attempt inline Python in PowerShell.
 
 **Prevention:** This is Lesson #22 from previous sessions, re-confirmed today. The `create_and_run_task` with a `.py` file is the reliable pattern.
+
+---
+
+## 16. `preDeployCommand` Should Not Run One-Time Ops on Every Deploy
+
+**Symptom:** `railway.toml` `preDeployCommand` ran `sync-schema.ts` (ALTER/CREATE/DELETE/DROP), `seed.ts` (admin user), and `seed-activity-log-types.ts` (upsert 32 types) on **every** deploy.
+
+**Root Cause:** These are one-time operations masquerading as deploy hooks. Running schema sync on every deploy introduced risk: the dedup DELETE query once removed 59 of 65 Unmapped Controls because it deduped on the wrong column (`standard` instead of `processAreaId`).
+
+**Fix:** Remove `preDeployCommand` entirely. Schema changes are now manual: `npx tsx prisma/sync-schema.ts`. The build pipeline is now just `prisma generate` (reads schema, no DB) + `next build` + `next start`.
+
+**Prevention:** Ask: "Does this need to happen on EVERY deploy, or just once?" If once, it's a manual script — not a deploy hook. Deploy hooks should be idempotent and side-effect-free.
+
+---
+
+## 17. `next/Image` Returns 400 on Static PNGs in Turbopack
+
+**Symptom:** `<Image src="/help/dashboard-health.png" ...>` returned HTTP 400 Bad Request for all screenshots in the Help page.
+
+**Root Cause:** Next.js `<Image>` component routes through the image optimizer, which failed on the PNG files (possibly Turbopack-specific). The images existed in `public/help/` and were accessible via direct URL, but the optimizer rejected them.
+
+**Fix:** Replaced `<Image>` with a plain `<img>` tag. Added `onClick` to open full-size in new tab. Static help screenshots don't need optimization.
+
+**Prevention:** For static images in `public/` that are just documentation assets, use `<img>` instead of `<Image>`. Reserve `<Image>` for dynamic/content images that benefit from optimization.
+
+---
+
+## 18. JSX Single-Quoted Attributes Cannot Contain Escaped Single Quotes
+
+**Symptom:** Turbopack build failed with `Expression expected` at `a='...Area\'s...'`.
+
+**Root Cause:** JSX single-quoted attributes (`a='...'`) do not support `\'` escape sequences. The backslash is treated literally, and the parser sees the single quote as the end of the attribute.
+
+**Fix:** Use double quotes for the attribute: `a="...Area's..."`. Replace inner double quotes with `&quot;` and `&` with `&amp;`.
+
+**Prevention:** Prefer double-quoted JSX attributes when the value contains single quotes. Use HTML entities for any double quotes inside.
