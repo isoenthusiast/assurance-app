@@ -1,6 +1,9 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 17, 2026 (v2.8.2)
+**Last Updated:** July 17, 2026 (v2.9.0)
+
+> **v2.9.0 — Removed preDeployCommand (one-time ops):**
+> - Removed `preDeployCommand` from `railway.toml`. Schema sync (`sync-schema.ts`), admin seeding (`seed.ts`), and activity log type seeding (`seed-activity-log-types.ts`) no longer run on every deploy. These are one-time operations. Schema changes now require manual `npx tsx prisma/sync-schema.ts` invocation.
 
 > **v2.8.2 — In-App Help Page & Screenshots:**
 > - New `/help` page with 8-section sidebar (Dashboard, Process Overview, Requirements & Controls, Knowledgebase & AI Chat, Assessments, Admin, Gamification, FAQ) featuring annotated screenshots and usage tips.
@@ -418,14 +421,13 @@ builder = "RAILPACK"
 buildCommand = "npx prisma generate && npm run build"
 
 [deploy]
-preDeployCommand = "npx tsx prisma/sync-schema.ts && npx tsx prisma/seed.ts && npx tsx prisma/seed-activity-log-types.ts"
 startCommand = "npm run start"
 ```
 
 - Railway PostgreSQL plugin auto-provisions database
 - Internal: `postgres.railway.internal:5432`, Public: `hayabusa.proxy.rlwy.net:54471`
-- Schema sync via direct SQL (ALTER/CREATE IF NOT EXISTS) in `prisma/sync-schema.ts` — **not** Prisma Migrate (no `_prisma_migrations` table). Dev schema changes must be added to `sync-schema.ts` to propagate to production.
-- ⚠️ **CRITICAL**: `sync-schema.ts` runs on **every deploy**. Never include data backfills (INSERT...SELECT) — they will re-execute on every push. Use CREATE TABLE IF NOT EXISTS and CREATE INDEX IF NOT EXISTS only. One-time data operations belong in standalone scripts under `scripts/`, not deploy hooks.
+- **`preDeployCommand` removed (v2.8.2):** Schema sync, seeding, and activity log type seeding were one-time operations. They no longer run on every deploy. If schema changes are needed, run `npx tsx prisma/sync-schema.ts` manually or via a dedicated one-time script.
+- Schema changes use direct SQL (ALTER/CREATE IF NOT EXISTS) in `prisma/sync-schema.ts` — **not** Prisma Migrate (no `_prisma_migrations` table).
 
 ## 12. Known Architectural Debt & Risks
 
