@@ -1,6 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 21, 2026 (v2.9.2)
+**Last Updated:** July 21, 2026 (v2.9.3)
+
+> **v2.9.3 — Map Controls Panel & Database Backup/Restore UI:**
+> - **Map Controls Panel:** Replaced the clunky "Bulk Map Controls to Requirements" collapsible section with a side-by-side mapping panel. Click "🗂 Map Controls" to toggle between normal card view and mapping mode. Left panel shows all unmapped controls for the current Process Area with checkboxes, filter, and Select All/Clear. Right panel shows compact requirement list — click a requirement to assign selected controls, or use the dropdown+button at the bottom. Drag-and-drop still works for single-control moves between requirements. Exits mapping mode with a single click.
+> - **Database Backup & Restore:** Added "💾 Full Database Backup & Restore" section to `/admin/database-management`. Download complete SQL dump (schema + data) or restore from a `.sql` file upload with confirmation warning.
+> - **Removed:** Old Bulk Map section (PA→SP comboboxes, checkbox list, requirement target) — 12 state variables, 50-line useEffect, and 150 lines of JSX deleted. Database Management page now standalone (navigated via Admin sidebar "🗄 Database" button).
 
 > **v2.9.2 — Authorization Hardening & Security:**
 > - **Centralized authz helpers** (`src/lib/authz.ts`): `requireAdmin`, `requireAuth`, `hasCompanyAccess`, `getSelectedCompanyId`, `requireSelectedCompany`, `getCompanyWhere`, `requireCompanyIdAccess`.
@@ -400,7 +405,7 @@ CSV validate/import, generic table CRUD (all 45 models), column management, SQL 
 | `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
 | `/admin/table/[table]` | Generic table editor (auto-discovers columns via information_schema) |
 | `/setup/process-areas` | Process areas with standard filter; expandable rows show Requirements (not Sub-Processes); requirement rows expand to linked controls with drag-and-drop re-mapping |
-| `/setup/processdetails/[id]` | 3-tab drill-down: Process Overview (stats, linked assessments, outstanding actions), **Requirements & Controls** (expandable requirement groups with drag-and-drop control re-mapping, full ControlForm integration for add/edit with `onSaved` callback, "Unassign" moves control to Unmapped Controls, collapsible "Bulk Map Controls to Requirements" panel with PA→SP→checklist→requirement→bulk map), Assessments (linked assessments list) |
+| `/setup/processdetails/[id]` | 3-tab drill-down: Process Overview (stats, linked assessments, outstanding actions), **Requirements & Controls** (expandable requirement groups with drag-and-drop control re-mapping, full ControlForm integration for add/edit with `onSaved` callback, "Unassign" moves control to Unmapped Controls, **🗂 Map Controls** toggle for side-by-side mapping panel: left=unmapped controls with checkboxes+filter, right=requirements list with one-click assign + dropdown bulk assign), Assessments (linked assessments list) |
 | `/setup/controls` | 28-field control form |
 | `/setup/badges` | Badge generation and management |
 | `/setup/sub-processes` | Sub-Process CRUD table |
@@ -491,6 +496,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 | v2.6.3 | 2026-07-16 | Fixed sync-schema.ts P2010/42P10 deploy crash. Removed ON CONFLICT, added companyId column + composite unique index. |
 | v2.6.2 | 2026-07-16 | Fixed 404 on all /api/admin/table/[table]/data routes (stale Turbopack). Fixed /api/admin/tables row counts (ANALYZE). StatusBar component. |
 | v2.6.1 | 2026-07-15 | Composite unique constraints on 4 company-scoped tables. All 10 adopt-template INSERTs have ON CONFLICT DO NOTHING. |
+| v2.9.3 | 2026-07-21 | Map Controls Panel: side-by-side mapping UI replaces bulk map section. Left=unmapped controls (checkbox+filter), right=requirements (click-to-assign + dropdown bulk assign). Database Backup & Restore UI on /admin/database-management. Removed old Bulk Map (12 state vars, useEffect, 150 lines JSX). |
 | v2.5.2 | 2026-07-14 | Assessment cascade delete (4 FK constraints, orphan cleanup, confirmation modal). ControlForm integration in ProcessDetailsClient with onSaved callback. Bulk Map Controls to Requirements panel. ControlsSelector: Requirement filter replaces SubProcess, regex wildcard search. ControlFromDocument.controlType → String. Control statement tooltips. Bulk map combobox sorting. Design doc audit with 7 gap fixes. |
 | v2.5.0 | 2026-07-14 | Multi-company architecture: companyId added to 8 core tables. UserCompany junction for access control. Template company "SAMS001" (admin-only). Company selector combobox in header. Control↔Requirement mapping: 718 intelligent + 330 catch-all = 1,048 total. Drag-and-drop control re-mapping. Process Areas page restructured with Requirements column. Schema change checklist documented. |
 | v2.4.6 | 2026-07-13 | Added Standard table (6 standards, sequenceNo ordering). Added MapControl2Requirement junction (1,048 mappings). ProcessArea.standardId FK. Requirements tree from Standard+ProcessArea tables. Req ID natural sort. Associated Controls panel. |

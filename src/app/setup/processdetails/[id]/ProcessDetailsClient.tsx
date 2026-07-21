@@ -223,12 +223,13 @@ export default function ProcessDetailsClient({
   const [filterPA, setFilterPA] = useState("");
   const [showLinkedList, setShowLinkedList] = useState(false);
 
-  // ── Bulk Map Controls to Requirements ──
-  const [cfProcessAreas, setCfProcessAreas] = useState<{ id: string; name: string }[]>([]);
-  const [cfSubProcesses, setCfSubProcesses] = useState<{ id: string; name: string; processAreaId: string }[]>([]);
-  const [cfEditing, setCfEditing] = useState<any>(null);
-  const [bulkMapExpanded, setBulkMapExpanded] = useState(false);
-  const [bulkMapPA, setBulkMapPA] = useState(processArea.id);
+  // ── Map Controls Panel ──
+  const [mapMode, setMapMode] = useState(false);
+  const [mapCheckedControls, setMapCheckedControls] = useState<Set<string>>(new Set());
+  const [mapTargetReqId, setMapTargetReqId] = useState<number | null>(null);
+  const [mapSaving, setMapSaving] = useState(false);
+  const [mapMsg, setMapMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [mapFilter, setMapFilter] = useState("");
 
   // ── Knowledgebase upload state ──
   const [kbUploading, setKbUploading] = useState(false);
@@ -248,43 +249,9 @@ export default function ProcessDetailsClient({
   const [chatSending, setChatSending] = useState(false);
   const [chatApproving, setChatApproving] = useState<Record<number, boolean>>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
-  const [bulkMapSP, setBulkMapSP] = useState("");
-  const [bulkMapCheckedControls, setBulkMapCheckedControls] = useState<Set<string>>(new Set());
-  const [bulkMapTargetReqId, setBulkMapTargetReqId] = useState<number | null>(null);
-  const [bulkMapControls, setBulkMapControls] = useState<ControlSummary[]>([]);
-  const [bulkMapSaving, setBulkMapSaving] = useState(false);
-  const [bulkMapError, setBulkMapError] = useState<string | null>(null);
-  const [bulkMapSuccess, setBulkMapSuccess] = useState<string | null>(null);
 
-  // Fetch controls when SP changes (via ControlSubProcess junction → Control)
-  useEffect(() => {
-    if (!bulkMapSP) { setBulkMapControls([]); return; }
-    // Step 1: Get ControlSubProcess links for this sub-process
-    fetch(`/api/admin/table/ControlSubProcess/data?perPage=5000&subProcessId=${bulkMapSP}`)
-      .then(r => r.json())
-      .then(async (data) => {
-        const cspRows: any[] = data.rows || [];
-        const linkedCtrlIds: string[] = cspRows.map((r: any) => r.controlId).filter(Boolean);
-        if (linkedCtrlIds.length === 0) { setBulkMapControls([]); return; }
-        // Step 2: Fetch each control individually by ID
-        const controls = await Promise.all(
-          linkedCtrlIds.map(async (ctrlId) => {
-            try {
-              const res = await fetch(`/api/admin/table/Control/${ctrlId}`);
-              if (!res.ok) return null;
-              return await res.json();
-            } catch { return null; }
-          })
-        );
-        // Filter to selected PA
-        setBulkMapControls(
-          controls.filter((c: any) => c && c.processAreaId === bulkMapPA) as ControlSummary[]
-        );
-        setBulkMapCheckedControls(new Set());
-        setBulkMapTargetReqId(null);
-      })
-      .catch(() => setBulkMapControls([]));
-  }, [bulkMapSP, bulkMapPA]);
+  // ControlForm state (used by edit/add control modals)
+  const [cfEditing, setCfEditing] = useState<any>(null);
 
   // Load process areas & sub-processes for ControlForm
   useEffect(() => {
@@ -292,9 +259,7 @@ export default function ProcessDetailsClient({
       fetch("/api/admin/table/ProcessArea/data?perPage=500").then(r => r.json()),
       fetch("/api/admin/table/SubProcess/data?perPage=5000").then(r => r.json()),
     ]).then(([paData, spData]) => {
-      setCfProcessAreas((paData.rows || []).map((r: any) => ({ id: r.id, name: r.name })));
       const seen = new Set<string>();
-      setCfSubProcesses((spData.rows || []).filter((r: any) => seen.has(r.id) ? false : seen.add(r.id)).map((r: any) => ({ id: r.id, name: r.name, processAreaId: r.processAreaId })));
     }).catch(() => {});
   }, []);
 
@@ -741,56 +706,52 @@ export default function ProcessDetailsClient({
     }
   };
 
-  // ── Bulk Map: assign checked controls to a target requirement ──
-  const handleBulkMap = async () => {
-    if (!bulkMapTargetReqId || bulkMapCheckedControls.size === 0) return;
-    setBulkMapSaving(true);
-    setBulkMapError(null);
-    setBulkMapSuccess(null);
+  // ── Map Controls Panel: assign checked controls to a target requirement ──
+  const handleMapAssign = async (targetReqRId?: number) => {
+    const rId = targetReqRId ?? mapTargetReqId;
+    if (!rId || mapCheckedControls.size === 0) return;
+    setMapSaving(true);
+    setMapMsg(null);
     let mapped = 0;
     try {
-      for (const ctrlId of bulkMapCheckedControls) {
+      const unmappedCtrls = reqData.find(r => r.requirementId === "Unmapped Controls")?.controls || [];
+      const targetReqName = reqData.find(r => r.rId === rId)?.requirementId || "";
+      for (const ctrlId of mapCheckedControls) {
+        const ctrl = unmappedCtrls.find(c => c.id === ctrlId);
+        if (!ctrl) continue;
         const res = await fetch(`/api/admin/table/MapControl2Requirement/data?controlId=${ctrlId}`);
         if (!res.ok) continue;
         const data = await res.json();
         const existing = (data.rows || []).find((r: any) => r.controlId === ctrlId);
-        const ctrlName = bulkMapControls.find(c => c.id === ctrlId)?.name || ctrlId;
-        const targetReqName = reqData.find(r => r.rId === bulkMapTargetReqId)?.requirementId || "";
         if (existing) {
           await fetch(`/api/admin/table/MapControl2Requirement/${existing.id}`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ requirementRId: bulkMapTargetReqId, processAreaId: bulkMapPA }),
+            body: JSON.stringify({ requirementRId: rId }),
           });
-          // Log: get old requirement ID
           const oldReq = reqData.find(r => r.rId === existing.requirementRId);
-          logMappingChange(existing.id, ctrlId, ctrlName,
+          logMappingChange(existing.id, ctrlId, ctrl.name,
             existing.requirementRId, oldReq?.requirementId || "",
-            bulkMapTargetReqId, targetReqName);
+            rId, targetReqName);
         } else {
           const newId = `m2r_${Date.now()}_${ctrlId.slice(-6)}`;
           await fetch("/api/admin/table/MapControl2Requirement/data", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: newId,
-              controlId: ctrlId,
-              requirementRId: bulkMapTargetReqId,
-              processAreaId: bulkMapPA,
-            }),
+            body: JSON.stringify({ id: newId, controlId: ctrlId, requirementRId: rId }),
           });
-          logMappingChange(newId, ctrlId, ctrlName, null, "", bulkMapTargetReqId, targetReqName);
+          logMappingChange(newId, ctrlId, ctrl.name, null, "", rId, targetReqName);
         }
         mapped++;
       }
-      setBulkMapSuccess(`Mapped ${mapped} control(s) successfully.`);
-      setBulkMapCheckedControls(new Set());
-      setBulkMapTargetReqId(null);
+      setMapMsg({ type: "ok", text: `Mapped ${mapped} control(s) to "${targetReqName}".` });
+      setMapCheckedControls(new Set());
+      setMapTargetReqId(null);
       router.refresh();
     } catch (err) {
-      setBulkMapError(err instanceof Error ? err.message : "Bulk mapping failed");
+      setMapMsg({ type: "err", text: err instanceof Error ? err.message : "Mapping failed" });
     } finally {
-      setBulkMapSaving(false);
+      setMapSaving(false);
     }
   };
 
@@ -1254,329 +1215,400 @@ export default function ProcessDetailsClient({
       {activeTab === "subprocesses" && (
         <>
         <div className="mt-6 space-y-6">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <p className="text-sm text-slate-500">
               {reqData.length} requirement(s) ·{" "}
               {reqData.reduce((sum, r) => sum + r.controls.length, 0)} linked control(s)
             </p>
-            <button
-              onClick={() => {
-                setAddReqForm({
-                  standard: processArea.standard || "",
-                  pId: processArea.pId || "",
-                  processAreaId: processArea.id,
-                  requirementId: "",
-                  clauseContent: "",
-                  intentOutcome: "",
-                  clauseApplicability: "",
-                  references: "",
-                  applicable: true,
-                });
-                setAddReqMsg(null);
-                setShowAddRequirement(true);
-              }}
-              className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
-            >
-              + Requirement
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setMapMode(prev => !prev);
+                  setMapCheckedControls(new Set());
+                  setMapTargetReqId(null);
+                  setMapMsg(null);
+                }}
+                className={`rounded px-4 py-2 text-sm font-medium transition-colors ${
+                  mapMode
+                    ? "bg-blue-600 text-white hover:bg-blue-700"
+                    : "border border-blue-300 text-blue-700 hover:bg-blue-50"
+                }`}
+              >
+                {mapMode ? "✕ Exit Map Mode" : "🗂 Map Controls"}
+              </button>
+              <button
+                onClick={() => {
+                  setAddReqForm({
+                    standard: processArea.standard || "",
+                    pId: processArea.pId || "",
+                    processAreaId: processArea.id,
+                    requirementId: "",
+                    clauseContent: "",
+                    intentOutcome: "",
+                    clauseApplicability: "",
+                    references: "",
+                    applicable: true,
+                  });
+                  setAddReqMsg(null);
+                  setShowAddRequirement(true);
+                }}
+                className="rounded bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
+              >
+                + Requirement
+              </button>
+            </div>
           </div>
-          {reqData.length === 0 ? (
-            <p className="text-sm text-slate-400 py-8 text-center">
-              No requirements linked to this process area.
-            </p>
-          ) : (
-            reqData.map((req) => {
-              const isExpanded = expandedReqSections.has(req.rId);
-              return (
-              <div key={req.rId} className="rounded-lg border border-slate-200 bg-white overflow-hidden">
-                <button
-                  onClick={() => toggleReqSection(req.rId)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    e.dataTransfer.dropEffect = 'move';
-                    setDragOverReqId(req.rId);
-                  }}
-                  onDragLeave={() => setDragOverReqId(null)}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    setDragOverReqId(null);
-                    if (dragCtrlId && dragCtrlId !== req.rId.toString()) {
-                      handleDropControl(dragCtrlId, req.rId);
-                    }
-                  }}
-                  className={`w-full text-left bg-slate-50 px-4 py-3 border-b border-slate-200 hover:bg-slate-100 transition-colors ${
-                    dragOverReqId === req.rId ? 'bg-blue-100 border-blue-400' : ''
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="min-w-0">
-                      <h2 className="font-semibold text-slate-900 text-sm">
-                        {req.requirementId} ({req.controls.length})
-                      </h2>
-                      <p className="text-xs text-slate-500 mt-0.5 whitespace-normal break-words">
-                        {req.clauseContent}
-                      </p>
+          {mapMode ? (
+            /* ── Map Controls Panel: side-by-side ── */
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* LEFT: Unmapped Controls */}
+              <div className="rounded-lg border border-amber-200 bg-amber-50 overflow-hidden">
+                <div className="bg-amber-100 px-4 py-3 border-b border-amber-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-amber-900 text-sm">
+                      📋 Unmapped Controls ({(() => { const uc = reqData.find(r => r.requirementId === "Unmapped Controls"); return uc ? uc.controls.length : 0; })()})
+                    </h3>
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const uc = reqData.find(r => r.requirementId === "Unmapped Controls");
+                          if (uc) setMapCheckedControls(new Set(uc.controls.map(c => c.id)));
+                        }}
+                        className="text-xs text-amber-700 hover:text-amber-900 hover:underline"
+                      >
+                        Select All
+                      </button>
+                      <span className="text-xs text-amber-400">|</span>
+                      <button
+                        type="button"
+                        onClick={() => setMapCheckedControls(new Set())}
+                        className="text-xs text-amber-700 hover:text-amber-900 hover:underline"
+                      >
+                        Clear
+                      </button>
                     </div>
-                    <span className="text-xs text-slate-300 ml-2 flex-shrink-0">{isExpanded ? '▼' : '▶'}</span>
                   </div>
-                  {dragOverReqId === req.rId && (
-                    <p className="text-xs text-blue-600 mt-1 animate-pulse">Drop control here</p>
-                  )}
-                </button>
-
-                {isExpanded && req.controls.length > 0 && (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-100">
-                        <tr>
-                          <th className="px-1 py-2 w-5"></th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Control</th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Health</th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Risk</th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Last Tested</th>
-                          <th className="px-4 py-2 text-left font-medium text-slate-600">Result</th>
-                          <th className="px-4 py-2 text-center font-medium text-slate-600">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                openAddControlForm(req.rId);
-                              }}
-                              className="text-blue-600 hover:underline font-medium"
-                            >
-                              +Add Control
-                            </button>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {req.controls.map((c) => (
-                          <tr
-                            key={c.id}
-                            draggable
-                            title={c.statement || c.name}
-                            onDragStart={(e) => {
-                              setDragCtrlId(c.id);
-                              e.dataTransfer.effectAllowed = 'move';
-                            }}
-                            onDragEnd={() => { setDragCtrlId(null); setDragOverReqId(null); }}
-                            className={`border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-grab active:cursor-grabbing ${
-                              dragCtrlId === c.id ? 'opacity-40 bg-blue-50' : ''
-                            }`}
-                          >
-                            <td className="px-1 py-2 text-slate-300 text-center select-none" title="Drag to another requirement">⋮⋮</td>
-                            <td className="px-4 py-2">
-                              <button
-                                onClick={() => openFullEditControl(c)}
-                                className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left"
-                              >
-                                {c.name}
-                              </button>
-                            </td>
-                            <td className="px-4 py-2 text-slate-600">{c.controlType}</td>
-                            <td className="px-4 py-2">
-                              {c._count.controlAssignments === 0 ? (
-                                <HealthBadge score={0} />
-                              ) : (
-                                <HealthBadge score={c.rawHealthScore} />
-                              )}
-                            </td>
-                            <td className="px-4 py-2">
-                              <span className={`text-xs font-medium ${c.isHsseCritical ? "text-red-600" : "text-slate-600"}`}>
-                                {c.isHsseCritical ? "HSSE Critical" : c.ramRating || "—"}
-                              </span>
-                            </td>
-                            <td className="px-4 py-2 text-slate-600">
-                              {c._count.controlAssignments === 0 ? (
-                                <span className="text-slate-400 italic">Never Tested</span>
-                              ) : c.lastTestedDate ? (
-                                formatDate(c.lastTestedDate)
-                              ) : ("—")}
-                            </td>
-                            <td className="px-4 py-2">
-                              {c._count.controlAssignments === 0 ? (
-                                <span className="text-xs text-slate-400 italic">—</span>
-                              ) : (
-                                <span className={`text-xs font-medium ${c.lastTestResult === "Pass" ? "text-green-600" : c.lastTestResult === "Fail" ? "text-red-600" : "text-slate-400"}`}>
-                                  {c.lastTestResult || "—"}
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button
-                                  onClick={() => openFullEditControl(c)}
-                                  className="text-xs text-blue-600 hover:underline font-medium"
-                                >
-                                  Edit
-                                </button>
-                                <span className="text-slate-300">|</span>
-                                <button
-                                  onClick={() => setUnassignControlTarget({ id: c.id, name: c.name })}
-                                  className="text-xs text-red-600 hover:underline font-medium"
-                                >
-                                  Unassign
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-                {isExpanded && req.controls.length === 0 && (
-                  <div className="px-4 py-6 text-center text-sm text-slate-400">
-                    No controls linked to this requirement yet.
-                    <button
-                      type="button"
-                      onClick={() => openAddControlForm(req.rId)}
-                      className="ml-1 text-blue-600 hover:underline"
-                    >
-                      +Add Control
-                    </button>
-                  </div>
-                )}
-              </div>
-            );})
-          )}
-        </div>
-
-        {/* ─── Bulk Map Controls to Requirements ──────────────────────── */}
-        <div className="mt-8 border border-slate-200 rounded-lg overflow-hidden">
-          <button
-            type="button"
-            onClick={async () => {
-              const expanding = !bulkMapExpanded;
-              setBulkMapExpanded(expanding);
-              if (expanding && cfProcessAreas.length === 0) {
-                const [paRes, spRes] = await Promise.all([
-                  fetch("/api/admin/table/ProcessArea/data?perPage=500"),
-                  fetch("/api/admin/table/SubProcess/data?perPage=5000"),
-                ]);
-                if (paRes.ok) { const d = await paRes.json(); setCfProcessAreas(d.rows || []); }
-                if (spRes.ok) { const d = await spRes.json(); setCfSubProcesses(d.rows || []); }
-              }
-            }}
-            className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 hover:bg-slate-100 transition-colors"
-          >
-            <span className="text-sm font-semibold text-slate-700">
-              🔗 Bulk Map Controls to Requirements
-            </span>
-            <span className="text-xs text-slate-400">{bulkMapExpanded ? "▲" : "▼"}</span>
-          </button>
-          {bulkMapExpanded && (
-            <div className="px-4 py-4 space-y-4 bg-white">
-              {/* Row 1: ProcessArea + SubProcess comboboxes stacked */}
-              <div className="space-y-3">
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Process Area</label>
-                  <select
-                    value={bulkMapPA}
-                    onChange={(e) => { setBulkMapPA(e.target.value); setBulkMapSP(""); }}
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  >
-                    {[...cfProcessAreas].sort((a, b) => a.name.localeCompare(b.name)).map(pa => (
-                      <option key={pa.id} value={pa.id}>{pa.name}</option>
-                    ))}
-                  </select>
+                  <input
+                    type="text"
+                    placeholder="Filter controls..."
+                    value={mapFilter}
+                    onChange={(e) => setMapFilter(e.target.value)}
+                    className="w-full rounded border border-amber-300 px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                  />
                 </div>
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-1">Sub-Process</label>
-                  <select
-                    value={bulkMapSP}
-                    onChange={(e) => setBulkMapSP(e.target.value)}
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                  >
-                    <option value="">-- Select a sub-process --</option>
-                    {cfSubProcesses
-                      .filter(sp => sp.processAreaId === bulkMapPA)
-                      .sort((a, b) => a.name.localeCompare(b.name))
-                      .map(sp => (
-                        <option key={sp.id} value={sp.id}>{sp.name}</option>
-                      ))}
-                  </select>
+                <div className="max-h-[60vh] overflow-y-auto">
+                  {(() => {
+                    const uc = reqData.find(r => r.requirementId === "Unmapped Controls");
+                    if (!uc || uc.controls.length === 0) {
+                      return <p className="px-4 py-6 text-sm text-amber-600 text-center">✅ All controls are mapped!</p>;
+                    }
+                    const filtered = mapFilter
+                      ? uc.controls.filter(c => c.name.toLowerCase().includes(mapFilter.toLowerCase()))
+                      : uc.controls;
+                    if (filtered.length === 0) {
+                      return <p className="px-4 py-6 text-sm text-amber-600 text-center">No controls match &quot;{mapFilter}&quot;.</p>;
+                    }
+                    return filtered.map(c => (
+                      <label
+                        key={c.id}
+                        className={`flex items-center gap-3 px-4 py-2.5 cursor-pointer hover:bg-amber-100 transition-colors border-b border-amber-100 ${
+                          mapCheckedControls.has(c.id) ? "bg-amber-200" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={mapCheckedControls.has(c.id)}
+                          onChange={() => {
+                            setMapCheckedControls(prev => {
+                              const next = new Set(prev);
+                              if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
+                              return next;
+                            });
+                          }}
+                          className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 flex-shrink-0"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="text-sm font-medium text-slate-800 truncate">{c.name}</div>
+                          <div className="text-xs text-slate-500 truncate">{c.statement}</div>
+                        </div>
+                        <span className="text-xs text-slate-400 flex-shrink-0">{c.controlType}</span>
+                      </label>
+                    ));
+                  })()}
                 </div>
               </div>
 
-              {/* Row 2: Checklist of controls */}
-              {bulkMapSP && (
-                <div>
-                  <label className="block text-xs font-medium text-slate-600 mb-2">
-                    Controls ({bulkMapControls.length})
-                    <span className="ml-2 font-normal text-slate-400">
-                      {bulkMapCheckedControls.size > 0 && `— ${bulkMapCheckedControls.size} selected`}
-                    </span>
-                  </label>
-                  <div className="max-h-48 overflow-y-auto rounded border border-slate-200 divide-y divide-slate-100">
-                    {bulkMapControls.length === 0 ? (
-                      <p className="px-3 py-4 text-sm text-slate-400 text-center">No controls found for this sub-process.</p>
-                    ) : (
-                      bulkMapControls.map(c => (
-                        <label
-                          key={c.id}
-                          className={`flex items-center gap-2 px-3 py-2 cursor-pointer hover:bg-slate-50 transition-colors ${
-                            bulkMapCheckedControls.has(c.id) ? "bg-blue-50" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={bulkMapCheckedControls.has(c.id)}
-                            onChange={() => {
-                              setBulkMapCheckedControls(prev => {
-                                const next = new Set(prev);
-                                if (next.has(c.id)) next.delete(c.id); else next.add(c.id);
-                                return next;
-                              });
-                            }}
-                            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 flex-shrink-0"
-                          />
-                          <span className="text-sm text-slate-800">{c.name}</span>
-                          <span className="text-xs text-slate-400 ml-auto flex-shrink-0">{c.controlType}</span>
-                        </label>
-                      ))
+              {/* RIGHT: Requirements + Assign */}
+              <div className="space-y-4">
+                <div className="rounded-lg border border-blue-200 bg-white overflow-hidden">
+                  <div className="bg-blue-50 px-4 py-3 border-b border-blue-200">
+                    <h3 className="font-semibold text-blue-900 text-sm">
+                      📋 Requirements
+                    </h3>
+                    {mapCheckedControls.size > 0 && (
+                      <p className="text-xs text-blue-600 mt-1">
+                        {mapCheckedControls.size} control(s) selected — click a requirement to assign, or use the dropdown below
+                      </p>
                     )}
                   </div>
-                </div>
-              )}
-
-              {/* Row 3: Target Requirement combobox + Map button */}
-              {bulkMapCheckedControls.size > 0 && (
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-medium text-slate-600 mb-1">
-                      Map to Requirement in this Process Area
-                    </label>
-                    <select
-                      value={bulkMapTargetReqId ?? ""}
-                      onChange={(e) => setBulkMapTargetReqId(e.target.value ? Number(e.target.value) : null)}
-                      className="w-full rounded border border-slate-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
-                    >
-                      <option value="">-- Select a requirement --</option>
-                      {reqData.filter(r => r.requirementId !== "Unmapped Controls").sort((a, b) => a.requirementId.localeCompare(b.requirementId)).map(r => (
-                        <option key={r.rId} value={r.rId}>
-                          {r.requirementId} — {r.clauseContent.slice(0, 80)}{r.clauseContent.length > 80 ? "…" : ""}
-                        </option>
+                  <div className="max-h-[50vh] overflow-y-auto divide-y divide-slate-100">
+                    {reqData
+                      .filter(r => r.requirementId !== "Unmapped Controls")
+                      .sort((a, b) => a.requirementId.localeCompare(b.requirementId))
+                      .map(req => (
+                        <button
+                          key={req.rId}
+                          type="button"
+                          onClick={() => {
+                            if (mapCheckedControls.size > 0) {
+                              handleMapAssign(req.rId);
+                            }
+                          }}
+                          onDragOver={(e) => {
+                            e.preventDefault();
+                            e.dataTransfer.dropEffect = 'move';
+                            setDragOverReqId(req.rId);
+                          }}
+                          onDragLeave={() => setDragOverReqId(null)}
+                          onDrop={(e) => {
+                            e.preventDefault();
+                            setDragOverReqId(null);
+                            if (dragCtrlId) {
+                              handleDropControl(dragCtrlId, req.rId);
+                            }
+                          }}
+                          className={`w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors ${
+                            dragOverReqId === req.rId ? 'bg-blue-100 border-l-4 border-blue-500' : ''
+                          } ${mapCheckedControls.size > 0 ? 'cursor-pointer' : ''}`}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="min-w-0">
+                              <span className="text-sm font-semibold text-slate-900">
+                                {req.requirementId}
+                              </span>
+                              <span className="ml-2 text-xs text-slate-400">({req.controls.length} controls)</span>
+                            </div>
+                            {mapCheckedControls.size > 0 && (
+                              <span className="text-xs text-blue-600 font-medium flex-shrink-0 ml-2">
+                                ← Assign
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-0.5 truncate">{req.clauseContent}</p>
+                          {dragOverReqId === req.rId && mapCheckedControls.size === 0 && (
+                            <p className="text-xs text-blue-600 mt-1 animate-pulse">Drop control here</p>
+                          )}
+                        </button>
                       ))}
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      type="button"
-                      disabled={!bulkMapTargetReqId || bulkMapSaving}
-                      onClick={handleBulkMap}
-                      className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {bulkMapSaving ? "Mapping…" : `Map ${bulkMapCheckedControls.size} Control(s)`}
-                    </button>
-                    {bulkMapError && <span className="text-sm text-red-600">{bulkMapError}</span>}
-                    {bulkMapSuccess && <span className="text-sm text-green-600">{bulkMapSuccess}</span>}
                   </div>
                 </div>
-              )}
+
+                {/* Bulk Assign dropdown */}
+                {mapCheckedControls.size > 0 && (
+                  <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <label className="text-sm font-medium text-green-900 flex-shrink-0">
+                        Assign {mapCheckedControls.size} to:
+                      </label>
+                      <select
+                        value={mapTargetReqId ?? ""}
+                        onChange={(e) => setMapTargetReqId(e.target.value ? Number(e.target.value) : null)}
+                        className="flex-1 min-w-[200px] rounded border border-green-300 px-3 py-2 text-sm focus:border-green-500 focus:ring-1 focus:ring-green-500"
+                      >
+                        <option value="">-- Select requirement --</option>
+                        {reqData
+                          .filter(r => r.requirementId !== "Unmapped Controls")
+                          .sort((a, b) => a.requirementId.localeCompare(b.requirementId))
+                          .map(r => (
+                            <option key={r.rId} value={r.rId}>
+                              {r.requirementId} — {r.clauseContent.slice(0, 60)}{r.clauseContent.length > 60 ? "…" : ""}
+                            </option>
+                          ))}
+                      </select>
+                      <button
+                        type="button"
+                        disabled={!mapTargetReqId || mapSaving}
+                        onClick={() => handleMapAssign()}
+                        className="rounded bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {mapSaving ? "Assigning…" : "✓ Assign"}
+                      </button>
+                    </div>
+                    {mapMsg && (
+                      <p className={`mt-2 text-sm ${mapMsg.type === "ok" ? "text-green-700" : "text-red-600"}`}>
+                        {mapMsg.text}
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+          ) : (
+            /* ── Normal card view ── */
+            <>
+              {reqData.length === 0 ? (
+                <p className="text-sm text-slate-400 py-8 text-center">
+                  No requirements linked to this process area.
+                </p>
+              ) : (
+                reqData.map((req) => {
+                  const isExpanded = expandedReqSections.has(req.rId);
+                  return (
+                  <div key={req.rId} className="rounded-lg border border-slate-200 bg-white overflow-hidden">
+                    <button
+                      onClick={() => toggleReqSection(req.rId)}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        setDragOverReqId(req.rId);
+                      }}
+                      onDragLeave={() => setDragOverReqId(null)}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setDragOverReqId(null);
+                        if (dragCtrlId && dragCtrlId !== req.rId.toString()) {
+                          handleDropControl(dragCtrlId, req.rId);
+                        }
+                      }}
+                      className={`w-full text-left bg-slate-50 px-4 py-3 border-b border-slate-200 hover:bg-slate-100 transition-colors ${
+                        dragOverReqId === req.rId ? 'bg-blue-100 border-blue-400' : ''
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="min-w-0">
+                          <h2 className="font-semibold text-slate-900 text-sm">
+                            {req.requirementId} ({req.controls.length})
+                          </h2>
+                          <p className="text-xs text-slate-500 mt-0.5 whitespace-normal break-words">
+                            {req.clauseContent}
+                          </p>
+                        </div>
+                        <span className="text-xs text-slate-300 ml-2 flex-shrink-0">{isExpanded ? '▼' : '▶'}</span>
+                      </div>
+                      {dragOverReqId === req.rId && (
+                        <p className="text-xs text-blue-600 mt-1 animate-pulse">Drop control here</p>
+                      )}
+                    </button>
+
+                    {isExpanded && req.controls.length > 0 && (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead className="bg-slate-100">
+                            <tr>
+                              <th className="px-1 py-2 w-5"></th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Control</th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Type</th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Health</th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Risk</th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Last Tested</th>
+                              <th className="px-4 py-2 text-left font-medium text-slate-600">Result</th>
+                              <th className="px-4 py-2 text-center font-medium text-slate-600">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    openAddControlForm(req.rId);
+                                  }}
+                                  className="text-blue-600 hover:underline font-medium"
+                                >
+                                  +Add Control
+                                </button>
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {req.controls.map((c) => (
+                              <tr
+                                key={c.id}
+                                draggable
+                                title={c.statement || c.name}
+                                onDragStart={(e) => {
+                                  setDragCtrlId(c.id);
+                                  e.dataTransfer.effectAllowed = 'move';
+                                }}
+                                onDragEnd={() => { setDragCtrlId(null); setDragOverReqId(null); }}
+                                className={`border-t border-slate-100 hover:bg-slate-50 transition-colors cursor-grab active:cursor-grabbing ${
+                                  dragCtrlId === c.id ? 'opacity-40 bg-blue-50' : ''
+                                }`}
+                              >
+                                <td className="px-1 py-2 text-slate-300 text-center select-none" title="Drag to another requirement">⋮⋮</td>
+                                <td className="px-4 py-2">
+                                  <button
+                                    onClick={() => openFullEditControl(c)}
+                                    className="font-medium text-slate-900 hover:text-blue-600 hover:underline text-left"
+                                  >
+                                    {c.name}
+                                  </button>
+                                </td>
+                                <td className="px-4 py-2 text-slate-600">{c.controlType}</td>
+                                <td className="px-4 py-2">
+                                  {c._count.controlAssignments === 0 ? (
+                                    <HealthBadge score={0} />
+                                  ) : (
+                                    <HealthBadge score={c.rawHealthScore} />
+                                  )}
+                                </td>
+                                <td className="px-4 py-2">
+                                  <span className={`text-xs font-medium ${c.isHsseCritical ? "text-red-600" : "text-slate-600"}`}>
+                                    {c.isHsseCritical ? "HSSE Critical" : c.ramRating || "—"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-2 text-slate-600">
+                                  {c._count.controlAssignments === 0 ? (
+                                    <span className="text-slate-400 italic">Never Tested</span>
+                                  ) : c.lastTestedDate ? (
+                                    formatDate(c.lastTestedDate)
+                                  ) : ("—")}
+                                </td>
+                                <td className="px-4 py-2">
+                                  {c._count.controlAssignments === 0 ? (
+                                    <span className="text-xs text-slate-400 italic">—</span>
+                                  ) : (
+                                    <span className={`text-xs font-medium ${c.lastTestResult === "Pass" ? "text-green-600" : c.lastTestResult === "Fail" ? "text-red-600" : "text-slate-400"}`}>
+                                      {c.lastTestResult || "—"}
+                                    </span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 text-center">
+                                  <div className="flex items-center justify-center gap-2">
+                                    <button
+                                      onClick={() => openFullEditControl(c)}
+                                      className="text-xs text-blue-600 hover:underline font-medium"
+                                    >
+                                      Edit
+                                    </button>
+                                    <span className="text-slate-300">|</span>
+                                    <button
+                                      onClick={() => setUnassignControlTarget({ id: c.id, name: c.name })}
+                                      className="text-xs text-red-600 hover:underline font-medium"
+                                    >
+                                      Unassign
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                    {isExpanded && req.controls.length === 0 && (
+                      <div className="px-4 py-6 text-center text-sm text-slate-400">
+                        No controls linked to this requirement yet.
+                        <button
+                          type="button"
+                          onClick={() => openAddControlForm(req.rId)}
+                          className="ml-1 text-blue-600 hover:underline"
+                        >
+                          +Add Control
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );})
+              )}
+            </>
           )}
         </div>
         </>
