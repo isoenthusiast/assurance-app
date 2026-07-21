@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 
 interface TableInfo {
@@ -36,6 +36,12 @@ export default function DatabaseManagementPage() {
   const [editingColumn, setEditingColumn] = useState<string | null>(null);
   const [editType, setEditType] = useState('String');
   const [saving, setSaving] = useState(false);
+
+  // ── Backup state ──────────────────────────────────────────────
+  const [backingUp, setBackingUp] = useState(false);
+  const [restoring, setRestoring] = useState(false);
+  const [restoreMsg, setRestoreMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     fetchTables();
@@ -215,6 +221,70 @@ export default function DatabaseManagementPage() {
       setError(err instanceof Error ? err.message : 'Failed to update column');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // ── Backup & Restore ──────────────────────────────────────────────
+  const handleBackup = async () => {
+    try {
+      setBackingUp(true);
+      setError(null);
+      const res = await fetch('/api/admin/database/backup');
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Backup failed');
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const disposition = res.headers.get('Content-Disposition') || '';
+      const match = disposition.match(/filename="?([^"]+)"?/);
+      a.download = match?.[1] || `full_backup_${new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-')}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSuccess('Full database backup downloaded successfully');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Backup failed');
+    } finally {
+      setBackingUp(false);
+    }
+  };
+
+  const handleRestore = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const file = fileInputRef.current?.files?.[0];
+    if (!file) {
+      setRestoreMsg({ type: 'err', text: 'Please select a .sql backup file' });
+      return;
+    }
+    if (!confirm(`⚠️ This will DROP and recreate ALL tables from the backup file.\n\nAre you sure you want to restore "${file.name}"? This cannot be undone.`)) {
+      return;
+    }
+    try {
+      setRestoring(true);
+      setRestoreMsg(null);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/admin/database/restore', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || data.errors?.join('; ') || 'Restore failed');
+      }
+      setRestoreMsg({ type: 'ok', text: `✅ Restore complete: ${data.executed} statements executed, ${data.skipped} skipped.` });
+      await fetchTables();
+      setSelectedTable(null);
+      // Reset file input
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (err) {
+      setRestoreMsg({ type: 'err', text: err instanceof Error ? err.message : 'Restore failed' });
+    } finally {
+      setRestoring(false);
     }
   };
 
@@ -525,6 +595,61 @@ export default function DatabaseManagementPage() {
           >
             📋 Requirements JSON
           </a>
+        </div>
+      </div>
+
+      {/* Backup & Restore */}
+      <div className="mt-8 rounded border border-slate-200 bg-white p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">💾 Full Database Backup & Restore</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          Download a complete SQL backup of all tables, or restore from a previously saved backup file.
+        </p>
+
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Backup */}
+          <div className="rounded border border-blue-200 bg-blue-50 p-4">
+            <h3 className="font-semibold text-blue-900 mb-2">📥 Backup</h3>
+            <p className="text-sm text-blue-700 mb-3">
+              Downloads a full SQL dump of every table (schema + data) as a .sql file.
+            </p>
+            <button
+              onClick={handleBackup}
+              disabled={backingUp}
+              className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:bg-blue-400 inline-flex items-center gap-2"
+            >
+              {backingUp ? '⏳ Generating...' : '💾 Download Full Backup'}
+            </button>
+          </div>
+
+          {/* Restore */}
+          <div className="rounded border border-amber-200 bg-amber-50 p-4">
+            <h3 className="font-semibold text-amber-900 mb-2">📤 Restore</h3>
+            <p className="text-sm text-amber-700 mb-3">
+              Upload a .sql backup file to restore the database. <strong>Warning:</strong> This drops and recreates all tables.
+            </p>
+            <form onSubmit={handleRestore}>
+              <div className="flex flex-col gap-3">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".sql"
+                  className="text-sm text-slate-700 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:bg-amber-600 file:text-white file:text-sm file:hover:bg-amber-700"
+                />
+                <button
+                  type="submit"
+                  disabled={restoring}
+                  className="rounded bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700 disabled:bg-amber-400 inline-flex items-center gap-2 self-start"
+                >
+                  {restoring ? '⏳ Restoring...' : '📤 Restore from File'}
+                </button>
+              </div>
+            </form>
+            {restoreMsg && (
+              <div className={`mt-3 rounded p-3 text-sm ${restoreMsg.type === 'ok' ? 'border border-green-200 bg-green-100 text-green-800' : 'border border-red-200 bg-red-100 text-red-800'}`}>
+                {restoreMsg.text}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
