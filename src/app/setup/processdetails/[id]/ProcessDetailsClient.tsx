@@ -1329,8 +1329,8 @@ export default function ProcessDetailsClient({
                           className="h-4 w-4 rounded border-amber-400 text-amber-600 focus:ring-amber-500 flex-shrink-0"
                         />
                         <div className="min-w-0 flex-1">
-                          <div className="text-sm font-medium text-slate-800 truncate">{c.name}</div>
-                          <div className="text-xs text-slate-500 truncate">{c.statement}</div>
+                          <div className="text-sm font-medium text-slate-800 whitespace-normal break-words">{c.name}</div>
+                          <div className="text-xs text-slate-500 whitespace-normal break-words">{c.statement}</div>
                         </div>
                         <span className="text-xs text-slate-400 flex-shrink-0">{c.controlType}</span>
                       </label>
@@ -1395,7 +1395,7 @@ export default function ProcessDetailsClient({
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 mt-0.5 truncate">{req.clauseContent}</p>
+                          <p className="text-xs text-slate-500 mt-0.5 whitespace-normal break-words">{req.clauseContent}</p>
                           {dragOverReqId === req.rId && mapCheckedControls.size === 0 && (
                             <p className="text-xs text-blue-600 mt-1 animate-pulse">Drop control here</p>
                           )}
