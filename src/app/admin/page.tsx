@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { KnowledgebaseManager } from "./knowledgebase/page";
 import { DocumentControlsManager } from "./document-controls/page";
 import TemplatesPage from "./templates/page";
@@ -9,6 +10,7 @@ interface TableInfo { table_name: string; row_estimate: number; }
 interface Column { name: string; type: string; }
 
 export default function AdminDashboard() {
+  const router = useRouter();
   const [tables, setTables] = useState<TableInfo[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -235,7 +237,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("documentControls")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "documentControls" ? "bg-blue-50 font-medium" : ""}`}>📄 Document Controls</button>
             <button onClick={() => setView("requirements")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "requirements" ? "bg-blue-50 font-medium" : ""}`}>📋 Requirements</button>
             <button onClick={() => setView("activityLog")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "activityLog" ? "bg-blue-50 font-medium" : ""}`}>📜 Mapping Activity Log</button>
-            <button onClick={() => setView("database")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "database" ? "bg-blue-50 font-medium" : ""}`}>🗄 Database</button>
+            <button onClick={() => router.push("/admin/database-management")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700`}>🗄 Database</button>
           </div>
         </div>
 
@@ -268,10 +270,10 @@ export default function AdminDashboard() {
             { key: "documentControls", label: "📄 Docs" },
             { key: "requirements", label: "📋 Reqs" },
             { key: "activityLog", label: "📜 Log" },
-            { key: "database", label: "🗄 DB" },
+            { key: "database", label: "🗄 DB", href: "/admin/database-management" },
           ].map(tab => (
-            <button key={tab.key} onClick={() => setView(tab.key as any)}
-              className={`flex-shrink-0 px-3 py-1.5 text-xs rounded whitespace-nowrap ${view === tab.key ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
+            <button key={tab.key} onClick={() => tab.href ? router.push(tab.href) : setView(tab.key as any)}
+              className={`flex-shrink-0 px-3 py-1.5 text-xs rounded whitespace-nowrap ${!tab.href && view === tab.key ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
               {tab.label}
             </button>
           ))}
