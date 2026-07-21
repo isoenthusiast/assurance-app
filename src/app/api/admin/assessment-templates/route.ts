@@ -1,15 +1,13 @@
-import { auth } from "@/auth";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { logActivity, getUsername } from "@/lib/activity-log";
 import { cookies } from "next/headers";
+import { requireAdmin } from "@/lib/authz";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     // Read selected company from cookie
     let companyWhere = {};
@@ -50,10 +48,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const { name, description, controlIds, activityTypeIds } =
       await request.json();

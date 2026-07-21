@@ -1,16 +1,14 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
     const { controlIds } = await request.json();
@@ -22,7 +20,7 @@ export async function PUT(
       );
     }
 
-    // Verify assessment exists
+    // Verify assessment exists and user can access its company
     const assessment = await prisma.assessment.findUnique({
       where: { id },
     });
@@ -32,6 +30,11 @@ export async function PUT(
         { error: "Assessment not found" },
         { status: 404 }
       );
+    }
+
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     // Verify all control IDs exist

@@ -1,20 +1,35 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
 
 const SEVERITIES = ["Low", "Medium", "High", "Serious"];
+
+async function loadFindingAssessmentCompany(findingId: string) {
+  const finding = await prisma.finding.findUnique({
+    where: { id: findingId },
+    select: { assessment: { select: { id: true, companyId: true } } },
+  });
+  return finding?.assessment || null;
+}
 
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadFindingAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Finding not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const { sampleId, description, details, controlIds, risks, repeat, severity } =
       await request.json();
 
@@ -79,12 +94,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadFindingAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Finding not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
     // Actions cascade-delete via the schema's onDelete: Cascade.
     await prisma.finding.delete({ where: { id } });

@@ -7,6 +7,7 @@ const { auth } = NextAuth(authConfig);
 export default auth(function proxy(req) {
   const isLoggedIn = !!req.auth;
   const isLoginPage = req.nextUrl.pathname === "/login";
+  const userRole = req.auth?.user?.role;
 
   // Redirect unauthenticated users to login (except login page itself)
   if (!isLoggedIn && !isLoginPage) {
@@ -17,6 +18,15 @@ export default auth(function proxy(req) {
   // Redirect authenticated users away from login page
   if (isLoggedIn && isLoginPage) {
     return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+  }
+
+  // Block non-admin access to admin UI pages only.
+  // /api/admin/* routes are also used by assessors (e.g., /fla assessment pages)
+  // and enforce their own authorization.
+  const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
+  if (isAdminRoute && userRole !== "Admin") {
+    const homeUrl = new URL("/", req.nextUrl.origin);
+    return NextResponse.redirect(homeUrl);
   }
 
   // Fix forwarded host for Codespaces proxy — Next.js Server Actions

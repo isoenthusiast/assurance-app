@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
 
 const EFFECTIVENESS_VALUES = ["Effective", "NotEffective"];
 
@@ -27,17 +27,32 @@ async function recalcControlHealth(controlId: string) {
   });
 }
 
+async function loadAssignmentAssessmentCompany(assignmentId: string) {
+  const assignment = await prisma.controlAssignment.findUnique({
+    where: { id: assignmentId },
+    select: { assessment: { select: { id: true, companyId: true } } },
+  });
+  return assignment?.assessment || null;
+}
+
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadAssignmentAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Control assignment not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const body = await request.json();
 
     // Only touch fields the caller actually sent — an omitted field must
@@ -98,12 +113,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadAssignmentAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Control assignment not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
     // Get controlId before deleting
     const assignment = await prisma.controlAssignment.findUnique({

@@ -1,14 +1,20 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { logActivity, getUsername } from "@/lib/activity-log";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
+
+async function loadFindingAssessmentCompany(findingId: string) {
+  const finding = await prisma.finding.findUnique({
+    where: { id: findingId },
+    select: { assessment: { select: { id: true, companyId: true } } },
+  });
+  return finding?.assessment || null;
+}
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const {
       findingId,
@@ -34,9 +40,13 @@ export async function POST(request: Request) {
       );
     }
 
-    const finding = await prisma.finding.findUnique({ where: { id: findingId } });
-    if (!finding) {
-      return NextResponse.json({ error: "Finding not found" }, { status: 400 });
+    const assessment = await loadFindingAssessmentCompany(findingId);
+    if (!assessment) {
+      return NextResponse.json({ error: "Finding not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const parsedTargetDate = targetDate ? new Date(targetDate) : null;

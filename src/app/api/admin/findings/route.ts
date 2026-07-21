@@ -1,20 +1,39 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { generateFindingId } from "@/lib/findings";
 import { NextResponse } from "next/server";
 import { logActivity, getUsername } from "@/lib/activity-log";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
 
 const SEVERITIES = ["Low", "Medium", "High", "Serious"];
 
+async function loadAssessmentCompany(assessmentId: string) {
+  return prisma.assessment.findUnique({
+    where: { id: assessmentId },
+    select: { id: true, companyId: true },
+  });
+}
+
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { searchParams } = new URL(request.url);
     const assessmentId = searchParams.get("assessmentId");
+
+    if (assessmentId) {
+      const assessment = await loadAssessmentCompany(assessmentId);
+      if (!assessment) {
+        return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+      }
+      const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+      if (!ok) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      }
+    } else if (session.user.role !== "Admin") {
+      // Non-admins must scope findings by assessment
+      return NextResponse.json({ error: "assessmentId is required" }, { status: 400 });
+    }
 
     const findings = await prisma.finding.findMany({
       where: assessmentId ? { assessmentId } : undefined,
@@ -37,10 +56,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const {
       assessmentId,
@@ -60,6 +77,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const assessment = await loadAssessmentCompany(assessmentId);
+    if (!assessment) {
+      return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     if (!description || !description.trim()) {
       return NextResponse.json(
         { error: "Finding description is required" },
@@ -70,16 +96,6 @@ export async function POST(request: Request) {
     if (!severity || !SEVERITIES.includes(severity)) {
       return NextResponse.json(
         { error: `Severity must be one of: ${SEVERITIES.join(", ")}` },
-        { status: 400 }
-      );
-    }
-
-    const assessment = await prisma.assessment.findUnique({
-      where: { id: assessmentId },
-    });
-    if (!assessment) {
-      return NextResponse.json(
-        { error: "Assessment not found" },
         { status: 400 }
       );
     }

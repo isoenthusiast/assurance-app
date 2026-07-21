@@ -921,7 +921,7 @@ function ManageCompany({ users }: { users: any[] }) {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [adopting, setAdopting] = useState(false);
   const [cleaning, setCleaning] = useState(false);
-  const [currentUserName, setCurrentUserName] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<"adopt" | "clean" | null>(null);
   const [submode, setSubmode] = useState<"select" | "add">("select");
   // UserCompany assignments for selected company
@@ -943,10 +943,10 @@ function ManageCompany({ users }: { users: any[] }) {
 
   useEffect(() => { loadCompanies(); }, [loadCompanies]);
 
-  // Fetch current user's username for Admin-only button gating
+  // Fetch current user's role for Admin-only button gating
   useEffect(() => {
     fetch("/api/auth/session").then(r => r.json()).then(s => {
-      setCurrentUserName(s?.user?.name || null);
+      setCurrentUserRole(s?.user?.role || null);
     }).catch(() => {});
   }, []);
 
@@ -1169,7 +1169,7 @@ function ManageCompany({ users }: { users: any[] }) {
                 <button onClick={saveCompany} className="rounded bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700">
                   {submode === "add" ? "Create Company" : "Save Changes"}
                 </button>
-                {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && currentUserName === "Admin" && (
+                {submode === "select" && selectedCompanyId && selectedCompanyId !== "comp_1783989395315" && currentUserRole === "Admin" && (
                   confirmAction ? (
                     <>
                       <span className="text-xs text-red-600 font-medium self-center">

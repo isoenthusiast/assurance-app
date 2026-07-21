@@ -13,7 +13,13 @@ export const authConfig: NextAuthConfig = {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
       const isLoginPage = nextUrl.pathname === "/login";
-      return isLoggedIn || isLoginPage;
+      if (!isLoggedIn) return isLoginPage;
+      if (isLoginPage) return false; // redirect authenticated users away from login
+      // Admin-only UI pages (/admin/*)
+      if (nextUrl.pathname.startsWith("/admin") && auth.user.role !== "Admin") {
+        return false;
+      }
+      return true;
     },
     jwt: ({ token, user }) => {
       if (user) {

@@ -2,16 +2,22 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { logActivity, getUsername } from "@/lib/activity-log";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
+
+async function loadAssessmentWithCompany(id: string) {
+  return prisma.assessment.findUnique({
+    where: { id },
+    select: { id: true, companyId: true },
+  });
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
 
@@ -29,6 +35,11 @@ export async function GET(
       return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
     }
 
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     return NextResponse.json(assessment);
   } catch (error) {
     console.error("Error fetching assessment:", error);
@@ -44,12 +55,22 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const existing = await loadAssessmentWithCompany(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+    }
+
+    // Only Admins or users with company access can update
+    const isAdmin = session.user.role === "Admin";
+    const ok = isAdmin || await hasCompanyAccess(session.user.id, existing.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const { name, status, endDate, assessorId, activityTypeId, startDate, loa } = await request.json();
 
     const assessment = await prisma.assessment.update({
@@ -94,12 +115,19 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const existing = await loadAssessmentWithCompany(id);
+    if (!existing) {
+      return NextResponse.json({ error: "Assessment not found" }, { status: 404 });
+    }
+
+    // DELETE is admin-only
+    if (session.user.role !== "Admin") {
+      return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    }
 
     await prisma.assessment.delete({
       where: { id },

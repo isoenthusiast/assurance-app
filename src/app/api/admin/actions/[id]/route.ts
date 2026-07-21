@@ -1,16 +1,22 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAuth, hasCompanyAccess } from "@/lib/authz";
+
+async function loadActionAssessmentCompany(actionId: string) {
+  const action = await prisma.action.findUnique({
+    where: { id: actionId },
+    select: { finding: { select: { assessment: { select: { id: true, companyId: true } } } } },
+  });
+  return action?.finding?.assessment || null;
+}
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
 
@@ -36,6 +42,11 @@ export async function GET(
       return NextResponse.json({ error: "Action not found" }, { status: 404 });
     }
 
+    const ok = await hasCompanyAccess(session.user.id, action.finding.assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     return NextResponse.json(action);
   } catch (error) {
     console.error("Error fetching action:", error);
@@ -51,12 +62,19 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadActionAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Action not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
     const {
       actionDescription,
       actionDetails,
@@ -132,12 +150,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { id } = await params;
+    const assessment = await loadActionAssessmentCompany(id);
+    if (!assessment) {
+      return NextResponse.json({ error: "Action not found" }, { status: 404 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, assessment.companyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
 
     await prisma.action.delete({ where: { id } });
 

@@ -1,18 +1,16 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { getTableSchema } from "@/lib/schema-introspection";
 import { getFallbackSchema } from "@/lib/fallback-schemas";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/authz";
 
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ table: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const { table } = await params;
 

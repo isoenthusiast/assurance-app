@@ -1,23 +1,26 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { logActivity, getUsername } from "@/lib/activity-log";
+import { requireAuth, hasCompanyAccess, getSelectedCompanyId } from "@/lib/authz";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
-    // Read company filter from cookie
+    // Read company filter from cookie and validate access
     let companyWhere: { companyId?: string } = {};
-    try {
-      const cookieStore = await cookies();
-      const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
-      if (selectedCompanyId) companyWhere = { companyId: selectedCompanyId };
-    } catch { /* ignore */ }
+    const selectedCompanyId = await getSelectedCompanyId();
+    if (selectedCompanyId) {
+      const ok = await hasCompanyAccess(session.user.id, selectedCompanyId);
+      if (!ok) {
+        return NextResponse.json({ error: "Access denied for selected company" }, { status: 403 });
+      }
+      companyWhere = { companyId: selectedCompanyId };
+    } else if (session.user.role !== "Admin") {
+      // Non-admins with no selected company see nothing
+      return NextResponse.json([]);
+    }
 
     const assessments = await prisma.assessment.findMany({
       where: companyWhere,
@@ -42,9 +45,16 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    const { session, response } = await requireAuth();
+    if (response) return response;
+
+    const selectedCompanyId = await getSelectedCompanyId();
+    if (!selectedCompanyId) {
+      return NextResponse.json({ error: "No company selected" }, { status: 400 });
+    }
+    const ok = await hasCompanyAccess(session.user.id, selectedCompanyId);
+    if (!ok) {
+      return NextResponse.json({ error: "Access denied for selected company" }, { status: 403 });
     }
 
     const { name, activityTypeId, startDate, controlIds } = await request.json();
@@ -112,6 +122,7 @@ export async function POST(request: Request) {
       data: {
         name,
         activityTypeId,
+        companyId: selectedCompanyId,
         assessorId: session.user.id!,
         startDate: startDate ? new Date(startDate) : new Date(),
         loa: activityType.defaultLOA,
