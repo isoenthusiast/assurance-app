@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect } from "react";
 import AttachmentList from "@/components/AttachmentList";
 
 interface OutstandingAction {
@@ -67,7 +67,7 @@ export default function OutstandingActions({ actions }: { actions: OutstandingAc
 
   // Modal state
   const [selectedAction, setSelectedAction] = useState<ActionDetail | null>(null);
-  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [, setLoadingDetail] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [editForm, setEditForm] = useState<Partial<ActionDetail>>({});
   const [saving, setSaving] = useState(false);

@@ -23,7 +23,7 @@ export const MASTER_COMPANY_ID = "SAMS001";
  * @param tableField - The column name for companyId (defaults to "companyId")
  * @returns { companyId: string } | {}
  */
-export async function getCompanyFilter(tableField = "companyId"): Promise<Record<string, string> | {}> {
+export async function getCompanyFilter(tableField = "companyId"): Promise<Record<string, string>> {
   try {
     const cookieStore = await cookies();
     const selectedId = cookieStore.get("selectedCompanyId")?.value;

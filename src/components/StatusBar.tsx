@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 /**
  * StatusBar — reads a status_message cookie set by API routes
@@ -8,54 +8,54 @@ import { useState, useEffect, useCallback } from "react";
  * Auto-hides after 10 seconds or on click.
  */
 export default function StatusBar() {
-  const [message, setMessage] = useState<string | null>(null);
-  const [visible, setVisible] = useState(false);
+  const [state, setState] = useState<{ message: string | null; visible: boolean }>({
+    message: null,
+    visible: false,
+  });
+  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const readCookie = useCallback(() => {
     const match = document.cookie.match(/(?:^|;\s*)status_message=([^;]*)/);
     return match ? decodeURIComponent(match[1]) : null;
   }, []);
 
+  // Poll for cookie-based status messages
   useEffect(() => {
-    // Initial read
-    const msg = readCookie();
-    if (msg) {
-      setMessage(msg);
-      setVisible(true);
-      // Clear cookie after reading
-      document.cookie = "status_message=; path=/; max-age=0";
-    }
-
-    // Poll for new messages every 3 seconds
-    const interval = setInterval(() => {
+    const checkCookie = () => {
       const msg = readCookie();
       if (msg) {
-        setMessage(msg);
-        setVisible(true);
+        // Clear cookie after reading
         document.cookie = "status_message=; path=/; max-age=0";
+        setState({ message: msg, visible: true });
+        // Auto-hide after 10 seconds
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = setTimeout(() => {
+          setState((prev) => ({ ...prev, visible: false }));
+        }, 10000);
       }
-    }, 3000);
+    };
 
-    return () => clearInterval(interval);
+    // Initial check
+    checkCookie();
+
+    // Poll for new messages every 3 seconds
+    const interval = setInterval(checkCookie, 3000);
+    return () => {
+      clearInterval(interval);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
   }, [readCookie]);
 
-  // Auto-hide after 10 seconds
-  useEffect(() => {
-    if (!visible) return;
-    const timer = setTimeout(() => setVisible(false), 10000);
-    return () => clearTimeout(timer);
-  }, [visible, message]);
-
-  if (!visible || !message) return null;
+  if (!state.visible || !state.message) return null;
 
   return (
     <div
-      onClick={() => setVisible(false)}
+      onClick={() => setState((prev) => ({ ...prev, visible: false }))}
       className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-2 bg-slate-900 text-white text-sm shadow-lg cursor-pointer"
     >
       <span className="flex items-center gap-2">
         <span className="animate-pulse">⬤</span>
-        {message}
+        {state.message}
       </span>
       <span className="text-xs text-slate-400 ml-4 flex-shrink-0">Click to dismiss</span>
     </div>

@@ -1,12 +1,18 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 20, 2026 (v2.9.1)
+**Last Updated:** July 21, 2026 (v2.9.2)
 
-> **v2.9.1 — Admin Table Import/Export & Database Backup/Restore:**
-> - **Admin table page:** Added 4 buttons next to "＋ Add Row": 📥 Import CSV (upload + parse + insert), 📋 Template (download CSV with headers + sample row), 📤 Export CSV (full table download), 🗄 Export SQL (CREATE TABLE + INSERT statements).
-> - **Database Management:** New "🗄 Database" menu item in Admin sidebar with full backup export (downloadable .sql dump of all tables with DDL + data) and restore (upload .sql file, parse, execute).
-> - **New API endpoints:** `GET /api/admin/table/[table]/sql` (SQL export), `POST /api/admin/table/[table]/import` (CSV import), `GET /api/admin/database/backup` (full DB backup), `POST /api/admin/database/restore` (full DB restore).
-> - **Changed:** `/api/admin/table/[table]/template` now returns downloadable CSV file (was JSON).
+> **v2.9.2 — Authorization Hardening & Security:**
+> - **Centralized authz helpers** (`src/lib/authz.ts`): `requireAdmin`, `requireAuth`, `hasCompanyAccess`, `getSelectedCompanyId`, `requireSelectedCompany`, `getCompanyWhere`, `requireCompanyIdAccess`.
+> - **Middleware:** `/admin/*` UI pages blocked for non-Admin users; `/api/admin/*` routes enforce their own auth (not blanket-blocked because `/fla` assessor pages call them).
+> - **Admin page:** Adopt/Clean Templates now gated on `role === "Admin"` (was username comparison).
+> - **Assessor-facing API routes:** Auth + company-access checks on assessments, findings, samples, actions, control-assignments, and assessment controls.
+> - **Generic table API:** `GET /api/admin/table/[table]/data` allows any authenticated user with company scoping. `POST/PUT/DELETE` uses `ASSESSOR_WRITABLE_TABLES` whitelist (Aact, AActUsers, AActControls, AActDetails) for assessor writes; all other tables remain Admin-only.
+> - **Admin-only routes standardized:** All 17 admin API routes (badges, database, diagnose, execute-sql, export/import, etc.) now use `requireAdmin()` helper instead of inline `auth()` + role checks.
+> - **Session hardening:** JWT `maxAge` set to 8 hours (was 30 days default). Runtime role validation in `jwt` callback — only `"Admin"` or `"Assessor"` accepted; defaults to `"Assessor"` if corrupted.
+> - **Data integrity:** 970 orphaned `MapControl2Requirement` rows dumped to JSON audit trail and deleted. All 3 companies verified at 1,048 controls each.
+> - **Code quality:** Fixed `StatusBar.tsx` sync setState in effect (cascading render bug). Fixed `company-context.ts` empty object type. Removed unused imports in `OutstandingActions.tsx`.
+> - **Nested repo hygiene:** `seam-assurance-app/` untracked from root `gamified-plant` repo (it has its own `.git`); added to root `.gitignore`.
 
 > **v2.9.0 — Removed preDeployCommand (one-time ops):**
 > - Removed `preDeployCommand` from `railway.toml`. Schema sync (`sync-schema.ts`), admin seeding (`seed.ts`), and activity log type seeding (`seed-activity-log-types.ts`) no longer run on every deploy. These are one-time operations. Schema changes now require manual `npx tsx prisma/sync-schema.ts` invocation.
@@ -475,6 +481,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.9.2 | 2026-07-21 | Authz hardening: centralized helpers, middleware /admin blocking, role-based gating, company-scoped API access, ASSESSOR_WRITABLE_TABLES whitelist. Session JWT maxAge=8h + role validation. 17 admin routes standardized to requireAdmin. 970 orphan MCR rows cleaned. StatusBar, company-context, OutstandingActions fixes. Nested repo hygiene. |
 | v2.9.1 | 2026-07-20 | Admin table import/export buttons (CSV import, CSV template, CSV export, SQL export). Database Management page: full backup download + restore from SQL file. New APIs: table SQL export, table CSV import, full DB backup, full DB restore. Template API now returns CSV. |
 | v2.7.0 | 2026-07-16 | Outstanding Actions dashboard (sortable/resizable, modal with attachments). actionId ACTID-XXXXXX. 3 deploy fixes. All companies verified 1:1. 45 models, 10 enums, 49 routes, 29 pages, 9 components. |
 | v2.6.5 | 2026-07-16 | Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. GET /api/admin/assessment-templates now filtered by companyId. OGP verified 1:1. |
