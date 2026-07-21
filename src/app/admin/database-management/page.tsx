@@ -493,6 +493,40 @@ export default function DatabaseManagementPage() {
           </div>
         )}
       </div>
+
+      {/* Relational Data Exports */}
+      <div className="mt-8 rounded border border-slate-200 bg-white p-6">
+        <h2 className="text-lg font-semibold text-slate-900 mb-4">📦 SAMS Relational Data Exports</h2>
+        <p className="text-sm text-slate-600 mb-4">
+          Export SAMS001 controls and requirements with joined Process Area names and relationship data.
+        </p>
+        <div className="flex flex-wrap gap-4">
+          <a
+            href="/api/admin/database/export-controls?format=csv"
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 inline-flex items-center gap-2"
+          >
+            📥 Controls CSV
+          </a>
+          <a
+            href="/api/admin/database/export-controls?format=json"
+            className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 inline-flex items-center gap-2"
+          >
+            📋 Controls JSON
+          </a>
+          <a
+            href="/api/admin/database/export-requirements?format=csv"
+            className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 inline-flex items-center gap-2"
+          >
+            📥 Requirements CSV
+          </a>
+          <a
+            href="/api/admin/database/export-requirements?format=json"
+            className="rounded bg-green-600 px-4 py-2 text-sm text-white hover:bg-green-700 inline-flex items-center gap-2"
+          >
+            📋 Requirements JSON
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
