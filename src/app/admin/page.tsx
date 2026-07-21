@@ -20,7 +20,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"data" | "columns">("data");
-  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements" | "activityLog">("tables");
+  const [view, setView] = useState<"tables" | "badges" | "templates" | "users" | "knowledgebase" | "documentControls" | "requirements" | "activityLog" | "database">("tables");
 
   // Generic table edit state
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
@@ -29,6 +29,11 @@ export default function AdminDashboard() {
   const [newRow, setNewRow] = useState<Record<string, any> | null>(null);
   const [savingRow, setSavingRow] = useState(false);
   const [rowMsg, setRowMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // CSV import state
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [importingCsv, setImportingCsv] = useState(false);
+  const [importMsg, setImportMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   const loadTables = useCallback(async () => {
     const res = await fetch("/api/admin/tables");
@@ -164,6 +169,57 @@ export default function AdminDashboard() {
     finally { setSavingRow(false); }
   };
 
+  // ── CSV Import / Export handlers ──────────────────────────────────
+  const handleImportCsv = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedTable) return;
+    setImportingCsv(true); setImportMsg(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(`/api/admin/table/${selectedTable}/import`, {
+        method: "POST", body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Import failed");
+      setImportMsg({ type: "ok", text: `Imported ${data.inserted} of ${data.total} rows.` });
+      loadData(selectedTable, 1, perPage);
+    } catch (e: any) { setImportMsg({ type: "err", text: e.message }); }
+    finally {
+      setImportingCsv(false);
+      // Reset file input so same file can be re-selected
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const downloadCsvTemplate = () => {
+    if (!selectedTable) return;
+    const a = document.createElement("a");
+    a.href = `/api/admin/table/${selectedTable}/template`;
+    a.download = `${selectedTable}_template.csv`;
+    a.click();
+  };
+
+  const exportCsv = () => {
+    if (!selectedTable) return;
+    const a = document.createElement("a");
+    a.href = `/api/admin/table/${selectedTable}/export`;
+    a.download = `${selectedTable}_export.csv`;
+    a.click();
+  };
+
+  const exportSql = () => {
+    if (!selectedTable) return;
+    const a = document.createElement("a");
+    a.href = `/api/admin/table/${selectedTable}/sql`;
+    a.download = `${selectedTable}_export.sql`;
+    a.click();
+  };
+
   return (
     <div className="flex h-[calc(100vh-140px)] gap-3">
       {/* LEFT: Nav + Table List — hidden on mobile unless tables view active */}
@@ -179,6 +235,7 @@ export default function AdminDashboard() {
             <button onClick={() => setView("documentControls")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "documentControls" ? "bg-blue-50 font-medium" : ""}`}>📄 Document Controls</button>
             <button onClick={() => setView("requirements")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "requirements" ? "bg-blue-50 font-medium" : ""}`}>📋 Requirements</button>
             <button onClick={() => setView("activityLog")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "activityLog" ? "bg-blue-50 font-medium" : ""}`}>📜 Mapping Activity Log</button>
+            <button onClick={() => setView("database")} className={`block w-full text-left px-2 py-1.5 text-xs rounded hover:bg-slate-100 text-slate-700 ${view === "database" ? "bg-blue-50 font-medium" : ""}`}>🗄 Database</button>
           </div>
         </div>
 
@@ -211,6 +268,7 @@ export default function AdminDashboard() {
             { key: "documentControls", label: "📄 Docs" },
             { key: "requirements", label: "📋 Reqs" },
             { key: "activityLog", label: "📜 Log" },
+            { key: "database", label: "🗄 DB" },
           ].map(tab => (
             <button key={tab.key} onClick={() => setView(tab.key as any)}
               className={`flex-shrink-0 px-3 py-1.5 text-xs rounded whitespace-nowrap ${view === tab.key ? "bg-blue-600 text-white" : "text-slate-600 hover:bg-slate-200"}`}>
@@ -232,6 +290,8 @@ export default function AdminDashboard() {
           <RequirementManager />
         ) : view === "activityLog" ? (
           <ActivityLogViewer />
+        ) : view === "database" ? (
+          <DatabaseManager />
         ) : !selectedTable ? (
           <div className="flex items-center justify-center h-full text-slate-400 text-sm">← Select a table</div>
         ) : (
@@ -241,8 +301,14 @@ export default function AdminDashboard() {
                 <span className="font-semibold text-slate-900 text-sm">{selectedTable}</span>
                 <span className="text-xs text-slate-400 ml-3">{totalRows} rows · {columns.length} cols</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <button onClick={startAddRow} className="rounded bg-green-600 px-2.5 py-0.5 text-xs font-medium text-white hover:bg-green-700">＋ Add Row</button>
+                <span className="text-slate-300 mx-0.5">|</span>
+                <button onClick={handleImportCsv} disabled={importingCsv} className="rounded border border-blue-200 px-2 py-0.5 text-xs text-blue-600 hover:bg-blue-50 disabled:opacity-50" title="Import data from CSV file">📥 Import CSV</button>
+                <button onClick={downloadCsvTemplate} className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50" title="Download CSV template with column headers">📋 Template</button>
+                <button onClick={exportCsv} className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50" title="Export table data as CSV">📤 Export CSV</button>
+                <button onClick={exportSql} className="rounded border border-slate-200 px-2 py-0.5 text-xs text-slate-600 hover:bg-slate-50" title="Export table as SQL (CREATE TABLE + INSERT)">🗄 Export SQL</button>
+                <input ref={fileInputRef} type="file" accept=".csv" onChange={handleFileSelected} className="hidden" />
                 <button onClick={() => dropTable(selectedTable!)} className="rounded border border-red-200 px-2 py-0.5 text-xs text-red-600 hover:bg-red-50">Drop</button>
               </div>
             </div>
@@ -256,6 +322,9 @@ export default function AdminDashboard() {
             </div>
             <div className="flex-1 overflow-auto">
               {error && <div className="m-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{error}</div>}
+              {importMsg && (
+                <div className={`mx-3 mt-2 rounded px-3 py-1.5 text-xs ${importMsg.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>{importMsg.text}</div>
+              )}
               {tab === "data" && (
                 loading ? <div className="p-4 text-xs text-slate-400">Loading...</div>
                 : rows.length === 0 ? <div className="p-4 text-xs text-slate-400">No rows.</div>
@@ -1994,6 +2063,123 @@ function RequirementManager() {
             </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Database Manager ──────────────────────────────────────────────────────
+
+function DatabaseManager() {
+  const [backupStatus, setBackupStatus] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [restoreStatus, setRestoreStatus] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [restoring, setRestoring] = useState(false);
+  const restoreFileRef = useRef<HTMLInputElement>(null);
+
+  const handleExportBackup = () => {
+    const a = document.createElement("a");
+    a.href = "/api/admin/database/backup";
+    a.download = `full_backup_${new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19)}.sql`;
+    a.click();
+    setBackupStatus({ type: "ok", text: "Backup download started." });
+  };
+
+  const handleRestoreClick = () => {
+    restoreFileRef.current?.click();
+  };
+
+  const handleRestoreFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setRestoring(true);
+    setRestoreStatus(null);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/database/restore", {
+        method: "POST", body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Restore failed");
+      setRestoreStatus({
+        type: data.ok ? "ok" : "err",
+        text: data.ok
+          ? `Restore complete: ${data.executed} statements executed. ${data.skipped} comments skipped.`
+          : `Restore had errors: ${(data.errors || []).join("; ")}`,
+      });
+    } catch (e: any) {
+      setRestoreStatus({ type: "err", text: e.message });
+    } finally {
+      setRestoring(false);
+      if (restoreFileRef.current) restoreFileRef.current.value = "";
+    }
+  };
+
+  return (
+    <div className="p-6">
+      <h2 className="text-lg font-semibold text-slate-900 mb-1">🗄 Database Management</h2>
+      <p className="text-xs text-slate-500 mb-6">Export full database backup or restore from a backup file.</p>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Export Backup */}
+        <div className="rounded-lg border border-slate-200 p-5">
+          <h3 className="text-sm font-semibold text-slate-800 mb-2">📥 Export Full Backup</h3>
+          <p className="text-xs text-slate-500 mb-4">
+            Downloads a complete SQL dump of all database tables including schema (CREATE TABLE) and data (INSERT statements).
+            The file includes DROP TABLE IF EXISTS CASCADE before each CREATE TABLE.
+          </p>
+          <button
+            onClick={handleExportBackup}
+            className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            ⬇ Download Full Backup (.sql)
+          </button>
+          {backupStatus && (
+            <div className={`mt-3 rounded px-3 py-1.5 text-xs ${backupStatus.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {backupStatus.text}
+            </div>
+          )}
+        </div>
+
+        {/* Restore Backup */}
+        <div className="rounded-lg border border-red-200 p-5 bg-red-50/30">
+          <h3 className="text-sm font-semibold text-red-800 mb-2">⚠ Restore Backup</h3>
+          <p className="text-xs text-red-600 mb-4">
+            <strong>Warning:</strong> This will drop and recreate all tables, then insert the backup data.
+            This operation cannot be undone. Ensure you have a recent backup before proceeding.
+          </p>
+          <button
+            onClick={handleRestoreClick}
+            disabled={restoring}
+            className="rounded bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            {restoring ? "⏳ Restoring..." : "📤 Upload & Restore (.sql)"}
+          </button>
+          <input
+            ref={restoreFileRef}
+            type="file"
+            accept=".sql,.txt"
+            onChange={handleRestoreFile}
+            className="hidden"
+          />
+          {restoreStatus && (
+            <div className={`mt-3 rounded px-3 py-1.5 text-xs ${restoreStatus.type === "ok" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
+              {restoreStatus.text}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Tips */}
+      <div className="mt-6 rounded-lg border border-slate-200 p-4 bg-slate-50">
+        <h4 className="text-xs font-semibold text-slate-700 mb-2">💡 Tips</h4>
+        <ul className="text-xs text-slate-500 space-y-1 list-disc list-inside">
+          <li>Backups are full SQL dumps — they include both schema and data.</li>
+          <li>The backup file can be used to migrate the database to another server.</li>
+          <li>Restore will drop all existing tables first, then recreate them with the backup data.</li>
+          <li>For large databases, the backup download may take a few seconds to generate.</li>
+          <li>Always download a fresh backup before attempting a restore.</li>
+        </ul>
       </div>
     </div>
   );

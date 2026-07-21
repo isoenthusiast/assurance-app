@@ -74,6 +74,13 @@ function generateSampleValue(fieldName: string, fieldType: string): string {
   return samples[fieldName] || 'Sample Data';
 }
 
+function escapeCSV(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ table: string }> }
@@ -87,38 +94,43 @@ export async function GET(
     const { table } = await params;
 
     // Get schema dynamically, with fallback
-    let columns: string[] = [];
+    interface ColInfo { name: string; type: string }
+    let colInfos: ColInfo[] = [];
 
     const tableSchema = getTableSchema(table);
     if (tableSchema) {
-      columns = tableSchema.columns
+      colInfos = tableSchema.columns
         .filter((col) => col.kind !== 'object')
-        .filter((col) => !col.isId || col.name === 'id')
-        .map((col) => col.name);
+        .map((col) => ({ name: col.name, type: col.type }));
     } else {
       // Use fallback schema
       const fallbackSchema = getFallbackSchema(table);
       if (!fallbackSchema) {
         return NextResponse.json({ error: 'Table not found' }, { status: 404 });
       }
-      columns = Object.keys(fallbackSchema);
+      colInfos = Object.entries(fallbackSchema).map(([name, config]) => ({
+        name, type: config.type,
+      }));
     }
 
-    if (!tableSchema) {
-      return NextResponse.json({ error: 'Schema not available for this table' }, { status: 500 });
+    if (colInfos.length === 0) {
+      return NextResponse.json({ error: 'No columns found for this table' }, { status: 404 });
     }
 
-    // Generate sample row
-    const sampleRow = columns.map((colName) => {
-      const column = tableSchema.columns.find((c) => c.name === colName);
-      return generateSampleValue(colName, column?.type || 'String');
-    });
+    // Build CSV: header row + one sample row
+    const headerLine = colInfos.map((c) => escapeCSV(c.name)).join(',');
+    const sampleLine = colInfos.map((c) => {
+      const val = generateSampleValue(c.name, c.type);
+      return escapeCSV(val);
+    }).join(',');
 
-    return NextResponse.json({
-      table,
-      columns,
-      sampleRow,
-      example: [columns, sampleRow],
+    const csv = `${headerLine}\n${sampleLine}\n`;
+
+    return new Response(csv, {
+      headers: {
+        'Content-Type': 'text/csv; charset=utf-8',
+        'Content-Disposition': `attachment; filename="${table}_template.csv"`,
+      },
     });
   } catch (error) {
     console.error('Error generating template:', error);

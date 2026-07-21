@@ -1,6 +1,12 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 17, 2026 (v2.9.0)
+**Last Updated:** July 20, 2026 (v2.9.1)
+
+> **v2.9.1 — Admin Table Import/Export & Database Backup/Restore:**
+> - **Admin table page:** Added 4 buttons next to "＋ Add Row": 📥 Import CSV (upload + parse + insert), 📋 Template (download CSV with headers + sample row), 📤 Export CSV (full table download), 🗄 Export SQL (CREATE TABLE + INSERT statements).
+> - **Database Management:** New "🗄 Database" menu item in Admin sidebar with full backup export (downloadable .sql dump of all tables with DDL + data) and restore (upload .sql file, parse, execute).
+> - **New API endpoints:** `GET /api/admin/table/[table]/sql` (SQL export), `POST /api/admin/table/[table]/import` (CSV import), `GET /api/admin/database/backup` (full DB backup), `POST /api/admin/database/restore` (full DB restore).
+> - **Changed:** `/api/admin/table/[table]/template` now returns downloadable CSV file (was JSON).
 
 > **v2.9.0 — Removed preDeployCommand (one-time ops):**
 > - Removed `preDeployCommand` from `railway.toml`. Schema sync (`sync-schema.ts`), admin seeding (`seed.ts`), and activity log type seeding (`seed-activity-log-types.ts`) no longer run on every deploy. These are one-time operations. Schema changes now require manual `npx tsx prisma/sync-schema.ts` invocation.
@@ -363,6 +369,16 @@ POST `/api/admin/suggest-activity-types` — activity type suggestions
 ### Admin Utilities
 CSV validate/import, generic table CRUD (all 45 models), column management, SQL executor (`/api/admin/execute-sql` — Admin-only, small blocklist: DROP DATABASE, DELETE FROM information_schema, PRAGMA database_list; see §12 for blast-radius notes), database management, export, diagnostics, information_schema column discovery
 
+### Table Import/Export (v2.9.1)
+`GET /api/admin/table/[table]/export` — exports table as downloadable CSV
+`GET /api/admin/table/[table]/sql` — exports table as SQL (CREATE TABLE IF NOT EXISTS + batch INSERT)
+`GET /api/admin/table/[table]/template` — downloads CSV template with header row + one sample row
+`POST /api/admin/table/[table]/import` — accepts CSV file upload (multipart `file` field), parses with quote/comma/newline handling, validates headers against table columns, coerces types (Boolean/Int/Float/DateTime), auto-generates String IDs, inserts rows
+
+### Database Backup & Restore (v2.9.1)
+`GET /api/admin/database/backup` — full database SQL dump: queries information_schema for all public tables, generates DROP/CREATE TABLE with PKs + unique constraints + column types/defaults, batch INSERTs all data (100 rows/statement), wrapped in BEGIN/COMMIT, returns downloadable .sql file
+`POST /api/admin/database/restore` — accepts .sql file upload, state-machine parser handles single-quote/$$/\$tag\$ quoting, executes statements sequentially, returns executed/skipped/error counts
+
 ## 7. Frontend Pages
 
 | Route | Description |
@@ -371,7 +387,7 @@ CSV validate/import, generic table CRUD (all 45 models), column management, SQL 
 | `/fla` | **Assurance Management Dashboard** — Process Health Dashboard (collapsible by standard, traffic-light indicators) + Gamification sidebar (points, earned badges, leaderboard top-3) |
 | `/fla/new` | Create assessment with cascading control picker |
 | `/fla/[id]` | **2-panel tabbed assessment**: Overview, Control Assignment, Sample Selection, Finding & Actions, Assessment Activities. Control Assignment has collapsible "Select Controls" panel with ProcessArea→Requirement→search filter chain (wildcard `*` regex matching on control statements) and checklist; "Assigned Controls" panel grouped by requirement. |
-| `/admin` | Admin dashboard with 45 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), **Requirements** (tree: Standard→ProcessArea, sorted table, inline editor, Associated Controls), Knowledgebase |
+| `/admin` | Admin dashboard with 45 table tiles, Badge Management, Template Management, **User Management** (Add/Edit with position/companyId, **Manage Roles**, **Manage Company**), **Requirements** (tree: Standard→ProcessArea, sorted table, inline editor, Associated Controls), Knowledgebase, **Database Management** (full backup export + restore), table view with CSV import/export/template + SQL export buttons |
 | `/admin/templates` | Template list + editor |
 | `/admin/knowledgebase` | Document upload (.docx/.pdf → Markdown), search, preview, download |
 | `/admin/table/[table]` | Generic table editor (auto-discovers columns via information_schema) |
@@ -459,6 +475,7 @@ Flagged as a candidate for future LLM-assisted enhancement.
 
 | Version | Date | Changes |
 |---------|------|---------|
+| v2.9.1 | 2026-07-20 | Admin table import/export buttons (CSV import, CSV template, CSV export, SQL export). Database Management page: full backup download + restore from SQL file. New APIs: table SQL export, table CSV import, full DB backup, full DB restore. Template API now returns CSV. |
 | v2.7.0 | 2026-07-16 | Outstanding Actions dashboard (sortable/resizable, modal with attachments). actionId ACTID-XXXXXX. 3 deploy fixes. All companies verified 1:1. 45 models, 10 enums, 49 routes, 29 pages, 9 components. |
 | v2.6.5 | 2026-07-16 | Proceed/Cancel confirmation for Adopt+Clean Templates, Admin-only gating. Templates page company-aware via cookie polling. GET /api/admin/assessment-templates now filtered by companyId. OGP verified 1:1. |
 | v2.6.4 | 2026-07-16 | Added @@unique to Control + Requirement. Clean-templates API + Clean button. Removed Standard NULL-companyId backfill. DEPLOYMENT_CHECKLIST.md. SMDS verified 1:1. |
