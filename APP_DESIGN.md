@@ -52,7 +52,9 @@
 
 > **v2.6.0 — Multi-Company Isolation:** Full company-scoped data isolation, Adopt Templates, CompanySelector.
 
-> **v2.5.4 — Design Doc Audit:** Full codebase audit (45 models, 49 routes, 29 pages). Mapping Activity Log.","newString":"**Last Updated:** July 15, 2026 (v2.6.0)"  
+> **v2.5.4 — Design Doc Audit:** Full codebase audit (45 models, 49 routes, 29 pages). Mapping Activity Log.
+
+**Last Updated:** July 15, 2026 (v2.6.0)  
 **Status:** Production — Deployed on Railway (PostgreSQL)  
 **Code Name:** "CONAN PROJECT"
 
