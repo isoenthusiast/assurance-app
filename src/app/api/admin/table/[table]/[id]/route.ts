@@ -1,7 +1,12 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import { requireAuth, hasCompanyAccess, getSelectedCompanyId } from "@/lib/authz";
+
+/** Tables that assessors can read/write via the generic table API (assessment activities workflow). */
+const ASSESSOR_TABLES = new Set([
+  "Aact", "AActUsers", "AActControls", "AActDetails",
+]);
 
 /**
  * Get the primary key field name for a model.
@@ -18,10 +23,11 @@ export async function GET(
 ) {
   const { table, id } = await params;
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
+
+    // Allow any authenticated user to read single records
+    const isAdmin = session.user.role === "Admin";
     const camelName = table.charAt(0).toLowerCase() + table.slice(1);
     const model = (prisma as any)[camelName];
     const pkField = getPkField(table);
@@ -130,12 +136,16 @@ export async function DELETE(
 ) {
   const deleteParams = await params;
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
     const { table, id } = deleteParams;
+
+    // Only Admins can delete from non-assessor tables
+    const isAdmin = session.user.role === "Admin";
+    if (!isAdmin && !ASSESSOR_TABLES.has(table)) {
+      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+    }
 
     if (!id) {
       return NextResponse.json(
@@ -340,12 +350,17 @@ export async function PUT(
 ) {
   const putParams = await params;
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
+    const { session, response } = await requireAuth();
+    if (response) return response;
+
+    const { table, id } = putParams;
+
+    // Only Admins can update non-assessor tables
+    const isAdmin = session.user.role === "Admin";
+    if (!isAdmin && !ASSESSOR_TABLES.has(table)) {
       return NextResponse.json({ error: "Not authorized" }, { status: 403 });
     }
 
-    const { table, id } = putParams;
     const body = await request.json();
 
     if (!id) {

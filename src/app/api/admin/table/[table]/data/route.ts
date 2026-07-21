@@ -1,9 +1,8 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getTableSchema } from "@/lib/schema-introspection";
 import { getFallbackSchema } from "@/lib/fallback-schemas";
-import { cookies } from "next/headers";
+import { requireAuth, requireAdmin, hasCompanyAccess, getSelectedCompanyId } from "@/lib/authz";
 
 /** Tables that have a companyId column and should be company-scoped */
 const COMPANY_SCOPED_TABLES = new Set([
@@ -19,13 +18,22 @@ export async function GET(
   { params }: { params: Promise<{ table: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
+    const { session, response } = await requireAuth();
+    if (response) return response;
 
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+    const isAdmin = session.user.role === "Admin";
+
+    // Non-admin users must have a selected company and valid access
+    let userCompanyId: string | null = null;
+    if (!isAdmin) {
+      userCompanyId = await getSelectedCompanyId();
+      if (!userCompanyId) {
+        return NextResponse.json({ error: "No company selected" }, { status: 400 });
+      }
+      const ok = await hasCompanyAccess(session.user.id, userCompanyId);
+      if (!ok) {
+        return NextResponse.json({ error: "Access denied for selected company" }, { status: 403 });
+      }
     }
 
     const { table } = await params;
@@ -74,13 +82,18 @@ export async function GET(
 
     // Inject companyId filter for company-scoped tables
     if (COMPANY_SCOPED_TABLES.has(table)) {
-      try {
-        const cookieStore = await cookies();
-        const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
-        if (selectedCompanyId && !where.companyId) {
-          where.companyId = selectedCompanyId;
-        }
-      } catch { /* cookies() may throw in edge cases */ }
+      if (!isAdmin && userCompanyId) {
+        // Non-admin: force filter to their selected company
+        where.companyId = userCompanyId;
+      } else if (isAdmin) {
+        // Admin: respect selected company cookie if set, otherwise see all
+        try {
+          const selectedCompanyId = await getSelectedCompanyId();
+          if (selectedCompanyId && !where.companyId) {
+            where.companyId = selectedCompanyId;
+          }
+        } catch { /* cookies() may throw in edge cases */ }
+      }
     }
 
     try {
@@ -196,14 +209,8 @@ export async function POST(
   { params }: { params: Promise<{ table: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const { table } = await params;
     const body = await request.json();
@@ -263,8 +270,7 @@ export async function POST(
         // Auto-inject companyId for company-scoped tables
         if (COMPANY_SCOPED_TABLES.has(table) && !body.companyId) {
           try {
-            const cookieStore = await cookies();
-            const selectedCompanyId = cookieStore.get("selectedCompanyId")?.value;
+            const selectedCompanyId = await getSelectedCompanyId();
             if (selectedCompanyId) body.companyId = selectedCompanyId;
           } catch { /* ignore */ }
         }
