@@ -1,17 +1,11 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     // Get unique control types from database
     const controls = await prisma.control.findMany({
@@ -53,14 +47,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const { activityTypes } = await request.json();
 

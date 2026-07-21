@@ -1,15 +1,13 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import { requireAdmin } from "@/lib/authz";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as { role?: string }).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const badges = await prisma.achievementBadge.findMany({
       orderBy: { badgeName: "asc" },
@@ -24,10 +22,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as { role?: string }).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const formData = await request.formData();
 

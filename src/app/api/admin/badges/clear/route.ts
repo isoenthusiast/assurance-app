@@ -1,13 +1,11 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/authz";
 
 export async function POST() {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as { role?: string }).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { response } = await requireAdmin();
+    if (response) return response;
 
     const result = await prisma.achievementBadge.deleteMany();
     return NextResponse.json({ deleted: result.count });

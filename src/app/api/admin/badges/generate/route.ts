@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
@@ -134,10 +134,8 @@ function sanitizeFilename(name: string): string {
 
 export async function POST() {
   try {
-    const session = await auth();
-    if (!session?.user || (session.user as { role?: string }).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const processAreas = await prisma.processArea.findMany({
       orderBy: { name: "asc" },

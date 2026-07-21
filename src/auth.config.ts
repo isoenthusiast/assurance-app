@@ -6,6 +6,7 @@ export const authConfig: NextAuthConfig = {
   },
   session: {
     strategy: "jwt",
+    maxAge: 8 * 60 * 60, // 8 hours
   },
   trustHost: true,
   providers: [],
@@ -23,8 +24,11 @@ export const authConfig: NextAuthConfig = {
     },
     jwt: ({ token, user }) => {
       if (user) {
-        token.id = (user as { id: string }).id;
-        token.role = (user as { role: string }).role;
+        const u = user as { id: string; role: string };
+        token.id = u.id;
+        // Validate role is a known value; default to "Assessor" if corrupted
+        const validRoles = ["Admin", "Assessor"];
+        token.role = validRoles.includes(u.role) ? u.role : "Assessor";
       }
       return token;
     },

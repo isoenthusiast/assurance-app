@@ -1,13 +1,11 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const { sql } = await request.json();
 

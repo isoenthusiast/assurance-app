@@ -1,18 +1,12 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { NextResponse } from "next/server";
 import { getAllTableNames, getTableSchema } from "@/lib/schema-introspection";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const diagnostics: Record<string, any> = {
       timestamp: new Date().toISOString(),

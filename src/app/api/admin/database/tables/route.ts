@@ -1,13 +1,11 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/authz";
 
 export async function GET(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     // Get list of all tables from PostgreSQL
     const tables = await prisma.$queryRawUnsafe<Array<{ name: string }>>(
@@ -58,10 +56,8 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const { name } = await request.json();
 

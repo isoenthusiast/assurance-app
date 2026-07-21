@@ -1,6 +1,6 @@
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/authz";
 
 /** Map PostgreSQL type to SQL DDL type */
 function pgTypeToDDL(pgType: string, isNullable: string, hasDefault: string | null): string {
@@ -36,10 +36,8 @@ function escapeSQL(value: any): string {
 
 export async function GET(_request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     // Get all table names
     const tables = await prisma.$queryRawUnsafe<Array<{ name: string }>>(

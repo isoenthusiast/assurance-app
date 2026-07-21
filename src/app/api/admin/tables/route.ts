@@ -1,13 +1,11 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     // Refresh PostgreSQL statistics so n_live_tup is accurate (avoid stale 0 counts)
     await prisma.$executeRawUnsafe(`ANALYZE`);
@@ -27,10 +25,8 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user || session.user.role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
     const { table, action } = await request.json();
     if (!table) return NextResponse.json({ error: "table required" }, { status: 400 });
     if (action === "drop") {

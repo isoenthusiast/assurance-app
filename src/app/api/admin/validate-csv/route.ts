@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
@@ -110,14 +110,8 @@ function parseCSVLine(line: string): string[] {
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
-    }
-
-    if ((session.user as { role?: string }).role !== "Admin") {
-      return NextResponse.json({ error: "Not authorized" }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const formData = await request.formData();
     const file = formData.get("file") as File;

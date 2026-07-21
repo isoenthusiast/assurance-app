@@ -1,4 +1,4 @@
-import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/authz";
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 import { getFallbackSchema } from "@/lib/fallback-schemas";
@@ -452,14 +452,8 @@ async function importControlAssignments(rows: string[][]): Promise<ImportStats> 
 
 export async function POST(request: Request) {
   try {
-    const session = await auth();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
-    }
-
-    if (session.user.role !== 'Admin') {
-      return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
-    }
+    const { session, response } = await requireAdmin();
+    if (response) return response;
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
