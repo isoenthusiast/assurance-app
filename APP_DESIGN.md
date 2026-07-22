@@ -1,6 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 22, 2026 (v2.9.6)
+**Last Updated:** July 22, 2026 (v2.9.7)
+
+> **v2.9.7 — Phase I & G Specs Settled (grill-with-docs):**
+> - **Phase I — Control Health Recalculation:** Cumulative deduction model with quarterly reset. Score starts at 0% each quarter; first assessment brings control to 100%. Outstanding actions (actionClosureEffective=false) deduct per severity: Low 0%, Medium -5%, High -10%, Serious -15%, Repeat -15%. Floor at 0%. Scoped to controls assigned to the completed assessment only. ADR-0001 recorded.
+> - **Phase G — Action Closure Fields:** Schema additions to Action model: `closureDate` (DateTime?) and `closureEvidence` (String?). UI includes AttachmentList (destTable=Action) for file uploads + text description. Updated by actionParty. Closure effectiveness reviewed separately by assessor.
+> - **Grill-with-docs skills adopted:** Three-skill system (grilling primitive, domain-modeling, grill-with-docs wrapper) from Matt Pocock's skills repo. CONTEXT.md glossary created with sharpened domain terms. ADR directory established at `docs/adr/`.
 
 > **v2.9.6 — Phase F: Attachment Integration for Samples & Findings:**
 > - **AttachmentList on Samples:** Added file upload/attachment support to the Sample Selection tab in assessment detail. Each sample card now has an AttachmentList section (`destTable=Sample`).
