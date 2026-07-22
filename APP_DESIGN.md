@@ -1,6 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 22, 2026 (v2.9.5)
+**Last Updated:** July 22, 2026 (v2.9.6)
+
+> **v2.9.6 — Phase F: Attachment Integration for Samples & Findings:**
+> - **AttachmentList on Samples:** Added file upload/attachment support to the Sample Selection tab in assessment detail. Each sample card now has an AttachmentList section (`destTable=Sample`).
+> - **AttachmentList on Findings:** Added file upload/attachment support to the Finding & Actions tab. Each finding card now has an AttachmentList section (`destTable=Finding`).
+> - **Sprint Backlog:** Phase F completed. Sprint is now fully done (18 completed, 0 in progress, 1 sprint item → completed).
 
 > **v2.9.5 — SAMS App: Admin User Management CRUD:**
 > - **UserManager Component:** Replaced static read-only user card list on `/admin?view=users` with interactive management. +Add User button opens modal with name, username, password, role dropdown (Admin/Assessor/Interviewee), and company multi-select checkboxes. Each user card has ✏️ Edit and 🗑 Delete buttons. Self-delete disabled for current user.
