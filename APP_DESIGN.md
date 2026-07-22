@@ -1,6 +1,11 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 22, 2026 (v2.9.4)
+**Last Updated:** July 22, 2026 (v2.9.5)
+
+> **v2.9.5 — SAMS App: Admin User Management CRUD:**
+> - **UserManager Component:** Replaced static read-only user card list on `/admin?view=users` with interactive management. +Add User button opens modal with name, username, password, role dropdown (Admin/Assessor/Interviewee), and company multi-select checkboxes. Each user card has ✏️ Edit and 🗑 Delete buttons. Self-delete disabled for current user.
+> - **User API:** `POST /api/admin/users` creates user with bcrypt-hashed password and company assignments. `PUT /api/admin/users/[id]` updates name, username, role, password (optional reset), and company sync (delete old UserCompany, insert new with ON CONFLICT DO NOTHING). `DELETE /api/admin/users/[id]` removes user with cascade; rejects self-delete.
+> - **All CRUD operations verified:** Create (201), update with role change (200), delete (200), self-delete blocked (400).
 
 > **v2.9.4 — SAMS App: Multi-Assessor, Activity Templates & Interviewee Role:**
 > - **Multi-Assessor Support:** Added `AssessmentAssessor` junction table (assessmentId + userId). Kept `assessorId` as lead assessor; additional assessors via junction. Dashboard and detail page queries use `OR: [{ assessorId }, { assessorLinks: { some: { userId } } }]`. Edit UI includes lead assessor dropdown + multi-select checkbox list. Sync endpoint: `PUT /api/admin/table/Assessment/[id]/assessors`. Backfilled all 7 existing assessments.
