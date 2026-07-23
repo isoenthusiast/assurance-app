@@ -1,6 +1,22 @@
 # SEAM Assurance App — Complete Design & Architecture Documentation
 
-**Last Updated:** July 22, 2026 (v2.9.7)
+**Last Updated:** July 23, 2026 (v2.9.10)
+
+> **v2.9.10 — Organizational Hierarchy & Gamification Design (SAMS App):**
+> - **Department & Position Models:** New `Department` (companyId, parentDepartmentId self-ref for hierarchy) and `Position` (title, departmentId) in both Prisma schemas. DB tables created. `User.position` free-text field replaced with `User.positionId` FK → Position. Position ≠ Role — a user has one position but many roles.
+> - **Team Leaderboard Foundation:** Points roll up `User → Position → Department → Company`. Department-level aggregation enables cross-department abundance race — competition without scarcity.
+> - **User Email Field:** `email String?` added to User model in both schemas + DB column. UserManager UI updated with email input in Add/Edit modal and display in user card. POST/PUT API routes handle email.
+> - **Gamification Grill (CD1 Epic Meaning):** Extensive grill-with-docs session captured the assurance gamification vision. Two paradigm shifts: findings as gold (not punishment), assurance as everyone's job (not just assessors). Point economy: role-weighted (Lead Assessor 10pt, Assessor 5pt, Interviewee 1pt, Effective Worker 10pt). XP per process area via GameAttribute. Three visibility layers: Business Objective Indicator → Team Leaderboard → Individual Competency Tracks. Hybrid individual + collective model with LFE-style attribution. Virtuous cycle: work well → sampled → recognized → volunteers for more testing.
+> - **CONTEXT.md:** Comprehensive "Assurance Gamification" section with Epic Meaning, Point Economy, Three Visibility Layers, Virtuous Cycle, Team Model (resolved), and 9 open design questions.
+> - **Session Memory:** `/memories/session/gamification-open-questions.md` — 9 open design topics for future grilling (point triggers, leaderboard UI, badge catalogue, competency mastery tracks, emotional drive integration, multipliers, non-assessor recognition, no-blame guardrails, implementation sequencing).
+> - **Grilling Workflow Instruction:** `/memories/repo/grilling-workflow.md` formalized — when to grill, where outcomes go, what to reference when implementing. CLAUDE.md updated with Design Context & Grilling Workflow section.
+> - **Library Adoption:** Approve candidate → creates Control record → maps to Requirement (AI-suggested or "Unmapped Controls" fallback). ProcessArea→Requirement→Control chain, no sub-process involvement.
+> - **Status Flow:** DocumentExtract: Uploaded→Extracted→Completed. ControlFromDocument: Pending→Approved/Rejected. Idempotent re-extraction.
+> - **Company-Specific Tier:** Added as P6 backlog item for follow-up (extraction from within assessments and controls).
+> - **CONTEXT.md:** Sharpened glossary for Document Extraction, Document Ingestion, Control Candidate, Extraction Run, Library Adoption.
+> - **Packages:** `pdf-parse` and `mammoth` added to sams-app for text extraction.
+> - **Auth config:** `validRoles` updated in `auth.config.ts`, users POST route, and users PUT route to include `Superuser`.
+> - **CONTEXT.md:** Sharpened role definitions and activity log added to glossary.
 
 > **v2.9.7 — Phase I & G Specs Settled (grill-with-docs):**
 > - **Phase I — Control Health Recalculation:** Cumulative deduction model with quarterly reset. Score starts at 0% each quarter; first assessment brings control to 100%. Outstanding actions (actionClosureEffective=false) deduct per severity: Low 0%, Medium -5%, High -10%, Serious -15%, Repeat -15%. Floor at 0%. Scoped to controls assigned to the completed assessment only. ADR-0001 recorded.
